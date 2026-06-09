@@ -1,22 +1,20 @@
 import json
-import os
 from pathlib import Path
 
-from dotenv import load_dotenv
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.core.credentials import AzureKeyCredential
+from config import (AZURE_OCR_ENDPOINT, AZURE_OCR_API_KEY)
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 
 FILE_PATH = BASE_DIR / "data" / "filled accord form five.pdf"
 
-load_dotenv()
 
 
 def get_client():
     return DocumentIntelligenceClient(
-        endpoint=os.getenv("AZURE_OCR_ENDPOINT"),
-        credential=AzureKeyCredential(os.getenv("AZURE_OCR_API_KEY"))
+        endpoint=AZURE_OCR_ENDPOINT,
+        credential=AzureKeyCredential(AZURE_OCR_API_KEY)
     )
 
 

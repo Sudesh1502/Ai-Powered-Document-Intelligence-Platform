@@ -1,0 +1,11 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+AZURE_SEARCH_ENDPOINT = os.getenv("AZURE_SEARCH_ENDPOINT")
+AZURE_SEARCH_ADMIN_KEY = os.getenv("AZURE_SEARCH_API_ADMIN_KEY")
+AZURE_SEARCH_API_QUERY_KEY = os.getenv("AZURE_SEARCH_API_QUERY_KEY")
+AZURE_OCR_ENDPOINT = os.getenv("AZURE_OCR_ENDPOINT")
+AZURE_OCR_API_KEY = os.getenv("AZURE_OCR_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
