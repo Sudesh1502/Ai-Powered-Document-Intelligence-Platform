@@ -6,7 +6,7 @@ from src.config.config import (
     AZURE_SEARCH_ENDPOINT,
     AZURE_SEARCH_ADMIN_KEY
 )
-from index_schema import FIELDS
+from src.indexing.index_schema import FIELDS
 
 
 def create_index():
@@ -16,8 +16,8 @@ def create_index():
     )
 
     index = SearchIndex(
-        name="documents-index",
+        name="generic-documents-index",
         fields=FIELDS
     )
 
-    client.create_index(index)
+    return client.create_index(index)

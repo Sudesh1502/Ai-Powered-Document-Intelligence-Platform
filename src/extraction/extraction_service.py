@@ -5,9 +5,7 @@ from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.core.credentials import AzureKeyCredential
 from src.config.config import (AZURE_OCR_ENDPOINT, AZURE_OCR_API_KEY)
 
-BASE_DIR = Path(__file__).resolve().parents[2]
 
-FILE_PATH = BASE_DIR / "data" / "filled accord form five.pdf"
 
 
 
@@ -18,16 +16,21 @@ def get_client():
     )
 
 
-def extract_text(pdf_path):
+def extract_text(file_path):
+    print("\nExtraction service hit, text is being extracted.")
     client = get_client()
 
-    with open(pdf_path, "rb") as file:
+    with open(file_path, "rb") as file:
         poller = client.begin_analyze_document(
             "prebuilt-read",
             body=file
         )
+        
+    print("\nExtraction completed...")
 
     return poller.result()
+    
+    
 
 
 
@@ -45,15 +48,4 @@ def calculate_confidence(result):
     return sum(confidences) / len(confidences)
 
 
-def main():
-    result = extract_text(FILE_PATH)
 
-    print(json.dumps(result.as_dict(), indent=2))
-    confidence = calculate_confidence(result)
-
-    print(f"OCR Confidence: {confidence:.4f}")
-    print(f"OCR Confidence: {confidence*100:.2f}%")
-
-
-if __name__ == "__main__":
-    main()

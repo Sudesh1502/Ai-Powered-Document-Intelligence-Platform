@@ -2,65 +2,22 @@ import json
 
 from google import genai
 
-from src.config.config import GOOGLE_API_KEY
+from src.config.config import OPENAI_API_KEY
+from src.utils.metadata_prompt import get_metadata_extraction_prompt
 
 
 client = genai.Client(
-    api_key=GOOGLE_API_KEY
+    api_key=OPENAI_API_KEY
 )
 
 
-def ocr_result_to_text(result):
 
-    text_lines = []
-
-    for page in result.pages:
-
-        if page.lines:
-
-            for line in page.lines:
-                text_lines.append(line.content)
-
-    return "\n".join(text_lines)
 
 
 def extract_metadata(text):
+    print("\nExtracting metadata...")
 
-    prompt = f"""
-You are a document understanding AI.
-
-Extract ONLY:
-
-- document_type
-- metadata
-
-Return STRICT JSON:
-
-{{
-    "document_type": "...",
-    "metadata": {{
-        "key": "value"
-    }}
-}}
-
-Rules:
-- Fix obvious OCR mistakes
-- Use snake_case keys
-- Return valid JSON only
-- Extract only business-relevant metadata
-- Ignore legal disclaimers
-- Ignore fraud warnings
-- Ignore state-specific notices
-- Ignore page numbers
-- Ignore footer text
-- Ignore copyright text
-- Ignore repeated headers
-- Ignore instructions and fine print
-- Include only meaningful document information
-
-TEXT:
-{text}
-"""
+    prompt = get_metadata_extraction_prompt(text)
 
     try:
 
@@ -78,6 +35,8 @@ TEXT:
             output = output.replace("```", "")
 
         output = output.strip()
+        
+        print("\nMetadata extraction completed...")
 
         return json.loads(output)
 
@@ -88,20 +47,11 @@ TEXT:
         }
 
 
-# Temporary testing block
-# Remove after main.py is implemented
 
-if __name__ == "__main__":
 
-    from src.extraction.extraction_service import (
-        extract_text,
-        FILE_PATH
-    )
 
-    result = extract_text(FILE_PATH)
+    
 
-    text = ocr_result_to_text(result)
+    
 
-    metadata = extract_metadata(text)
-
-    print(json.dumps(metadata, indent=2))
+   
