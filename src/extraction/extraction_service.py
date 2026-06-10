@@ -3,7 +3,7 @@ from pathlib import Path
 
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.core.credentials import AzureKeyCredential
-from config import (AZURE_OCR_ENDPOINT, AZURE_OCR_API_KEY)
+from src.config.config import (AZURE_OCR_ENDPOINT, AZURE_OCR_API_KEY)
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 

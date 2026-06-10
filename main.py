@@ -16,6 +16,6 @@
 #         "document_type": "claim",
 #         "amount": 5000,
 #         "date": "2026-04-01T00:00:00Z",
-#         "sharepoint_url": "https://sharepoint.com/claim1"
+#         "sharepoint_url": "https://sharepoint.com/claim1"git
 #     }
 # ]
