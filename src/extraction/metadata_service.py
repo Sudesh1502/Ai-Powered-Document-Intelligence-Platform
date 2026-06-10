@@ -46,11 +46,20 @@ Return STRICT JSON:
 Rules:
 - Fix obvious OCR mistakes
 - Use snake_case keys
-- No explanations
 - Return valid JSON only
+- Extract only business-relevant metadata
+- Ignore legal disclaimers
+- Ignore fraud warnings
+- Ignore state-specific notices
+- Ignore page numbers
+- Ignore footer text
+- Ignore copyright text
+- Ignore repeated headers
+- Ignore instructions and fine print
+- Include only meaningful document information
 
 TEXT:
-{text[:3000]}
+{text}
 """
 
     try:
@@ -77,8 +86,11 @@ TEXT:
         return {
             "error": str(e)
         }
-    
-#Temporary main function for testing BAAD ME CHANGE KARENGE TO MAIN WALA MAIN
+
+
+# Temporary testing block
+# Remove after main.py is implemented
+
 if __name__ == "__main__":
 
     from src.extraction.extraction_service import (
