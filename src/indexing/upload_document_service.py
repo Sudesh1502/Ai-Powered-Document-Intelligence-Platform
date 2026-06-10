@@ -1,7 +1,7 @@
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
 
-from config import (
+from src.config.config import (
     AZURE_SEARCH_ENDPOINT,
     AZURE_SEARCH_ADMIN_KEY
 )

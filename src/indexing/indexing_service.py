@@ -2,7 +2,7 @@ from azure.core.credentials import AzureKeyCredential
 from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import SearchIndex
 
-from config import (
+from src.config.config import (
     AZURE_SEARCH_ENDPOINT,
     AZURE_SEARCH_ADMIN_KEY
 )
