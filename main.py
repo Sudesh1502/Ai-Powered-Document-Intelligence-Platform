@@ -69,13 +69,13 @@ indexed_document = {
 }
 
 print("\nThis is the index created.")
-print(
-    json.dumps(
-        indexed_document,
-        indent=4,
-        ensure_ascii=False
-    )
-)
+# print(
+#     json.dumps(
+#         indexed_document,
+#         indent=4,
+#         ensure_ascii=False
+#     )
+# )
 
 upload_result = upload_documents([indexed_document])
 
