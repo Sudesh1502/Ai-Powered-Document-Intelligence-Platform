@@ -12,8 +12,6 @@ client = genai.Client(
 
 
 
-
-
 def extract_metadata(text):
     print("\nExtracting metadata...")
 
@@ -26,6 +24,11 @@ def extract_metadata(text):
             contents=prompt
         )
 
+        if not response.text:
+            return {
+                "error": "Empty response from Gemini"
+            }
+
         output = response.text.strip()
 
         if "```json" in output:
@@ -35,10 +38,12 @@ def extract_metadata(text):
             output = output.replace("```", "")
 
         output = output.strip()
-        
+
+        metadata = json.loads(output)
+
         print("\nMetadata extraction completed...")
 
-        return json.loads(output)
+        return metadata
 
     except Exception as e:
 
