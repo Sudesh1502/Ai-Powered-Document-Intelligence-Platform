@@ -4,3 +4,6 @@ __pycache__/
 *.pyc
 .vscode/
 .idea/
+
+# Ignore test scripts
+test_search.py

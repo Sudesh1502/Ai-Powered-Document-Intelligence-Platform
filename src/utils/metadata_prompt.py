@@ -10,6 +10,7 @@ Schema:
 
 {{
     "document_type": "",
+    "document_title": "",
     "document_number": "",
     "entity_name": "",
     "amount": null,
@@ -30,6 +31,13 @@ document_type:
 - notice
 - correspondence
 - other
+
+document_title:
+- the title or heading of the document
+- examples:
+  - "Invoice for Services Rendered"
+  - "Annual Maintenance Contract"
+  - "Water Damage Claim Form"
 
 document_number:
 - primary identifier for the document

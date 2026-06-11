@@ -1,24 +1,4 @@
 
-# documents = [
-#     {
-#         "id": "1",
-#         "file_name": "invoice_001.pdf",
-#         "content": "White Forest Cake 1kg amount 1000",
-#         "document_type": "invoice",
-#         "amount": 1000,
-#         "date": "2026-03-31T00:00:00Z",
-#         "sharepoint_url": "https://sharepoint.com/invoice1"
-#     },
-#     {
-#         "id": "2",
-#         "file_name": "claim_001.pdf",
-#         "content": "Water damage insurance claim amount 5000",
-#         "document_type": "claim",
-#         "amount": 5000,
-#         "date": "2026-04-01T00:00:00Z",
-#         "sharepoint_url": "https://sharepoint.com/claim1"git
-#     }
-# ]
 import uuid
 from pathlib import Path
 from src.ingestion.ingestion_service import get_unprocessed_documents
@@ -41,7 +21,7 @@ if not documents:
 print("\nprocessing documents for extraction")
 print(f"\nToatl {len(documents)} found.")
 
-doc = documents[0]
+doc = documents[1]
 
 
 
@@ -64,6 +44,8 @@ indexed_document = {
     "file_name": Path(doc).name,
 
     "document_type": metadata.get("document_type"),
+    
+    "document_title": metadata.get("document_title"),
 
     "content": result.content,
 

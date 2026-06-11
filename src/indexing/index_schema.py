@@ -1,7 +1,11 @@
 from azure.search.documents.indexes.models import (
     SimpleField,
     SearchableField,
-    SearchFieldDataType
+    SearchFieldDataType,
+    SemanticConfiguration,
+    SemanticPrioritizedFields,
+    SemanticField,
+    SemanticSearch
 )
 
 FIELDS = [
@@ -21,6 +25,11 @@ FIELDS = [
 
     SearchableField(
         name="document_type",
+        type=SearchFieldDataType.String
+    ),
+
+    SearchableField(
+        name="document_title",
         type=SearchFieldDataType.String
     ),
 
@@ -78,3 +87,20 @@ FIELDS = [
         type=SearchFieldDataType.String
     )
 ]
+
+# Define how the Semantic Ranker should interpret our fields
+semantic_config = SemanticConfiguration(
+    name="default-semantic-config",
+    prioritized_fields=SemanticPrioritizedFields(
+        title_field=SemanticField(field_name="document_title"),
+        content_fields=[SemanticField(field_name="content")],
+        keywords_fields=[
+            SemanticField(field_name="document_type"),
+            SemanticField(field_name="entity_name"),
+            SemanticField(field_name="document_number")
+        ]
+    )
+)
+
+# Create the semantic search definition that we will attach to the index
+SEMANTIC_SEARCH = SemanticSearch(configurations=[semantic_config])

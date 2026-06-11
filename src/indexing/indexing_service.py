@@ -6,7 +6,7 @@ from src.config.config import (
     AZURE_SEARCH_ENDPOINT,
     AZURE_SEARCH_ADMIN_KEY
 )
-from src.indexing.index_schema import FIELDS
+from src.indexing.index_schema import FIELDS, SEMANTIC_SEARCH
 
 
 def create_index():
@@ -17,7 +17,8 @@ def create_index():
 
     index = SearchIndex(
         name="generic-documents-index",
-        fields=FIELDS
+        fields=FIELDS,
+        semantic_search=SEMANTIC_SEARCH
     )
 
     return client.create_index(index)
