@@ -1,3 +1,6 @@
+"""
+This file handles the ingestion and validation of raw documents.
+"""
 from pathlib import Path
 from pypdf import PdfReader
 
@@ -23,6 +26,7 @@ BLOCKED_EXTENSIONS = {
 
 
 def validate_pdf(file_path: Path) -> tuple[bool, str]:
+    """Validates a PDF file for encryption and page limits."""
    
     try:
         reader = PdfReader(str(file_path))
@@ -42,6 +46,7 @@ def validate_pdf(file_path: Path) -> tuple[bool, str]:
 
 
 def get_unprocessed_documents(raw_dir: str):
+    """Retrieves and validates unprocessed documents from a directory."""
    
     raw_path = Path(raw_dir)
 

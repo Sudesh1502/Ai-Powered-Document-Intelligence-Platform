@@ -1,3 +1,6 @@
+"""
+This file provides logging functionality to track document processing status.
+"""
 import csv
 import os
 from datetime import datetime
@@ -6,6 +9,7 @@ from pathlib import Path
 LOG_FILE = Path(__file__).resolve().parent.parent.parent / "processing_logs.csv"
 
 def log_document_status(file_name: str, url: str, status: str, note: str):
+    """Logs the processing status of a document to a CSV file."""
     file_exists = os.path.isfile(LOG_FILE)
     
     with open(LOG_FILE, mode='a', newline='', encoding='utf-8') as f:

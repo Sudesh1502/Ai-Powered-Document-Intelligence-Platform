@@ -1,3 +1,6 @@
+"""
+This file handles text extraction (OCR) using Azure Document Intelligence.
+"""
 import json
 from pathlib import Path
 
@@ -10,6 +13,7 @@ from src.config.config import (AZURE_OCR_ENDPOINT, AZURE_OCR_API_KEY)
 
 
 def get_client():
+    """Initializes and returns the Azure Document Intelligence client."""
     return DocumentIntelligenceClient(
         endpoint=AZURE_OCR_ENDPOINT,
         credential=AzureKeyCredential(AZURE_OCR_API_KEY)
@@ -17,6 +21,7 @@ def get_client():
 
 
 def extract_text(file_path):
+    """Extracts text from a given document using Azure OCR."""
     print("\nExtraction service hit, text is being extracted.")
     client = get_client()
 
@@ -35,6 +40,7 @@ def extract_text(file_path):
 
 
 def calculate_confidence(result):
+    """Calculates the average confidence score from the OCR result."""
     confidences = []
 
     for page in result.pages:

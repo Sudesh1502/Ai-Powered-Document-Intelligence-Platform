@@ -1,4 +1,7 @@
 
+"""
+Main script that orchestrates the entire document processing pipeline: ingestion, extraction, and indexing.
+"""
 import uuid
 from pathlib import Path
 from src.ingestion.ingestion_service import get_unprocessed_documents

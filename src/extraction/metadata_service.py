@@ -1,3 +1,6 @@
+"""
+This file handles metadata extraction from text using a Generative AI model.
+"""
 import json
 
 from google import genai
@@ -13,6 +16,7 @@ client = genai.Client(
 
 
 def extract_metadata(text):
+    """Extracts structured metadata (JSON) from raw text using Gemini."""
     print("\nExtracting metadata...")
 
     prompt = get_metadata_extraction_prompt(text)
@@ -50,13 +54,3 @@ def extract_metadata(text):
         return {
             "error": str(e)
         }
-
-
-
-
-
-    
-
-    
-
-   
