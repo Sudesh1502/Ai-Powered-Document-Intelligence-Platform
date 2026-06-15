@@ -54,11 +54,3 @@ def extract_metadata(text):
         return {
             "error": str(e)
         }
-
-
-
-
-
-
-
-

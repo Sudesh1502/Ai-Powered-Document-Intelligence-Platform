@@ -12,6 +12,7 @@ from src.indexing.indexing_service import create_index
 from src.indexing.upload_document_service import upload_documents
 from src.utils.logger import log_document_status
 import json
+from datetime import datetime
 
 BASE_DIR = Path(__file__).resolve().parent
 RAW_DATA_DIR = BASE_DIR / "data"
@@ -25,10 +26,11 @@ if not documents:
 print("\nprocessing documents for extraction")
 print(f"\nTotal {len(documents)} found.")
 
-for doc in documents[:5]:
+for doc in documents[:12]:
     file_name = Path(doc).name
     url = str(Path(doc).resolve())
     
+    start_time = datetime.now()
     try:
         print(f"\nProcessing {file_name}...")
         
@@ -58,22 +60,28 @@ for doc in documents[:5]:
         upload_result = upload_documents([indexed_document])
         
         # Log success
+        end_time = datetime.now()
         log_document_status(
             file_name=file_name,
             url=url,
             status="Completed",
-            note="File index created successfully"
+            note="File index created successfully",
+            start_time=start_time,
+            end_time=end_time
         )
         print(f"Successfully processed and indexed {file_name}")
 
     except Exception as e:
         # Log failure
+        end_time = datetime.now()
         error_msg = str(e)
         log_document_status(
             file_name=file_name,
             url=url,
             status="Failed",
-            note=error_msg
+            note=error_msg,
+            start_time=start_time,
+            end_time=end_time
         )
         print(f"Failed to process {file_name}: {error_msg}")
 
