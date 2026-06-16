@@ -7,6 +7,7 @@ from src.config.config import (
     AZURE_SEARCH_ADMIN_KEY
 )
 
+
 def search_documents(
     query: str, 
     use_semantic_ranker: bool = False, 
@@ -37,7 +38,7 @@ def search_documents(
         "top": top,
         "select": [
             "id", "file_name", "document_title", "document_type", 
-            "entity_name", "amount", "document_date", "confidence", "sharepoint_url"
+            "entity_name", "document_date", "confidence", "sharepoint_url"
         ]
     }
 

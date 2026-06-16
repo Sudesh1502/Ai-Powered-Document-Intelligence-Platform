@@ -13,7 +13,6 @@ Schema:
     "document_title": "",
     "document_number": "",
     "entity_name": "",
-    "amount": null,
     "document_date": null,
     "metadata": {{}}
 }}
@@ -58,11 +57,7 @@ entity_name:
   - company
   - organization
 
-amount:
-- primary monetary value in the document
-- return as a number
-- do not include currency symbols
-- if not available return null
+
 
 document_date:
 - most important business date in the document
