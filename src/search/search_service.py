@@ -1,12 +1,52 @@
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
 from azure.search.documents.models import QueryType, QueryCaptionType
+from src.utils.get_prompt import get_search_summary_prompt
 
 from src.config.config import (
     AZURE_SEARCH_ENDPOINT,
     AZURE_SEARCH_ADMIN_KEY
 )
+from google import genai
 
+from src.config.config import OPENAI_API_KEY
+
+def get_summary(search_results:list, user_query:str, semantic_search:bool):
+    print("\nSummary extraction started...")
+    client = genai.Client(
+        api_key=OPENAI_API_KEY
+    )
+    search_type = "semantic" if semantic_search else "keyword"
+    summary_prompt = get_search_summary_prompt(user_query, search_type, search_results)
+
+    try:
+
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=summary_prompt
+        )
+
+        if not response.text:
+            return {
+                "error": "Empty response from Gemini"
+            }
+
+        output = response.text.strip()
+
+        
+
+        summary = output
+
+        print("\nSummary extraction completed...")
+
+        return summary
+
+    except Exception as e:
+
+        return {
+            "error": str(e)
+        }
+    
 
 def search_documents(
     query: str, 
@@ -55,15 +95,17 @@ def search_documents(
         results = search_client.search(**search_kwargs)
         
         formatted_results = []
-        for result in results:
+        for rank, result in enumerate(results, start=1):
             doc_data = {
+                "rank": rank,
                 "id": result["id"],
                 "file_name": result.get("file_name"),
                 "document_title": result.get("document_title"),
                 "document_type": result.get("document_type"),
+                "document_date": result.get("document_date"),
                 "entity_name": result.get("entity_name"),
                 "sharepoint_url": result.get("sharepoint_url"),
-                "score": result["@search.score"]
+                "score": round(result["@search.score"], 3)
             }
             
             # If semantic search is used, Azure provides exact text snippets (captions) where it found the answer
@@ -74,6 +116,8 @@ def search_documents(
             formatted_results.append(doc_data)
             
         print(f"Found {len(formatted_results)} results.")
+        if not formatted_results:
+            return ("No documents were found matching the search criteria.")
         return formatted_results
         
     except Exception as e:

@@ -6,7 +6,7 @@ import json
 from google import genai
 
 from src.config.config import OPENAI_API_KEY
-from src.utils.metadata_prompt import get_metadata_extraction_prompt
+from utils.get_prompt import get_metadata_extraction_prompt
 
 
 client = genai.Client(
