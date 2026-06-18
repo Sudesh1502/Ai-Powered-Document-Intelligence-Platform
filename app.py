@@ -197,43 +197,64 @@ if uploaded_file:
             )
 
             st.subheader(
-                "Document Information"
+                "Extracted Metadata"
             )
 
-            left, right = st.columns(2)
+            c1, c2, c3 = st.columns(3)
 
-            with left:
+            with c1:
 
-                st.write(
-                    f"**Document Type:** "
-                    f"{metadata.get('document_type', 'N/A')}"
+                st.metric(
+                    "Document Type",
+                    metadata.get(
+                        "document_type",
+                        "N/A"
+                    )
                 )
 
-                st.write(
-                    f"**Document Title:** "
-                    f"{metadata.get('document_title', 'N/A')}"
+                st.metric(
+                    "Document Number",
+                    metadata.get(
+                        "document_number",
+                        "N/A"
+                    )
                 )
 
-                st.write(
-                    f"**Document Number:** "
-                    f"{metadata.get('document_number', 'N/A')}"
+            with c2:
+
+                st.metric(
+                    "Entity",
+                    metadata.get(
+                        "entity_name",
+                        "N/A"
+                    )
                 )
 
-            with right:
-
-                st.write(
-                    f"**Entity:** "
-                    f"{metadata.get('entity_name', 'N/A')}"
+                st.metric(
+                    "Amount",
+                    str(
+                        metadata.get(
+                            "amount",
+                            "N/A"
+                        )
+                    )
                 )
 
-                st.write(
-                    f"**Amount:** "
-                    f"{metadata.get('amount', 'N/A')}"
+            with c3:
+
+                st.metric(
+                    "Date",
+                    str(
+                        metadata.get(
+                            "document_date",
+                            "N/A"
+                        )
+                    )
                 )
 
-                st.write(
-                    f"**Date:** "
-                    f"{metadata.get('document_date', 'N/A')}"
+                st.metric(
+                    "Pages",
+                    page_count
                 )
 
             with st.expander(
@@ -244,6 +265,7 @@ if uploaded_file:
                     metadata
                 )
 
+
             document = build_document(
                 uploaded_file=uploaded_file,
                 metadata=metadata,
@@ -252,7 +274,15 @@ if uploaded_file:
                 confidence=confidence,
                 review_status=review_status
             )
+            
+            with st.expander(
+                "Azure Search Document Preview"
+            ):
 
+                st.json(
+                    document
+                )
+            
             if review_status == "Completed":
 
                 with st.spinner(

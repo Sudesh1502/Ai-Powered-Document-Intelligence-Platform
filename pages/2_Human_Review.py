@@ -1,6 +1,5 @@
 import streamlit as st
 from datetime import datetime
-
 from src.indexing.upload_document_service import (
     upload_documents
 )
@@ -18,15 +17,28 @@ if "review_documents" not in st.session_state:
     st.session_state.review_documents = []
 
 st.title(
-    "Human Review Queue"
+    "📝 Human Review Queue"
 )
 
 docs = st.session_state.review_documents
 
-st.metric(
-    "Pending Reviews",
-    len(docs)
-)
+c1, c2 = st.columns(2)
+
+with c1:
+
+    st.metric(
+        "Pending Reviews",
+        len(docs)
+    )
+
+with c2:
+
+    st.metric(
+        "Ready To Approve",
+        len(docs)
+    )
+
+st.markdown("---")
 
 if not docs:
 
@@ -38,16 +50,22 @@ else:
 
     for i, doc in enumerate(docs):
 
+        st.container()
+
         st.markdown("---")
 
         left, right = st.columns(
-            [2, 1]
+            [3, 2]
         )
 
         with left:
 
             st.subheader(
-                doc["file_name"]
+                f"📄 {doc['file_name']}"
+            )
+
+            st.caption(
+                "Document Preview"
             )
 
             st.text_area(
@@ -56,7 +74,7 @@ else:
                     "content",
                     ""
                 ),
-                height=400,
+                height=500,
                 disabled=True,
                 key=f"text_{i}"
             )
@@ -95,7 +113,7 @@ else:
             )
 
             entity_name = st.text_input(
-                "Entity",
+                "Entity Name",
                 value=doc.get(
                     "entity_name",
                     ""
@@ -104,7 +122,7 @@ else:
             )
 
             document_date = st.text_input(
-                "Date",
+                "Document Date",
                 value=str(
                     doc.get(
                         "document_date",
@@ -124,13 +142,29 @@ else:
                 f"{doc.get('review_status', 'Review Required')}"
             )
 
+            with st.expander(
+                "Azure Search Document Preview"
+            ):
+
+                preview = doc.copy()
+
+                preview.pop(
+                    "review_status",
+                    None
+                )
+
+                st.json(
+                    preview
+                )
+
             c1, c2 = st.columns(2)
 
             with c1:
 
                 if st.button(
-                    "Approve",
-                    key=f"a_{i}"
+                    "✅ Approve",
+                    key=f"a_{i}",
+                    use_container_width=True
                 ):
 
                     doc[
@@ -186,8 +220,9 @@ else:
             with c2:
 
                 if st.button(
-                    "Reject",
-                    key=f"r_{i}"
+                    "❌ Reject",
+                    key=f"r_{i}",
+                    use_container_width=True
                 ):
 
                     log_document_status(

@@ -5,3 +5,9 @@ Code:
 Message: The request is invalid. Details: The property 'review_status' does not exist on type 'search.documentFields' or is not present in the API version '2026-04-01'. Make sure to only use property names that are defined by the type.",0,2026-06-18 13:36:50,2026-06-18 13:37:26,36.17
 2026-06-18 13:39:55,"ChatGPT Image Jun 5, 2026, 12_23_06 PM.png",C:\Users\PGFELL~1\AppData\Local\Temp\tmpj391s3nm.png,Review Required,Waiting For Human Review,0,2026-06-18 13:39:29,2026-06-18 13:39:55,26.57
 2026-06-18 13:48:52,"ChatGPT Image Jun 5, 2026, 12_15_37 PM.png",C:\Users\PGFELL~1\AppData\Local\Temp\tmpa8g4wax5.png,Review Required,Waiting For Human Review,0,2026-06-18 13:48:19,2026-06-18 13:48:52,32.61
+2026-06-18 13:58:38,"ChatGPT Image Jun 5, 2026, 12_15_37 PM.png",C:\Users\PGFELL~1\AppData\Local\Temp\tmpgkua8fp7.png,Review Required,Waiting For Human Review,0,2026-06-18 13:58:09,2026-06-18 13:58:38,28.95
+2026-06-18 13:58:53,"ChatGPT Image Jun 5, 2026, 12_15_37 PM.png",,Completed,Approved by Human Reviewer,0,2026-06-18 13:58:53,2026-06-18 13:58:53,0.0
+2026-06-18 14:08:01,Filled-5-AcordForm36Agent-BrokerofRecordChangeBOR.pdf.pdf,,Failed,name 'document' is not defined,0,2026-06-18 14:07:55,2026-06-18 14:08:01,6.5
+2026-06-18 14:11:35,"ChatGPT Image Jun 9, 2026, 11_37_32 AM.png",C:\Users\PGFELL~1\AppData\Local\Temp\tmp9_l6o7xw.png,Completed,Indexed Successfully,0,2026-06-18 14:11:11,2026-06-18 14:11:35,24.03
+2026-06-18 14:13:07,Filled-2-AcordForm36Agent-BrokerofRecordChangeBOR.pdf (2).pdf,C:\Users\PGFELL~1\AppData\Local\Temp\tmpltdqexzv.pdf,Failed,Waiting For Human Review,0,2026-06-18 14:13:01,2026-06-18 14:13:07,6.79
+2026-06-18 14:22:37,Filled-6-AcordForm36Agent-BrokerofRecordChangeBOR.pdf (3).pdf,C:\Users\PGFELL~1\AppData\Local\Temp\tmpk4f2tbdl.pdf,Completed,Indexed Successfully,0,2026-06-18 14:22:20,2026-06-18 14:22:37,16.5
