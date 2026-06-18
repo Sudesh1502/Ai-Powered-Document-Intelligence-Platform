@@ -1,7 +1,11 @@
 import streamlit as st
+from datetime import datetime
 
 from src.indexing.upload_document_service import (
     upload_documents
+)
+from src.utils.logger import (
+    log_document_status
 )
 
 st.set_page_config(
@@ -18,6 +22,11 @@ st.title(
 )
 
 docs = st.session_state.review_documents
+
+st.metric(
+    "Pending Reviews",
+    len(docs)
+)
 
 if not docs:
 
@@ -47,12 +56,16 @@ else:
                     "content",
                     ""
                 ),
-                height=300,
+                height=400,
                 disabled=True,
                 key=f"text_{i}"
             )
 
         with right:
+
+            st.subheader(
+                "Metadata Review"
+            )
 
             document_type = st.text_input(
                 "Document Type",
@@ -111,9 +124,7 @@ else:
                 f"{doc.get('review_status', 'Review Required')}"
             )
 
-            c1, c2 = st.columns(
-                2
-            )
+            c1, c2 = st.columns(2)
 
             with c1:
 
@@ -153,12 +164,21 @@ else:
                         [doc_to_upload]
                     )
 
-                    docs.pop(
-                        i
+                    log_document_status(
+                        file_name=doc[
+                            "file_name"
+                        ],
+                        url="",
+                        status="Completed",
+                        note="Approved by Human Reviewer",
+                        start_time=datetime.now(),
+                        end_time=datetime.now()
                     )
 
+                    docs.pop(i)
+
                     st.success(
-                        "Document Indexed Successfully."
+                        "Document approved and indexed successfully."
                     )
 
                     st.rerun()
@@ -170,12 +190,21 @@ else:
                     key=f"r_{i}"
                 ):
 
-                    docs.pop(
-                        i
+                    log_document_status(
+                        file_name=doc[
+                            "file_name"
+                        ],
+                        url="",
+                        status="Rejected",
+                        note="Rejected by Human Reviewer",
+                        start_time=datetime.now(),
+                        end_time=datetime.now()
                     )
 
+                    docs.pop(i)
+
                     st.warning(
-                        "Document Rejected."
+                        "Document rejected."
                     )
 
                     st.rerun()

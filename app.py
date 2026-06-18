@@ -282,7 +282,7 @@ if uploaded_file:
                 st.warning(
                     f"Document marked as "
                     f"'{review_status}'. "
-                    f"Needs Human Review."
+                    f"Go to the Human Review page for approval."
                 )
 
             end_time = datetime.now()
