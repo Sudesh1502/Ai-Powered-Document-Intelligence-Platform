@@ -1,7 +1,5 @@
 import streamlit as st
 import tempfile
-import uuid
-import json
 from datetime import datetime
 
 from src.validation.file_validator import is_valid_file
@@ -20,12 +18,21 @@ from src.utils.logger import (
     get_logs,
     get_metrics
 )
+from src.utils.review_service import (
+    get_review_status
+)
+from src.utils.document_builder import (
+    build_document
+)
 
 st.set_page_config(
     page_title="Document Intelligence Platform",
     page_icon="📄",
     layout="wide"
 )
+
+if "review_documents" not in st.session_state:
+    st.session_state.review_documents = []
 
 st.title(
     "AI Powered Document Intelligence Platform"
@@ -60,7 +67,7 @@ with c3:
 with c4:
     st.metric(
         "Avg Processing Time",
-        f'{metrics["avg_time"]} sec'
+        f"{metrics['avg_time']} sec"
     )
 
 st.markdown("---")
@@ -114,7 +121,6 @@ if uploaded_file:
                 st.error(
                     "Invalid file."
                 )
-
                 st.stop()
 
             with st.spinner(
@@ -177,6 +183,18 @@ if uploaded_file:
                     text
                 )
 
+            review_status = (
+                get_review_status(
+                    confidence,
+                    metadata
+                )
+            )
+
+            st.info(
+                f"Review Status: "
+                f"{review_status}"
+            )
+
             st.subheader(
                 "Document Information"
             )
@@ -225,70 +243,45 @@ if uploaded_file:
                     metadata
                 )
 
-            document = {
+            document = build_document(
+                uploaded_file=uploaded_file,
+                metadata=metadata,
+                text=text,
+                page_count=page_count,
+                confidence=confidence,
+                review_status=review_status
+            )
 
-                "id":
-                    str(
-                        uuid.uuid4()
-                    ),
+            if review_status == "Completed":
 
-                "file_name":
-                    uploaded_file.name,
+                with st.spinner(
+                    "Uploading to Azure Search..."
+                ):
 
-                "document_type":
-                    metadata.get(
-                        "document_type"
-                    ),
+                    upload_documents(
+                        [document]
+                    )
 
-                "document_title":
-                    metadata.get(
-                        "document_title"
-                    ),
+                status = "Completed"
+                note = "Indexed Successfully"
 
-                "content":
-                    text,
+                st.success(
+                    "Document Indexed Successfully."
+                )
 
-                "document_number":
-                    metadata.get(
-                        "document_number"
-                    ),
+            else:
 
-                "entity_name":
-                    metadata.get(
-                        "entity_name"
-                    ),
+                st.session_state.review_documents.append(
+                    document
+                )
 
-                "amount":
-                    metadata.get(
-                        "amount"
-                    ),
+                status = review_status
+                note = "Waiting For Human Review"
 
-                "document_date":
-                    metadata.get(
-                        "document_date"
-                    ),
-
-                "page_count":
-                    page_count,
-
-                "confidence":
-                    confidence,
-
-                "metadata":
-                    json.dumps(
-                        metadata
-                    ),
-
-                "sharepoint_url":
-                    ""
-            }
-
-            with st.spinner(
-                "Uploading to Azure Search..."
-            ):
-
-                upload_documents(
-                    [document]
+                st.warning(
+                    f"Document marked as "
+                    f"'{review_status}'. "
+                    f"Needs Human Review."
                 )
 
             end_time = datetime.now()
@@ -305,14 +298,10 @@ if uploaded_file:
             log_document_status(
                 file_name=uploaded_file.name,
                 url=file_path,
-                status="Completed",
-                note="Indexed Successfully",
+                status=status,
+                note=note,
                 start_time=start_time,
                 end_time=end_time
-            )
-
-            st.success(
-                "Document Indexed Successfully."
             )
 
             st.info(
@@ -353,27 +342,24 @@ if logs.empty:
 
 else:
 
-    keep_cols = []
+        keep_cols = []
 
-    for c in [
-        "Timestamp",
-        "File Name",
-        "Status",
-        "Processing Time (s)"
-    ]:
+        for c in [
+            "Timestamp",
+            "File Name",
+            "Status",
+            "Processing Time (s)"
+        ]:
 
-        if c in logs.columns:
+            if c in logs.columns:
+                keep_cols.append(c)
 
-            keep_cols.append(
-                c
-            )
+        display = logs[
+            keep_cols
+        ]
 
-    display = logs[
-        keep_cols
-    ]
-
-    st.dataframe(
-        display.tail(10),
-        use_container_width=True,
-        hide_index=True
-    )
+        st.dataframe(
+            display.tail(10),
+            use_container_width=True,
+            hide_index=True
+        )
