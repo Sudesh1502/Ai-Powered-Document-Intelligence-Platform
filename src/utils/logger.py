@@ -27,9 +27,6 @@ def log_document_status(file_name: str, url: str, status: str, note: str, start_
         if start_time and end_time:
             processing_time = str(round((end_time - start_time).total_seconds(), 2))
             
-<<<<<<< HEAD
-        writer.writerow([timestamp, file_name, url, status, note,word_count, start_str, end_str, processing_time])
-=======
         writer.writerow([timestamp, file_name, url, status, note, start_str, end_str, processing_time])
 
 def get_logs():
@@ -77,4 +74,3 @@ def get_metrics():
         "avg_time": avg_time,
         "avg_confidence": 0
     }
->>>>>>> 36f707d99d78a168edd05f951b076b062e015468
