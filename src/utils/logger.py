@@ -5,6 +5,7 @@ import csv
 import os
 from datetime import datetime
 from pathlib import Path
+import pandas as pd
 
 LOG_FILE = Path(__file__).resolve().parent.parent.parent / "processing_logs.csv"
 
@@ -26,4 +27,54 @@ def log_document_status(file_name: str, url: str, status: str, note: str, start_
         if start_time and end_time:
             processing_time = str(round((end_time - start_time).total_seconds(), 2))
             
+<<<<<<< HEAD
         writer.writerow([timestamp, file_name, url, status, note,word_count, start_str, end_str, processing_time])
+=======
+        writer.writerow([timestamp, file_name, url, status, note, start_str, end_str, processing_time])
+
+def get_logs():
+
+    if not os.path.exists(
+        LOG_FILE
+    ):
+        return pd.DataFrame()
+
+    return pd.read_csv(
+        LOG_FILE
+    )
+
+def get_metrics():
+
+    logs = get_logs()
+
+    if logs.empty:
+        return {
+            "processed": 0,
+            "indexed": 0,
+            "avg_time": 0,
+            "avg_confidence": 0
+        }
+
+    processed = len(logs)
+
+    indexed = len(
+        logs[
+            logs["Status"] == "Completed"
+        ]
+    )
+
+    avg_time = round(
+        pd.to_numeric(
+            logs["Processing Time (s)"],
+            errors="coerce"
+        ).mean(),
+        2
+    )
+
+    return {
+        "processed": processed,
+        "indexed": indexed,
+        "avg_time": avg_time,
+        "avg_confidence": 0
+    }
+>>>>>>> 36f707d99d78a168edd05f951b076b062e015468
