@@ -51,13 +51,6 @@ FIELDS = [
     ),
 
     SimpleField(
-        name="amount",
-        type=SearchFieldDataType.Double,
-        filterable=True,
-        sortable=True
-    ),
-
-    SimpleField(
         name="document_date",
         type=SearchFieldDataType.DateTimeOffset,
         filterable=True,

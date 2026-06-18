@@ -26,7 +26,7 @@ if not documents:
 print("\nprocessing documents for extraction")
 print(f"\nTotal {len(documents)} found.")
 
-for doc in documents[:12]:
+for doc in documents[:1]:
     file_name = Path(doc).name
     url = str(Path(doc).resolve())
     
@@ -35,6 +35,7 @@ for doc in documents[:12]:
         print(f"\nProcessing {file_name}...")
         
         result = extract_text(doc)
+        word_count = len(result.content.split())
         confidence = calculate_confidence(result)
         metadata = extract_metadata(result.content)
         
@@ -49,7 +50,6 @@ for doc in documents[:12]:
             "content": result.content,
             "document_number": metadata.get("document_number"),
             "entity_name": metadata.get("entity_name"),
-            "amount": metadata.get("amount"),
             "document_date": metadata.get("document_date"),
             "page_count": len(result.pages),
             "confidence": confidence,
@@ -67,7 +67,8 @@ for doc in documents[:12]:
             status="Completed",
             note="File index created successfully",
             start_time=start_time,
-            end_time=end_time
+            end_time=end_time,
+            word_count=word_count,
         )
         print(f"Successfully processed and indexed {file_name}")
 
