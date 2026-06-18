@@ -21,9 +21,6 @@ def build_document(
         "file_name":
             uploaded_file.name,
 
-        "review_status":
-            review_status,
-
         "document_type":
             metadata.get(
                 "document_type"

@@ -1,2 +1,7 @@
 Timestamp,File Name,URL,Status,Note,Word Count,Start Time,End Time,Processing Time (s)
 2026-06-16 12:21:47,"ChatGPT Image Jun 12, 2026, 03_37_42 PM.png","C:\Users\Sudesh\Desktop\Ai-Powered Document Intelligence Platform\data\ChatGPT Image Jun 12, 2026, 03_37_42 PM.png",Completed,File index created successfully,91,2026-06-16 12:21:36,2026-06-16 12:21:47,10.89
+2026-06-18 13:37:26,Filled-2-Acord-24-Certificate-Of-Property-Insurance.pdf (1).pdf,,Failed,"() The request is invalid. Details: The property 'review_status' does not exist on type 'search.documentFields' or is not present in the API version '2026-04-01'. Make sure to only use property names that are defined by the type.
+Code: 
+Message: The request is invalid. Details: The property 'review_status' does not exist on type 'search.documentFields' or is not present in the API version '2026-04-01'. Make sure to only use property names that are defined by the type.",0,2026-06-18 13:36:50,2026-06-18 13:37:26,36.17
+2026-06-18 13:39:55,"ChatGPT Image Jun 5, 2026, 12_23_06 PM.png",C:\Users\PGFELL~1\AppData\Local\Temp\tmpj391s3nm.png,Review Required,Waiting For Human Review,0,2026-06-18 13:39:29,2026-06-18 13:39:55,26.57
+2026-06-18 13:48:52,"ChatGPT Image Jun 5, 2026, 12_15_37 PM.png",C:\Users\PGFELL~1\AppData\Local\Temp\tmpa8g4wax5.png,Review Required,Waiting For Human Review,0,2026-06-18 13:48:19,2026-06-18 13:48:52,32.61

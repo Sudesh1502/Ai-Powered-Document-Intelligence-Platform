@@ -121,6 +121,7 @@ if uploaded_file:
                 st.error(
                     "Invalid file."
                 )
+
                 st.stop()
 
             with st.spinner(
@@ -342,24 +343,27 @@ if logs.empty:
 
 else:
 
-        keep_cols = []
+    keep_cols = []
 
-        for c in [
-            "Timestamp",
-            "File Name",
-            "Status",
-            "Processing Time (s)"
-        ]:
+    for c in [
+        "Timestamp",
+        "File Name",
+        "Status",
+        "Processing Time (s)"
+    ]:
 
-            if c in logs.columns:
-                keep_cols.append(c)
+        if c in logs.columns:
 
-        display = logs[
-            keep_cols
-        ]
+            keep_cols.append(
+                c
+            )
 
-        st.dataframe(
-            display.tail(10),
-            use_container_width=True,
-            hide_index=True
-        )
+    display = logs[
+        keep_cols
+    ]
+
+    st.dataframe(
+        display.tail(10),
+        use_container_width=True,
+        hide_index=True
+    )
