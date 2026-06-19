@@ -2,7 +2,7 @@ import os
 import streamlit as st
 import tempfile
 from datetime import datetime
-
+import shutil
 from src.validation.file_validator import is_valid_file
 from src.extraction.extraction_service import (
     extract_text,
@@ -25,15 +25,15 @@ from src.utils.review_service import (
 from src.utils.document_builder import (
     build_document
 )
+from src.utils.review_storage import (
+    add_review_document
+)
 
 st.set_page_config(
     page_title="Document Intelligence Platform",
     page_icon="📄",
     layout="wide"
 )
-
-if "review_documents" not in st.session_state:
-    st.session_state.review_documents = []
 
 header1, header2 = st.columns(
     [1, 8]
@@ -49,7 +49,7 @@ with header1:
 
         st.image(
             logo_path,
-            width=90
+            width=150
         )
 
 with header2:
@@ -128,6 +128,8 @@ if uploaded_file:
 
         try:
 
+            file_bytes = uploaded_file.getvalue()
+
             with tempfile.NamedTemporaryFile(
                 delete=False,
                 suffix="." +
@@ -135,10 +137,29 @@ if uploaded_file:
             ) as tmp:
 
                 tmp.write(
-                    uploaded_file.read()
+                    file_bytes
                 )
 
                 file_path = tmp.name
+
+            os.makedirs(
+                "data",
+                exist_ok=True
+            )
+
+            saved_file_path = os.path.join(
+                "data",
+                uploaded_file.name
+            )
+
+            with open(
+                saved_file_path,
+                "wb"
+            ) as f:
+
+                f.write(
+                    file_bytes
+                )
 
             if not is_valid_file(
                 file_path
@@ -335,6 +356,26 @@ if uploaded_file:
                         [document]
                     )
 
+                os.makedirs(
+                    "app_data/processed_docs",
+                    exist_ok=True
+                )
+
+                processed_file = os.path.join(
+                    "app_data",
+                    "processed_docs",
+                    uploaded_file.name
+                )
+
+                if os.path.exists(
+                    saved_file_path
+                ):
+
+                    shutil.move(
+                        saved_file_path,
+                        processed_file
+                    )
+
                 status = "Completed"
                 note = "Indexed Automatically"
 
@@ -344,7 +385,7 @@ if uploaded_file:
 
             else:
 
-                st.session_state.review_documents.append(
+                add_review_document(
                     document
                 )
 
@@ -352,7 +393,7 @@ if uploaded_file:
                 note = "Waiting for manual review"
 
                 st.warning(
-                    f"⚠️ Document marked as "
+                    f"Document marked as "
                     f"'{review_status}'. "
                     f"Go to the Action Centre for review."
                 )
@@ -434,10 +475,101 @@ else:
         keep_cols
     ]
 
+    display = display.tail(10)
+
+    selected_file = st.selectbox(
+        "Open Document",
+        ["Select a file"] +
+        display["File Name"].tolist()
+    )
+
     st.dataframe(
-        display.tail(10),
+        display,
         use_container_width=True,
         hide_index=True,
         height=300
     )
+    if selected_file != "Select a file":
 
+        source_file = os.path.join(
+            "data",
+            selected_file
+        )
+
+        processed_file = os.path.join(
+            "app_data",
+            "processed_docs",
+            selected_file
+        )
+
+        if os.path.exists(
+            processed_file
+        ):
+
+            file_path = processed_file
+
+        elif os.path.exists(
+            source_file
+        ):
+
+            file_path = source_file
+
+        else:
+
+            file_path = None
+
+        if file_path:
+
+            st.markdown("---")
+            st.subheader(
+                f"Document Preview : {selected_file}"
+            )
+
+            extension = os.path.splitext(
+                file_path
+            )[1].lower()
+
+            if extension in [
+                ".png",
+                ".jpg",
+                ".jpeg"
+            ]:
+
+                st.image(
+                    file_path,
+                    use_container_width=True
+                )
+
+            elif extension == ".pdf":
+
+                with open(
+                    file_path,
+                    "rb"
+                ) as pdf:
+
+                    st.download_button(
+                        "Open PDF",
+                        pdf,
+                        file_name=selected_file,
+                        use_container_width=True
+                    )
+
+            elif extension == ".docx":
+
+                with open(
+                    file_path,
+                    "rb"
+                ) as doc:
+
+                    st.download_button(
+                        "Open DOCX",
+                        doc,
+                        file_name=selected_file,
+                        use_container_width=True
+                    )
+
+        else:
+
+            st.warning(
+                "Document file not found."
+            )

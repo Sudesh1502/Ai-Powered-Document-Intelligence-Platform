@@ -117,9 +117,9 @@ def search_documents(
             
         print(f"Found {len(formatted_results)} results.")
         if not formatted_results:
-            return ("No documents were found matching the search criteria.")
+            return []
         return formatted_results
         
     except Exception as e:
         print(f"Search failed: {e}")
-        return {"error": str(e)}
+        return []
