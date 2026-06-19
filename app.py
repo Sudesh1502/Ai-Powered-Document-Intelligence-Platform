@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import tempfile
 from datetime import datetime
@@ -34,37 +35,62 @@ st.set_page_config(
 if "review_documents" not in st.session_state:
     st.session_state.review_documents = []
 
-st.title(
-    "AI Powered Document Intelligence Platform"
+header1, header2 = st.columns(
+    [1, 8]
 )
 
-st.caption(
-    "OCR • Metadata Extraction • Azure AI Search"
-)
+with header1:
+
+    logo_path = "pages/LOGO.png"
+
+    if os.path.exists(
+        logo_path
+    ):
+
+        st.image(
+            logo_path,
+            width=90
+        )
+
+with header2:
+
+    st.title(
+        "AI Powered Document Intelligence Platform"
+    )
+
+    st.caption(
+        "Transforming unstructured documents into searchable business intelligence."
+    )
+
+st.markdown("---")
 
 metrics = get_metrics()
 
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
+
     st.metric(
         "Documents Processed",
         metrics["processed"]
     )
 
 with c2:
+
     st.metric(
         "Documents Indexed",
         metrics["indexed"]
     )
 
 with c3:
+
     st.metric(
         "OCR Confidence",
         "--"
     )
 
 with c4:
+
     st.metric(
         "Avg Processing Time",
         f"{metrics['avg_time']} sec"
@@ -72,8 +98,8 @@ with c4:
 
 st.markdown("---")
 
-st.subheader(
-    "Upload Document"
+st.markdown(
+    "## 📤 Upload Document"
 )
 
 uploaded_file = st.file_uploader(
@@ -154,8 +180,8 @@ if uploaded_file:
                 result.pages
             )
 
-            st.subheader(
-                "Extracted Text"
+            st.markdown(
+                "## 📄 Extracted Text"
             )
 
             st.text_area(
@@ -164,8 +190,8 @@ if uploaded_file:
                 height=300
             )
 
-            st.subheader(
-                "OCR Confidence"
+            st.markdown(
+                "## 🎯 OCR Confidence"
             )
 
             st.progress(
@@ -196,8 +222,8 @@ if uploaded_file:
                 f"{review_status}"
             )
 
-            st.subheader(
-                "Extracted Metadata"
+            st.markdown(
+                "## 🏷️ Extracted Metadata"
             )
 
             c1, c2, c3 = st.columns(3)
@@ -257,14 +283,23 @@ if uploaded_file:
                     page_count
                 )
 
-            with st.expander(
-                "Additional Metadata"
-            ):
+            if "error" in metadata:
 
-                st.json(
-                    metadata
+                st.error(
+                    metadata[
+                        "error"
+                    ]
                 )
 
+            else:
+
+                with st.expander(
+                    "Additional Metadata"
+                ):
+
+                    st.json(
+                        metadata
+                    )
 
             document = build_document(
                 uploaded_file=uploaded_file,
@@ -274,15 +309,22 @@ if uploaded_file:
                 confidence=confidence,
                 review_status=review_status
             )
-            
+
             with st.expander(
                 "Azure Search Document Preview"
             ):
 
-                st.json(
-                    document
+                preview = document.copy()
+
+                preview.pop(
+                    "review_status",
+                    None
                 )
-            
+
+                st.json(
+                    preview
+                )
+
             if review_status == "Completed":
 
                 with st.spinner(
@@ -294,10 +336,10 @@ if uploaded_file:
                     )
 
                 status = "Completed"
-                note = "Indexed Successfully"
+                note = "Indexed Automatically"
 
                 st.success(
-                    "Document Indexed Successfully."
+                    "✅ Document Indexed Successfully."
                 )
 
             else:
@@ -307,12 +349,12 @@ if uploaded_file:
                 )
 
                 status = review_status
-                note = "Waiting For Human Review"
+                note = "Waiting for manual review"
 
                 st.warning(
-                    f"Document marked as "
+                    f"⚠️ Document marked as "
                     f"'{review_status}'. "
-                    f"Go to the Human Review page for approval."
+                    f"Go to the Action Centre for review."
                 )
 
             end_time = datetime.now()
@@ -359,8 +401,8 @@ if uploaded_file:
 
 st.markdown("---")
 
-st.subheader(
-    "Recent Processing Activity"
+st.markdown(
+    "## 📊 Recent Processing Activity"
 )
 
 logs = get_logs()
@@ -395,5 +437,7 @@ else:
     st.dataframe(
         display.tail(10),
         use_container_width=True,
-        hide_index=True
+        hide_index=True,
+        height=300
     )
+
