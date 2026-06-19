@@ -19,3 +19,5 @@ Message: The request is invalid. Details: The property 'review_status' does not 
 2026-06-19 14:13:50,"ChatGPT Image Jun 5, 2026, 12_20_22 PM.png","data\ChatGPT Image Jun 5, 2026, 12_20_22 PM.png",Rejected,Rejected by human reviewer,0,2026-06-19 14:13:50,2026-06-19 14:13:50,0.0
 2026-06-19 14:46:40,"ChatGPT Image Jun 5, 2026, 12_20_22 PM.png",C:\Users\PGFELL~1\AppData\Local\Temp\tmpea5crt4_.png,Review Required,Waiting for manual review,0,2026-06-19 14:46:05,2026-06-19 14:46:40,34.89
 2026-06-19 14:48:22,"ChatGPT Image Jun 5, 2026, 12_20_22 PM.png","data\ChatGPT Image Jun 5, 2026, 12_20_22 PM.png",Approved Manually,Reviewed and indexed by human reviewer,0,2026-06-19 14:48:22,2026-06-19 14:48:22,0.0
+2026-06-19 17:41:14,"ChatGPT Image Jun 5, 2026, 12_20_22 PM.png",,Failed,"HTTPSConnection(host='abdvector.cognitiveservices.azure.com', port=443): Failed to resolve 'abdvector.cognitiveservices.azure.com' ([Errno 11001] getaddrinfo failed)",0,2026-06-19 17:41:03,2026-06-19 17:41:14,11.06
+2026-06-19 17:44:45,Sample Blur Doc.png,C:\Users\PGFELL~1\AppData\Local\Temp\tmpopuc6e_6.png,Review Required,Waiting for manual review,0,2026-06-19 17:44:02,2026-06-19 17:44:45,43.39
