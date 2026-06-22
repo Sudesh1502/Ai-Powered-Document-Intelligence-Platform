@@ -9,12 +9,12 @@ from src.config.config import (
 )
 from google import genai
 
-from src.config.config import OPENAI_API_KEY
+from src.config.config import GEMINI_API_KEY
 
 def get_summary(search_results:list, user_query:str, semantic_search:bool):
     print("\nSummary extraction started...")
     client = genai.Client(
-        api_key=OPENAI_API_KEY
+        api_key=GEMINI_API_KEY
     )
     search_type = "semantic" if semantic_search else "keyword"
     summary_prompt = get_search_summary_prompt(user_query, search_type, search_results)
@@ -117,9 +117,9 @@ def search_documents(
             
         print(f"Found {len(formatted_results)} results.")
         if not formatted_results:
-            return ("No documents were found matching the search criteria.")
+            return []
         return formatted_results
         
     except Exception as e:
         print(f"Search failed: {e}")
-        return {"error": str(e)}
+        return []

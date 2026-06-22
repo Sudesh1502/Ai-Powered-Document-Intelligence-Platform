@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 
@@ -10,27 +11,54 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("Document Search")
-st.caption(
-    "Search indexed documents using keyword and semantic search."
+header1, header2 = st.columns(
+    [1, 8]
 )
+
+with header1:
+
+    logo_path = "pages/LOGO.png"
+
+    if os.path.exists(
+        logo_path
+    ):
+
+        st.image(
+            logo_path,
+            width=150
+        )
+
+with header2:
+
+    st.title(
+        "Document Search"
+    )
+
+    st.caption(
+        "Search indexed documents using keyword and semantic search."
+    )
 
 st.markdown("---")
 
-c1, c2, c3 = st.columns([5, 2, 2])
+c1, c2, c3 = st.columns(
+    [5, 2, 2]
+)
 
 with c1:
+
     query = st.text_input(
         "Search Query",
-        placeholder="Enter keywords..."
+        placeholder="Enter keywords, document number, entity name or phrases..."
     )
 
 with c2:
+
     semantic = st.checkbox(
         "Semantic Search"
     )
 
 with c3:
+
     top = st.selectbox(
         "Top Results",
         [5, 10, 20],
@@ -45,6 +73,7 @@ if st.button(
 ):
 
     if not query.strip():
+
         st.warning(
             "Please enter a search query."
         )
@@ -86,50 +115,95 @@ if st.button(
             )
 
             st.markdown("---")
+            
+            if isinstance(results, list):
 
-            for r in results:
+                if not results:
+                    st.info("No documents found.")
 
-                with st.expander(
-                    r.get(
-                        "file_name",
-                        "Document"
+                else:
+                    for i, r in enumerate(results, start=1):
+                        ...
+            else:
+                st.error(results)
+
+            for i, r in enumerate(
+                results,
+                start=1
+            ):
+
+                with st.container():
+
+                    st.markdown(
+                        f"### Result {i}"
                     )
-                ):
 
-                    col1, col2 = st.columns(2)
+                    st.markdown(
+                        f"**File Name:** "
+                        f"{r.get('file_name', 'N/A')}"
+                    )
 
-                    with col1:
+                    c1, c2, c3 = st.columns(
+                        3
+                    )
 
-                        st.write(
-                            f"**Title:** "
-                            f"{r.get('document_title', 'N/A')}"
+                    with c1:
+
+                        st.metric(
+                            "Document Type",
+                            r.get(
+                                "document_type",
+                                "N/A"
+                            )
                         )
 
-                        st.write(
-                            f"**Document Type:** "
-                            f"{r.get('document_type', 'N/A')}"
+                        st.metric(
+                            "Document Number",
+                            r.get(
+                                "document_number",
+                                "N/A"
+                            )
                         )
 
-                        st.write(
-                            f"**Document Number:** "
-                            f"{r.get('document_number', 'N/A')}"
+                    with c2:
+
+                        st.metric(
+                            "Entity",
+                            r.get(
+                                "entity_name",
+                                "N/A"
+                            )
                         )
 
-                    with col2:
-
-                        st.write(
-                            f"**Entity:** "
-                            f"{r.get('entity_name', 'N/A')}"
+                        st.metric(
+                            "Date",
+                            str(
+                                r.get(
+                                    "document_date",
+                                    "N/A"
+                                )
+                            )
                         )
 
-                        st.write(
-                            f"**Score:** "
-                            f"{round(r.get('score', 0), 3)}"
+                    with c3:
+
+                        st.metric(
+                            "Search Score",
+                            round(
+                                r.get(
+                                    "score",
+                                    0
+                                ),
+                                3
+                            )
                         )
 
-                        st.write(
-                            f"**Date:** "
-                            f"{r.get('document_date', 'N/A')}"
+                        st.metric(
+                            "Title",
+                            r.get(
+                                "document_title",
+                                "N/A"
+                            )
                         )
 
                     captions = r.get(
@@ -158,13 +232,18 @@ if st.button(
 
                         st.link_button(
                             "Open Document",
-                            sharepoint_url
+                            sharepoint_url,
+                            use_container_width=True
                         )
+
+                    st.markdown(
+                        "---"
+                    )
 
 st.markdown("---")
 
 st.subheader(
-    "Processing Logs"
+    "Recent Processing Logs"
 )
 
 logs = get_logs()
@@ -187,8 +266,12 @@ else:
         "Status",
         "Processing Time (s)"
     ]:
+
         if c in display.columns:
-            keep_cols.append(c)
+
+            keep_cols.append(
+                c
+            )
 
     display = display[
         keep_cols
@@ -197,5 +280,6 @@ else:
     st.dataframe(
         display.tail(20),
         use_container_width=True,
-        hide_index=True
+        hide_index=True,
+        height=350
     )

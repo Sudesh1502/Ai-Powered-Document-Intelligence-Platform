@@ -5,14 +5,22 @@ import json
 
 from google import genai
 
-from src.config.config import OPENAI_API_KEY
+from src.config.config import GEMINI_API_KEY
 from src.utils.get_prompt import get_metadata_extraction_prompt
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 
 client = genai.Client(
-    api_key=OPENAI_API_KEY
+    api_key=GEMINI_API_KEY
 )
 
+@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=2, max=10))
+def _generate_content_with_retry(prompt):
+    """Helper function to call Gemini API with automatic retries on failure."""
+    return client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
 
 
 def extract_metadata(text):
@@ -23,10 +31,8 @@ def extract_metadata(text):
 
     try:
 
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
+        #we are trying to retry the meta data extraction whenever server is busy of gemini.
+        response = _generate_content_with_retry(prompt)
 
         if not response.text:
             return {

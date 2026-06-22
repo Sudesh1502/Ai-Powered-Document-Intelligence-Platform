@@ -1,9 +1,8 @@
+import os
 import streamlit as st
 import tempfile
-import uuid
-import json
 from datetime import datetime
-
+import shutil
 from src.validation.file_validator import is_valid_file
 from src.extraction.extraction_service import (
     extract_text,
@@ -20,6 +19,15 @@ from src.utils.logger import (
     get_logs,
     get_metrics
 )
+from src.utils.review_service import (
+    get_review_status
+)
+from src.utils.document_builder import (
+    build_document
+)
+from src.utils.review_storage import (
+    add_review_document
+)
 
 st.set_page_config(
     page_title="Document Intelligence Platform",
@@ -27,46 +35,71 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title(
-    "AI Powered Document Intelligence Platform"
+header1, header2 = st.columns(
+    [1, 8]
 )
 
-st.caption(
-    "OCR • Metadata Extraction • Azure AI Search"
-)
+with header1:
+
+    logo_path = "pages/LOGO.png"
+
+    if os.path.exists(
+        logo_path
+    ):
+
+        st.image(
+            logo_path,
+            width=150
+        )
+
+with header2:
+
+    st.title(
+        "AI Powered Document Intelligence Platform"
+    )
+
+    st.caption(
+        "Transforming unstructured documents into searchable business intelligence."
+    )
+
+st.markdown("---")
 
 metrics = get_metrics()
 
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
+
     st.metric(
         "Documents Processed",
         metrics["processed"]
     )
 
 with c2:
+
     st.metric(
         "Documents Indexed",
         metrics["indexed"]
     )
 
 with c3:
+
     st.metric(
         "OCR Confidence",
         "--"
     )
 
 with c4:
+
     st.metric(
         "Avg Processing Time",
-        f'{metrics["avg_time"]} sec'
+        f"{metrics['avg_time']} sec"
     )
 
 st.markdown("---")
 
-st.subheader(
-    "Upload Document"
+st.markdown(
+    "## 📤 Upload Document"
 )
 
 uploaded_file = st.file_uploader(
@@ -95,6 +128,8 @@ if uploaded_file:
 
         try:
 
+            file_bytes = uploaded_file.getvalue()
+
             with tempfile.NamedTemporaryFile(
                 delete=False,
                 suffix="." +
@@ -102,10 +137,29 @@ if uploaded_file:
             ) as tmp:
 
                 tmp.write(
-                    uploaded_file.read()
+                    file_bytes
                 )
 
                 file_path = tmp.name
+
+            os.makedirs(
+                "data",
+                exist_ok=True
+            )
+
+            saved_file_path = os.path.join(
+                "data",
+                uploaded_file.name
+            )
+
+            with open(
+                saved_file_path,
+                "wb"
+            ) as f:
+
+                f.write(
+                    file_bytes
+                )
 
             if not is_valid_file(
                 file_path
@@ -132,23 +186,12 @@ if uploaded_file:
                 2
             )
 
-            text = ""
+            text = result.content
 
-            for page in result.pages:
+            page_count = len(result.pages) if result.pages else 0
 
-                for line in page.lines:
-
-                    text += (
-                        line.content
-                        + "\n"
-                    )
-
-            page_count = len(
-                result.pages
-            )
-
-            st.subheader(
-                "Extracted Text"
+            st.markdown(
+                "## 📄 Extracted Text"
             )
 
             st.text_area(
@@ -157,8 +200,8 @@ if uploaded_file:
                 height=300
             )
 
-            st.subheader(
-                "OCR Confidence"
+            st.markdown(
+                "## 🎯 OCR Confidence"
             )
 
             st.progress(
@@ -177,118 +220,162 @@ if uploaded_file:
                     text
                 )
 
-            st.subheader(
-                "Document Information"
-            )
-
-            left, right = st.columns(2)
-
-            with left:
-
-                st.write(
-                    f"**Document Type:** "
-                    f"{metadata.get('document_type', 'N/A')}"
-                )
-
-                st.write(
-                    f"**Document Title:** "
-                    f"{metadata.get('document_title', 'N/A')}"
-                )
-
-                st.write(
-                    f"**Document Number:** "
-                    f"{metadata.get('document_number', 'N/A')}"
-                )
-
-            with right:
-
-                st.write(
-                    f"**Entity:** "
-                    f"{metadata.get('entity_name', 'N/A')}"
-                )
-
-                st.write(
-                    f"**Amount:** "
-                    f"{metadata.get('amount', 'N/A')}"
-                )
-
-                st.write(
-                    f"**Date:** "
-                    f"{metadata.get('document_date', 'N/A')}"
-                )
-
-            with st.expander(
-                "Additional Metadata"
-            ):
-
-                st.json(
+            review_status = (
+                get_review_status(
+                    confidence,
                     metadata
                 )
+            )
 
-            document = {
+            st.info(
+                f"Review Status: "
+                f"{review_status}"
+            )
 
-                "id":
+            st.markdown(
+                "## 🏷️ Extracted Metadata"
+            )
+
+            c1, c2, c3 = st.columns(3)
+
+            with c1:
+
+                st.metric(
+                    "Document Type",
+                    metadata.get(
+                        "document_type",
+                        "N/A"
+                    )
+                )
+
+                st.metric(
+                    "Document Number",
+                    metadata.get(
+                        "document_number",
+                        "N/A"
+                    )
+                )
+
+            with c2:
+
+                st.metric(
+                    "Entity",
+                    metadata.get(
+                        "entity_name",
+                        "N/A"
+                    )
+                )
+
+
+            with c3:
+
+                st.metric(
+                    "Date",
                     str(
-                        uuid.uuid4()
-                    ),
+                        metadata.get(
+                            "document_date",
+                            "N/A"
+                        )
+                    )
+                )
 
-                "file_name":
-                    uploaded_file.name,
+                st.metric(
+                    "Pages",
+                    page_count
+                )
 
-                "document_type":
-                    metadata.get(
-                        "document_type"
-                    ),
+            if "error" in metadata:
 
-                "document_title":
-                    metadata.get(
-                        "document_title"
-                    ),
+                st.error(
+                    metadata[
+                        "error"
+                    ]
+                )
 
-                "content":
-                    text,
+            else:
 
-                "document_number":
-                    metadata.get(
-                        "document_number"
-                    ),
+                with st.expander(
+                    "Additional Metadata"
+                ):
 
-                "entity_name":
-                    metadata.get(
-                        "entity_name"
-                    ),
-
-                "amount":
-                    metadata.get(
-                        "amount"
-                    ),
-
-                "document_date":
-                    metadata.get(
-                        "document_date"
-                    ),
-
-                "page_count":
-                    page_count,
-
-                "confidence":
-                    confidence,
-
-                "metadata":
-                    json.dumps(
+                    st.json(
                         metadata
-                    ),
+                    )
 
-                "sharepoint_url":
-                    ""
-            }
+            document = build_document(
+                uploaded_file=uploaded_file,
+                metadata=metadata,
+                text=text,
+                page_count=page_count,
+                confidence=confidence,
+                review_status=review_status
+            )
 
-            with st.spinner(
-                "Uploading to Azure Search..."
+            with st.expander(
+                "Azure Search Document Preview"
             ):
 
-                upload_documents(
-                    [document]
+                preview = document.copy()
+
+                preview.pop(
+                    "review_status",
+                    None
+                )
+
+                st.json(
+                    preview
+                )
+
+            if review_status == "Completed":
+
+                with st.spinner(
+                    "Uploading to Azure Search..."
+                ):
+
+                    upload_documents(
+                        [document]
+                    )
+
+                os.makedirs(
+                    "app_data/processed_docs",
+                    exist_ok=True
+                )
+
+                processed_file = os.path.join(
+                    "app_data",
+                    "processed_docs",
+                    uploaded_file.name
+                )
+
+                if os.path.exists(
+                    saved_file_path
+                ):
+
+                    shutil.move(
+                        saved_file_path,
+                        processed_file
+                    )
+
+                status = "Completed"
+                note = "Indexed Automatically"
+
+                st.success(
+                    "✅ Document Indexed Successfully."
+                )
+
+            else:
+
+                add_review_document(
+                    document
+                )
+
+                status = review_status
+                note = "Waiting for manual review"
+
+                st.warning(
+                    f"Document marked as "
+                    f"'{review_status}'. "
+                    f"Go to the Action Centre for review."
                 )
 
             end_time = datetime.now()
@@ -305,14 +392,10 @@ if uploaded_file:
             log_document_status(
                 file_name=uploaded_file.name,
                 url=file_path,
-                status="Completed",
-                note="Indexed Successfully",
+                status=status,
+                note=note,
                 start_time=start_time,
                 end_time=end_time
-            )
-
-            st.success(
-                "Document Indexed Successfully."
             )
 
             st.info(
@@ -339,8 +422,8 @@ if uploaded_file:
 
 st.markdown("---")
 
-st.subheader(
-    "Recent Processing Activity"
+st.markdown(
+    "## 📊 Recent Processing Activity"
 )
 
 logs = get_logs()
@@ -372,8 +455,101 @@ else:
         keep_cols
     ]
 
-    st.dataframe(
-        display.tail(10),
-        use_container_width=True,
-        hide_index=True
+    display = display.tail(10)
+
+    selected_file = st.selectbox(
+        "Open Document",
+        ["Select a file"] +
+        display["File Name"].tolist()
     )
+
+    st.dataframe(
+        display,
+        use_container_width=True,
+        hide_index=True,
+        height=300
+    )
+    if selected_file != "Select a file":
+
+        source_file = os.path.join(
+            "data",
+            selected_file
+        )
+
+        processed_file = os.path.join(
+            "app_data",
+            "processed_docs",
+            selected_file
+        )
+
+        if os.path.exists(
+            processed_file
+        ):
+
+            file_path = processed_file
+
+        elif os.path.exists(
+            source_file
+        ):
+
+            file_path = source_file
+
+        else:
+
+            file_path = None
+
+        if file_path:
+
+            st.markdown("---")
+            st.subheader(
+                f"Document Preview : {selected_file}"
+            )
+
+            extension = os.path.splitext(
+                file_path
+            )[1].lower()
+
+            if extension in [
+                ".png",
+                ".jpg",
+                ".jpeg"
+            ]:
+
+                st.image(
+                    file_path,
+                    use_container_width=True
+                )
+
+            elif extension == ".pdf":
+
+                with open(
+                    file_path,
+                    "rb"
+                ) as pdf:
+
+                    st.download_button(
+                        "Open PDF",
+                        pdf,
+                        file_name=selected_file,
+                        use_container_width=True
+                    )
+
+            elif extension == ".docx":
+
+                with open(
+                    file_path,
+                    "rb"
+                ) as doc:
+
+                    st.download_button(
+                        "Open DOCX",
+                        doc,
+                        file_name=selected_file,
+                        use_container_width=True
+                    )
+
+        else:
+
+            st.warning(
+                "Document file not found."
+            )
