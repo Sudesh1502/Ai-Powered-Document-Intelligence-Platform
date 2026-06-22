@@ -35,12 +35,21 @@ for doc in documents[:1]:
         print(f"\nProcessing {file_name}...")
         
         result = extract_text(doc)
-        word_count = len(result.content.split())
+        word_count = len(result.content.split()) if result.content else 0
         confidence = calculate_confidence(result)
         metadata = extract_metadata(result.content)
         
         if "error" in metadata:
             raise Exception(f"Metadata extraction failed: {metadata['error']}")
+        
+        raw_date = str(metadata.get("document_date", ""))
+        formatted_date = None
+        
+        if raw_date and raw_date.strip() not in ["", "None"]:
+            if "T" not in raw_date:
+                formatted_date = f"{raw_date.strip()}T00:00:00Z"
+            else:
+                formatted_date = raw_date.strip()
 
         indexed_document = {
             "id": str(uuid.uuid4()),
@@ -50,8 +59,8 @@ for doc in documents[:1]:
             "content": result.content,
             "document_number": metadata.get("document_number"),
             "entity_name": metadata.get("entity_name"),
-            "document_date": metadata.get("document_date"),
-            "page_count": len(result.pages),
+            "document_date": formatted_date,
+            "page_count": len(result.pages) if result.pages else 0,
             "confidence": confidence,
             "metadata": json.dumps(metadata.get("metadata", {})),
             "sharepoint_url": ""

@@ -314,6 +314,22 @@ else:
                         exist_ok=True
                     )
 
+                    # 1. Format the date properly for Azure Search (ISO 8601)
+                    raw_date = str(doc_to_upload.get("document_date", ""))
+
+                    if raw_date and raw_date.strip() not in ["", "None"]:
+                        if "T" not in raw_date:
+                            doc_to_upload["document_date"] = f"{raw_date.strip()}T00:00:00Z"
+                    else:
+                        doc_to_upload["document_date"] = None
+
+                    # 2. ACTUALLY upload the document to the Search Index!
+                    try:
+                        upload_documents([doc_to_upload])
+                    except Exception as e:
+                        st.error(f"Failed to upload to Azure Search: {e}")
+                        st.stop()  # Stop the process so it doesn't falsely show success
+
                     if os.path.exists(
                         source_file
                     ):
