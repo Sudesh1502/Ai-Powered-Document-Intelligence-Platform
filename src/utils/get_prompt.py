@@ -1,3 +1,4 @@
+
 def get_metadata_extraction_prompt(text: str) -> str:
     return f"""
 You are an expert document understanding system.
