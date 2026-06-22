@@ -142,7 +142,7 @@ Semantic & Keyword Search
 
 Before running the application, ensure you have:
 
-- Python 3.10+
+- Python 3.12
 - Azure Document Intelligence Resource
 - Azure AI Search Service
 - Google Gemini API Key
