@@ -130,7 +130,7 @@ Semantic & Keyword Search
 | OCR Engine | Azure Document Intelligence |
 | Generative AI | Google Gemini 2.5 Flash |
 | Search Engine | Azure AI Search |
-| Language | Python 3.10+ |
+| Language | Python 3.12 |
 | Retry Mechanism | Tenacity |
 | Configuration | Python Dotenv |
 | Data Processing | Pandas |
