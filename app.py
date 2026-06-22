@@ -186,20 +186,9 @@ if uploaded_file:
                 2
             )
 
-            text = ""
+            text = result.content
 
-            for page in result.pages:
-
-                for line in page.lines:
-
-                    text += (
-                        line.content
-                        + "\n"
-                    )
-
-            page_count = len(
-                result.pages
-            )
+            page_count = len(result.pages) if result.pages else 0
 
             st.markdown(
                 "## 📄 Extracted Text"
@@ -277,15 +266,6 @@ if uploaded_file:
                     )
                 )
 
-                st.metric(
-                    "Amount",
-                    str(
-                        metadata.get(
-                            "amount",
-                            "N/A"
-                        )
-                    )
-                )
 
             with c3:
 

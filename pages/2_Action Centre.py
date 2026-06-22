@@ -163,7 +163,8 @@ else:
                             file_name=doc[
                                 "file_name"
                             ],
-                            use_container_width=True
+                            use_container_width=True,
+                            key=f"download_pdf_{i}"
                         )
 
                 elif extension == ".docx":
@@ -179,7 +180,8 @@ else:
                             file_name=doc[
                                 "file_name"
                             ],
-                            use_container_width=True
+                            use_container_width=True,
+                            key=f"download_docx_{i}"
                         )
 
             else:
