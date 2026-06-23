@@ -121,7 +121,7 @@ if uploaded_file:
 
     if st.button(
         "Process Document",
-        use_container_width=True
+        width="stretch"
     ):
 
         start_time = datetime.now()
@@ -465,7 +465,7 @@ else:
 
     st.dataframe(
         display,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         height=300
     )
@@ -517,7 +517,7 @@ else:
 
                 st.image(
                     file_path,
-                    use_container_width=True
+                    width="stretch"
                 )
 
             elif extension == ".pdf":
@@ -531,7 +531,7 @@ else:
                         "Open PDF",
                         pdf,
                         file_name=selected_file,
-                        use_container_width=True
+                        width="stretch"
                     )
 
             elif extension == ".docx":
@@ -545,7 +545,7 @@ else:
                         "Open DOCX",
                         doc,
                         file_name=selected_file,
-                        use_container_width=True
+                        width="stretch"
                     )
 
         else:

@@ -1,0 +1,11 @@
+Timestamp,File Name,URL,Status,Note,Word Count,Start Time,End Time,Processing Time (s)
+2026-06-23 10:35:57,CLAIM CLOSURE REPORT.docx (2).docx,,Failed,"() The request is invalid. Details: The property 'amount' does not exist on type 'search.documentFields' or is not present in the API version '2026-04-01'. Make sure to only use property names that are defined by the type.
+Code: 
+Message: The request is invalid. Details: The property 'amount' does not exist on type 'search.documentFields' or is not present in the API version '2026-04-01'. Make sure to only use property names that are defined by the type.",0,2026-06-23 10:35:44,2026-06-23 10:35:57,13.04
+2026-06-23 11:40:03,CLAIM CLOSURE REPORT.docx (4).docx,C:\Users\HP\AppData\Local\Temp\tmp20mpc69g.docx,Failed,Waiting for manual review,0,2026-06-23 11:39:14,2026-06-23 11:40:03,48.66
+2026-06-23 11:48:19,CLAIM CLOSURE REPORT.docx (1).docx,C:\Users\HP\AppData\Local\Temp\tmphdk98344.docx,Failed,Waiting for manual review,0,2026-06-23 11:45:52,2026-06-23 11:48:19,146.52
+2026-06-23 11:49:29,CLAIM CLOSURE REPORT.docx.docx,C:\Users\HP\AppData\Local\Temp\tmpz8qkml4z.docx,Failed,Waiting for manual review,0,2026-06-23 11:49:01,2026-06-23 11:49:29,27.81
+2026-06-23 11:52:52,CLAIM CLOSURE REPORT.docx.docx,C:\Users\HP\AppData\Local\Temp\tmp0l10l81g.docx,Failed,Waiting for manual review,0,2026-06-23 11:52:28,2026-06-23 11:52:52,24.06
+2026-06-23 11:56:37,CLAIM CLOSURE REPORT.docx (4).docx,C:\Users\HP\AppData\Local\Temp\tmpywa04ckm.docx,Failed,Waiting for manual review,0,2026-06-23 11:56:13,2026-06-23 11:56:37,23.62
+2026-06-23 11:58:38,CLAIM CLOSURE REPORT.docx (4).docx,C:\Users\HP\AppData\Local\Temp\tmp1ctzt23x.docx,Failed,Waiting for manual review,0,2026-06-23 11:58:15,2026-06-23 11:58:38,23.14
+2026-06-23 12:00:37,CLAIM CLOSURE REPORT.docx.docx,C:\Users\HP\AppData\Local\Temp\tmpz5elduku.docx,Failed,Waiting for manual review,0,2026-06-23 12:00:14,2026-06-23 12:00:37,23.59

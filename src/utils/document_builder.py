@@ -44,11 +44,6 @@ def build_document(
                 "entity_name"
             ),
 
-        "amount":
-            metadata.get(
-                "amount"
-            ),
-
         "document_date":
             metadata.get(
                 "document_date"

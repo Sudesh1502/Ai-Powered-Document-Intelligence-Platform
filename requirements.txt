@@ -11,3 +11,5 @@ plotly>=5.22.0
 pypdf>=5.0.0
 pillow>=11.0.0
 requests>=2.32.0
+mammoth>=1.12.0
+streamlit-pdf-viewer>=0.0.29
