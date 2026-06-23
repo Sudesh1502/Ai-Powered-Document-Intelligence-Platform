@@ -38,7 +38,6 @@ def extract_text(file_path):
     
 
 
-
 def calculate_confidence(result):
     """Calculates the average confidence score from the OCR result."""
     confidences = []
