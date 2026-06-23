@@ -69,7 +69,7 @@ st.markdown("")
 
 if st.button(
     "Search Documents",
-    use_container_width=True
+    width="stretch"
 ):
 
     if not query.strip():
@@ -233,7 +233,7 @@ if st.button(
                         st.link_button(
                             "Open Document",
                             sharepoint_url,
-                            use_container_width=True
+                            width="stretch"
                         )
 
                     st.markdown(
@@ -279,7 +279,7 @@ else:
 
     st.dataframe(
         display.tail(20),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         height=350
     )
