@@ -130,36 +130,10 @@ if uploaded_file:
 
             file_bytes = uploaded_file.getvalue()
 
-            with tempfile.NamedTemporaryFile(
-                delete=False,
-                suffix="." +
-                uploaded_file.name.split(".")[-1]
-            ) as tmp:
-
-                tmp.write(
-                    file_bytes
-                )
-
-                file_path = tmp.name
-
-            os.makedirs(
-                "data",
-                exist_ok=True
-            )
-
-            saved_file_path = os.path.join(
-                "data",
-                uploaded_file.name
-            )
-
-            with open(
-                saved_file_path,
-                "wb"
-            ) as f:
-
-                f.write(
-                    file_bytes
-                )
+            os.makedirs("data", exist_ok=True)
+            file_path = os.path.join("data", uploaded_file.name)
+            with open(file_path, "wb") as f:
+                f.write(file_bytes)
 
             if not is_valid_file(
                 file_path
@@ -336,25 +310,8 @@ if uploaded_file:
                         [document]
                     )
 
-                os.makedirs(
-                    "app_data/processed_docs",
-                    exist_ok=True
-                )
-
-                processed_file = os.path.join(
-                    "app_data",
-                    "processed_docs",
-                    uploaded_file.name
-                )
-
-                if os.path.exists(
-                    saved_file_path
-                ):
-
-                    shutil.move(
-                        saved_file_path,
-                        processed_file
-                    )
+                # Removed folder creation and file moving to keep files in data/
+                pass
 
                 status = "Completed"
                 note = "Indexed Automatically"

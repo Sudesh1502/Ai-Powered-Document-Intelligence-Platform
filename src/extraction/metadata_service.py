@@ -56,7 +56,5 @@ def extract_metadata(text):
         return metadata
 
     except Exception as e:
-
-        return {
-            "error": str(e)
-        }
+        print(f"Gemini API Error: {e}")
+        return {}
