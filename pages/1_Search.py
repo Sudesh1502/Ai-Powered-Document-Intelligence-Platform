@@ -69,7 +69,7 @@ st.markdown("")
 
 if st.button(
     "Search Documents",
-    use_container_width=True
+    width="stretch"
 ):
 
     if not query.strip():
@@ -168,3 +168,44 @@ if "search_results" in st.session_state:
 
 st.markdown("---")
 
+st.subheader(
+    "Recent Processing Logs"
+)
+
+logs = get_logs()
+
+if logs.empty:
+
+    st.info(
+        "No logs available."
+    )
+
+else:
+
+    display = logs.copy()
+
+    keep_cols = []
+
+    for c in [
+        "Timestamp",
+        "File Name",
+        "Status",
+        "Processing Time (s)"
+    ]:
+
+        if c in display.columns:
+
+            keep_cols.append(
+                c
+            )
+
+    display = display[
+        keep_cols
+    ]
+
+    st.dataframe(
+        display.tail(20),
+        width="stretch",
+        hide_index=True,
+        height=350
+    )

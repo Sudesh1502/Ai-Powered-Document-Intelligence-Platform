@@ -1,7 +1,12 @@
 import os
+import json
 import streamlit as st
 from datetime import datetime
 import shutil
+import pandas as pd
+import base64
+import mammoth
+from streamlit_pdf_viewer import pdf_viewer
 
 from src.indexing.upload_document_service import (
     upload_documents
@@ -93,8 +98,64 @@ if not docs:
 
 else:
 
-    for i, doc in enumerate(docs):
+    if "selected_doc_index" not in st.session_state:
+        st.session_state.selected_doc_index = None
 
+    if st.session_state.selected_doc_index is None:
+        # Inject CSS to drastically reduce vertical whitespace for the list rows
+        st.markdown("""
+            <style>
+            [data-testid="column"] {
+                padding-bottom: 0rem !important;
+                padding-top: 0rem !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
+        st.markdown("### Pending Documents")
+        hcols = st.columns([4, 3, 3, 2])
+        hcols[0].markdown("**File Name**")
+        hcols[1].markdown("**Entity Name**")
+        hcols[2].markdown("**Document Date**")
+        hcols[3].markdown("**Action**")
+        st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid rgba(200,200,200,0.3);'/>", unsafe_allow_html=True)
+        
+        for idx, list_doc in enumerate(docs):
+            cols = st.columns([4, 3, 3, 2], gap="small")
+            
+            # File Name is always available
+            cols[0].write(list_doc.get("file_name", "Unknown"))
+            
+            # Handle Entity Name & Errors
+            if "error" in list_doc:
+                cols[1].markdown("🚨 **Extraction Failed**")
+                cols[2].markdown("🚨 **Failed**")
+            else:
+                entity = list_doc.get("entity_name")
+                cols[1].write(entity if entity and str(entity).strip() else "⚠️ *Missing*")
+                
+                date = list_doc.get("document_date")
+                cols[2].write(str(date) if date and str(date).strip() else "⚠️ *Missing*")
+            
+            if cols[3].button("Review", key=f"review_btn_{idx}", use_container_width=True):
+                st.session_state.selected_doc_index = idx
+                st.rerun()
+            st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid rgba(200,200,200,0.3);'/>", unsafe_allow_html=True)
+
+            
+    else:
+        i = st.session_state.selected_doc_index
+        if i >= len(docs):
+            st.session_state.selected_doc_index = None
+            st.rerun()
+            
+        doc = docs[i]
+        
+        if st.button("← Back to List", key="back_to_list"):
+            st.session_state.selected_doc_index = None
+            st.rerun()
+            
+        st.markdown(f"### Reviewing: {doc.get('file_name', 'Document')}")
         st.markdown("---")
 
         left, right = st.columns(
@@ -125,50 +186,37 @@ else:
                     file_path
                 )[1].lower()
 
-                if extension in [
-                    ".png",
-                    ".jpg",
-                    ".jpeg"
-                ]:
+                with st.container(border=True):
+                    if extension in [
+                        ".png",
+                        ".jpg",
+                        ".jpeg"
+                    ]:
 
-                    st.image(
-                        file_path,
-                        use_container_width=True
-                    )
-
-                elif extension == ".pdf":
-
-                    with open(
-                        file_path,
-                        "rb"
-                    ) as pdf:
-
-                        st.download_button(
-                            "Open PDF",
-                            data=pdf,
-                            file_name=doc[
-                                "file_name"
-                            ],
-                            use_container_width=True,
-                            key=f"download_pdf_{i}"
+                        st.image(
+                            file_path,
+                            use_container_width=True
                         )
 
-                elif extension == ".docx":
+                    elif extension == ".pdf":
+                        try:
+                            pdf_viewer(file_path, width=700, height=800)
+                        except Exception as e:
+                            st.error(f"Failed to preview PDF: {e}")
 
-                    with open(
-                        file_path,
-                        "rb"
-                    ) as f:
-
-                        st.download_button(
-                            "Open DOCX",
-                            data=f,
-                            file_name=doc[
-                                "file_name"
-                            ],
-                            use_container_width=True,
-                            key=f"download_docx_{i}"
-                        )
+                    elif extension == ".docx":
+                        try:
+                            with open(file_path, "rb") as docx_file:
+                                result = mammoth.convert_to_html(docx_file)
+                                html = result.value
+                            
+                            # Render DOCX content inside a scrollable container
+                            st.markdown(
+                                f'<div style="height: 800px; overflow-y: auto; padding: 1rem; background: white; color: black; font-family: sans-serif;">{html}</div>', 
+                                unsafe_allow_html=True
+                            )
+                        except Exception as e:
+                            st.error(f"Failed to preview DOCX: {e}")
 
             else:
 
@@ -229,6 +277,55 @@ else:
                 key=f"date_{i}"
             )
 
+            st.markdown("##### Metadata")
+            
+            metadata_fields_key = f"metadata_fields_{i}"
+
+            if metadata_fields_key not in st.session_state:
+                metadata_list = []
+                raw_metadata = doc.get("metadata", "")
+                
+                if raw_metadata:
+                    try:
+                        parsed_meta = json.loads(raw_metadata)
+                        if isinstance(parsed_meta, dict):
+                            # In some cases, Gemini nests metadata in a 'metadata' key
+                            if "metadata" in parsed_meta and isinstance(parsed_meta["metadata"], dict):
+                                parsed_meta = parsed_meta["metadata"]
+                                
+                            for k, v in parsed_meta.items():
+                                if k not in ["document_type", "document_title", "document_number", "entity_name", "document_date", "error"]:
+                                    metadata_list.append({"Key": str(k), "Value": str(v)})
+                    except Exception:
+                        pass
+                
+                if not metadata_list:
+                    # Empty dataframe with string columns ensures 0 data rows and exactly 1 "+" row
+                    df = pd.DataFrame({
+                        "Key": pd.Series(dtype="str"),
+                        "Value": pd.Series(dtype="str")
+                    })
+                else:
+                    df = pd.DataFrame(metadata_list[:50])
+                    
+                st.session_state[metadata_fields_key] = df
+
+            # Render metadata data_editor (natively supports add/remove and scrolling!)
+            edited_metadata = st.data_editor(
+                st.session_state[metadata_fields_key],
+                num_rows="dynamic",
+                column_config={
+                    "Key": st.column_config.TextColumn("Key"),
+                    "Value": st.column_config.TextColumn("Value")
+                },
+                hide_index=True,
+                use_container_width=True,
+                key=f"editor_{i}"
+            )
+            
+            if len(edited_metadata) > 50:
+                st.warning("Warning: Only the first 50 entries will be saved.")
+
             st.metric(
                 "Confidence",
                 f"{doc.get('confidence')}%"
@@ -263,7 +360,7 @@ else:
                 if st.button(
                     "Approve",
                     key=f"a_{i}",
-                    use_container_width=True
+                    width="stretch"
                 ):
 
                     doc[
@@ -285,6 +382,20 @@ else:
                     doc[
                         "document_date"
                     ] = document_date
+
+                    # Collect non-empty metadata
+                    final_metadata = {}
+                    
+                    for _, row in edited_metadata.iterrows():
+                        if pd.notna(row.get("Key")) and pd.notna(row.get("Value")):
+                            k = str(row["Key"]).strip()
+                            v = str(row["Value"]).strip()
+                            if k and v:
+                                final_metadata[k] = v
+                    
+                    # Truncate to 50 items to be safe
+                    final_metadata = dict(list(final_metadata.items())[:50])
+                    doc["metadata"] = json.dumps(final_metadata)
 
                     doc_to_upload = (
                         doc.copy()
@@ -346,7 +457,8 @@ else:
                     st.success(
                         "Document approved and indexed successfully."
                     )
-
+                    
+                    st.session_state.selected_doc_index = None
                     st.rerun()
 
             with b2:
@@ -354,7 +466,7 @@ else:
                 if st.button(
                     "Reject",
                     key=f"r_{i}",
-                    use_container_width=True
+                    width="stretch"
                 ):
 
                     log_document_status(
@@ -386,4 +498,5 @@ else:
                         "Document rejected."
                     )
 
+                    st.session_state.selected_doc_index = None
                     st.rerun()

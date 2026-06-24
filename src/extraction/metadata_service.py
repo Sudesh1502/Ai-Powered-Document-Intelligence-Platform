@@ -32,7 +32,10 @@ def extract_metadata(text):
     try:
 
         #we are trying to retry the meta data extraction whenever server is busy of gemini.
-        response = _generate_content_with_retry(prompt)
+        response = client.models.generate_content(
+                   model="gemini-2.5-pro",
+                   contents=prompt
+                 )   
 
         if not response.text:
             return {
