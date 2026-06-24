@@ -2,9 +2,10 @@ import os
 import base64
 import streamlit as st
 import pandas as pd
+import mammoth
+from streamlit_pdf_viewer import pdf_viewer
 
 from src.search.search_service import search_documents, get_summary
-from src.utils.logger import get_logs
 
 st.set_page_config(
     page_title="Search",
@@ -39,6 +40,46 @@ with header2:
     )
 
 st.markdown("---")
+
+if st.session_state.get("preview_doc"):
+    doc = st.session_state.preview_doc
+    if st.button("← Back to List", key="back_to_search"):
+        st.session_state.preview_doc = None
+        st.rerun()
+        
+    st.markdown(f"### Reviewing: {doc.get('file_name', 'Document')}")
+    st.markdown("---")
+    
+    st.subheader(doc.get("file_name", ""))
+    st.caption("Document Preview")
+
+    file_name = doc.get("file_name", "")
+    if file_name:
+        file_path = os.path.abspath(os.path.join("data", file_name))
+        if os.path.exists(file_path):
+            extension = os.path.splitext(file_path)[1].lower()
+            with st.container(border=True):
+                if extension in [".png", ".jpg", ".jpeg"]:
+                    st.image(file_path, use_container_width=True)
+                elif extension == ".pdf":
+                    try:
+                        pdf_viewer(file_path, width=700, height=800)
+                    except Exception as e:
+                        st.error(f"Failed to preview PDF: {e}")
+                elif extension == ".docx":
+                    try:
+                        with open(file_path, "rb") as docx_file:
+                            result = mammoth.convert_to_html(docx_file)
+                            html = result.value
+                        st.markdown(
+                            f'<div style="height: 800px; overflow-y: auto; padding: 1rem; background: white; color: black; font-family: sans-serif;">{html}</div>', 
+                            unsafe_allow_html=True
+                        )
+                    except Exception as e:
+                        st.error(f"Failed to preview DOCX: {e}")
+        else:
+            st.warning("Original document not found locally.")
+    st.stop()
 
 c1, c2, c3 = st.columns(
     [5, 2, 2]
@@ -145,8 +186,7 @@ if "search_results" in st.session_state:
             
             if cols[3].button("View Document", key=f"view_doc_{i}", use_container_width=True):
                 st.session_state.preview_doc = r
-                st.switch_page("pages/3_Document Viewer.py")
-            st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid rgba(200,200,200,0.3);'/>", unsafe_allow_html=True)
+                st.rerun()
         # 5. Fetch the AI Summary exactly once after the loop finishes
         with summary_placeholder.container():
             # Only generate summary if it hasn't been generated yet for this specific query
@@ -162,50 +202,8 @@ if "search_results" in st.session_state:
             else:
                 summary = st.session_state[summary_cache_key]
                 
-            if summary and "error" not in summary:
+            if isinstance(summary, str):
                 st.markdown("### ✨ AI Synthesis")
                 st.info(summary)
-
-st.markdown("---")
-
-st.subheader(
-    "Recent Processing Logs"
-)
-
-logs = get_logs()
-
-if logs.empty:
-
-    st.info(
-        "No logs available."
-    )
-
-else:
-
-    display = logs.copy()
-
-    keep_cols = []
-
-    for c in [
-        "Timestamp",
-        "File Name",
-        "Status",
-        "Processing Time (s)"
-    ]:
-
-        if c in display.columns:
-
-            keep_cols.append(
-                c
-            )
-
-    display = display[
-        keep_cols
-    ]
-
-    st.dataframe(
-        display.tail(20),
-        width="stretch",
-        hide_index=True,
-        height=350
-    )
+            elif isinstance(summary, dict) and "error" in summary:
+                st.error(f"Summary Error: {summary['error']}")
