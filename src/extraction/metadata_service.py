@@ -19,7 +19,7 @@ client = genai.Client(
 def _generate_content_with_retry(prompt):
     """Helper function to call Gemini API with automatic retries on failure."""
     return client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.1-flash-lite",
         contents=prompt
     )
 
@@ -98,9 +98,5 @@ def extract_metadata(text):
         return metadata
 
     except Exception as e:
-        
-            
         print(f"Gemini API Error: {e}")
-        return {
-            "error": str(e)
-        }
+        return {}

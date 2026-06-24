@@ -3,7 +3,7 @@ def get_review_status(
         metadata
 ):
 
-    if "error" in metadata:
+    if "error" in metadata or not metadata:
         return "Failed"
 
     if confidence >= 90:

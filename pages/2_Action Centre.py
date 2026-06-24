@@ -56,7 +56,8 @@ with header2:
 
 st.markdown("---")
 
-docs = load_review_documents()
+# Reverse so the newest documents appear at the top
+docs = list(reversed(load_review_documents()))
 
 c1, c2, c3 = st.columns(3)
 
@@ -161,26 +162,11 @@ else:
             [3, 2]
         )
 
-        source_file = os.path.join(
+        # Exclusively read from data/ folder
+        file_path = os.path.join(
             "data",
             doc["file_name"]
         )
-
-        processed_file = os.path.join(
-            "app_data",
-            "processed_docs",
-            doc["file_name"]
-        )
-
-        if os.path.exists(
-            processed_file
-        ):
-
-            file_path = processed_file
-
-        else:
-
-            file_path = source_file      
 
         with left:
 
@@ -421,7 +407,7 @@ else:
                     )
 
                     os.makedirs(
-                        "app_data/processed_docs",
+                        "data/",
                         exist_ok=True
                     )
 
@@ -441,14 +427,7 @@ else:
                         st.error(f"Failed to upload to Azure Search: {e}")
                         st.stop()  # Stop the process so it doesn't falsely show success
 
-                    if os.path.exists(
-                        source_file
-                    ):
-
-                        shutil.move(
-                            source_file,
-                            processed_file
-                        )
+                    # (Removed old shutil.move block)
 
                     log_document_status(
                         file_name=doc[
