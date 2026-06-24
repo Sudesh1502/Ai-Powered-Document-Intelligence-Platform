@@ -189,21 +189,15 @@ if "search_results" in st.session_state:
                 st.rerun()
         # 5. Fetch the AI Summary exactly once after the loop finishes
         with summary_placeholder.container():
-            # Only generate summary if it hasn't been generated yet for this specific query
-            summary_cache_key = f"summary_{query}_{semantic}"
-            if summary_cache_key not in st.session_state:
-                with st.spinner("✨ Generating AI Summary..."):
-                    summary = get_summary(
-                        search_results=results, 
-                        user_query=query, 
-                        semantic_search=semantic
-                    )
-                    st.session_state[summary_cache_key] = summary
-            else:
-                summary = st.session_state[summary_cache_key]
-                
+            with st.spinner("Summary..."):
+                summary = get_summary(
+                    search_results=results,
+                    user_query=query,
+                    semantic_search=semantic
+                )
+
             if isinstance(summary, str):
-                st.markdown("### ✨ AI Synthesis")
+                st.markdown("### Summary")
                 st.info(summary)
             elif isinstance(summary, dict) and "error" in summary:
                 st.error(f"Summary Error: {summary['error']}")
