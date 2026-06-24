@@ -8,6 +8,7 @@ from google import genai
 from src.config.config import GEMINI_API_KEY
 from src.utils.get_prompt import get_metadata_extraction_prompt
 from tenacity import retry, stop_after_attempt, wait_exponential
+from src.utils.gemini_cost_calculator import calculate_gemini_cost
 
 
 client = genai.Client(
@@ -33,9 +34,47 @@ def extract_metadata(text):
 
         #we are trying to retry the meta data extraction whenever server is busy of gemini.
         response = client.models.generate_content(
-                   model="gemini-2.5-pro",
+                   model="gemini-3.1-flash-lite",
                    contents=prompt
-                 )   
+                 )
+        
+        print("\n===== GEMINI USAGE =====")
+
+        try:
+
+            usage = response.usage_metadata
+
+            print(usage)
+
+            print(
+                "Prompt Tokens:",
+                usage.prompt_token_count
+            )
+
+            print(
+                "Output Tokens:",
+                usage.candidates_token_count
+            )
+
+            print(
+                "Total Tokens:",
+                usage.total_token_count
+            )
+            calculate_gemini_cost(
+            prompt_tokens=usage.prompt_token_count,
+            output_tokens=usage.candidates_token_count,
+            input_cost_per_million=0.25,   # set accordingly
+            output_cost_per_million=1.50   # set accordingly as per latest pricing
+        )
+
+        except Exception as e:
+
+            print(
+                "Usage metadata unavailable:",
+                e
+            )
+
+        print("========================\n")   
 
         if not response.text:
             return {
