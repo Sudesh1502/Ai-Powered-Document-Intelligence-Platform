@@ -412,7 +412,11 @@ else:
         keep_cols
     ]
 
-    display = display.tail(10)
+    # Sort by Timestamp descending so newest is at the top
+    if "Timestamp" in display.columns:
+        display = display.sort_values(by="Timestamp", ascending=False)
+
+    display = display.head(20)
 
     selected_file = st.selectbox(
         "Open Document",

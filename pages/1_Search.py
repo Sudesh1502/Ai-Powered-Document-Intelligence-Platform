@@ -1,8 +1,9 @@
 import os
+import base64
 import streamlit as st
 import pandas as pd
 
-from src.search.search_service import search_documents
+from src.search.search_service import search_documents, get_summary
 from src.utils.logger import get_logs
 
 st.set_page_config(
@@ -10,7 +11,6 @@ st.set_page_config(
     page_icon="🔍",
     layout="wide"
 )
-
 header1, header2 = st.columns(
     [1, 8]
 )
@@ -84,202 +84,87 @@ if st.button(
             "Searching documents..."
         ):
 
-            results = search_documents(
+            st.session_state.search_results = search_documents(
                 query=query,
                 use_semantic_ranker=semantic,
                 top=top
             )
+            st.session_state.search_query = query
+            st.session_state.search_semantic = semantic
 
-        if isinstance(
-            results,
-            dict
-        ):
+if "search_results" in st.session_state:
 
-            st.error(
-                results.get(
-                    "error",
-                    "Search failed."
-                )
+    results = st.session_state.search_results
+    query = st.session_state.search_query
+    semantic = st.session_state.search_semantic
+
+    if isinstance(
+        results,
+        dict
+    ):
+
+        st.error(
+            results.get(
+                "error",
+                "Search failed."
             )
+        )
 
-        elif len(results) == 0:
+    elif len(results) == 0:
 
-            st.warning(
-                "No documents found."
-            )
+        st.warning(
+            "No documents found."
+        )
 
-        else:
+    else:
 
-            st.success(
-                f"{len(results)} document(s) found."
-            )
-
-            st.markdown("---")
+        summary_placeholder = st.empty()
+                
+        st.markdown("### Search Results")
+        
+        # 1. Inject CSS to tighten up the vertical spacing (just like Action Centre)
+        st.markdown("""
+            <style>
+            [data-testid="column"] { padding-bottom: 0rem !important; padding-top: 0rem !important; }
+            </style>
+        """, unsafe_allow_html=True)
+        # 2. Draw the Master List Header
+        hcols = st.columns([4, 3, 2, 2])
+        hcols[0].markdown("**File Name**")
+        hcols[1].markdown("**Entity Name**")
+        hcols[2].markdown("**Date**")
+        hcols[3].markdown("**Action**")
+        st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid rgba(200,200,200,0.3);'/>", unsafe_allow_html=True)
+        # 3. Loop through results and draw the rows
+        for i, r in enumerate(results, start=1):
+            cols = st.columns([4, 3, 2, 2], gap="small")
             
-            if isinstance(results, list):
-
-                if not results:
-                    st.info("No documents found.")
-
-                else:
-                    for i, r in enumerate(results, start=1):
-                        ...
+            cols[0].write(r.get('file_name', 'N/A'))
+            cols[1].write(r.get('entity_name', 'N/A'))
+            cols[2].write(str(r.get('document_date', 'N/A')))
+            
+            if cols[3].button("View Document", key=f"view_doc_{i}", use_container_width=True):
+                st.session_state.preview_doc = r
+                st.switch_page("pages/3_Document Viewer.py")
+            st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid rgba(200,200,200,0.3);'/>", unsafe_allow_html=True)
+        # 5. Fetch the AI Summary exactly once after the loop finishes
+        with summary_placeholder.container():
+            # Only generate summary if it hasn't been generated yet for this specific query
+            summary_cache_key = f"summary_{query}_{semantic}"
+            if summary_cache_key not in st.session_state:
+                with st.spinner("✨ Generating AI Summary..."):
+                    summary = get_summary(
+                        search_results=results, 
+                        user_query=query, 
+                        semantic_search=semantic
+                    )
+                    st.session_state[summary_cache_key] = summary
             else:
-                st.error(results)
-
-            for i, r in enumerate(
-                results,
-                start=1
-            ):
-
-                with st.container():
-
-                    st.markdown(
-                        f"### Result {i}"
-                    )
-
-                    st.markdown(
-                        f"**File Name:** "
-                        f"{r.get('file_name', 'N/A')}"
-                    )
-
-                    c1, c2, c3 = st.columns(
-                        3
-                    )
-
-                    with c1:
-
-                        st.metric(
-                            "Document Type",
-                            r.get(
-                                "document_type",
-                                "N/A"
-                            )
-                        )
-
-                        st.metric(
-                            "Document Number",
-                            r.get(
-                                "document_number",
-                                "N/A"
-                            )
-                        )
-
-                    with c2:
-
-                        st.metric(
-                            "Entity",
-                            r.get(
-                                "entity_name",
-                                "N/A"
-                            )
-                        )
-
-                        st.metric(
-                            "Date",
-                            str(
-                                r.get(
-                                    "document_date",
-                                    "N/A"
-                                )
-                            )
-                        )
-
-                    with c3:
-
-                        st.metric(
-                            "Search Score",
-                            round(
-                                r.get(
-                                    "score",
-                                    0
-                                ),
-                                3
-                            )
-                        )
-
-                        st.metric(
-                            "Title",
-                            r.get(
-                                "document_title",
-                                "N/A"
-                            )
-                        )
-
-                    captions = r.get(
-                        "semantic_captions",
-                        []
-                    )
-
-                    if captions:
-
-                        st.markdown(
-                            "##### Semantic Summary"
-                        )
-
-                        st.info(
-                            "\n".join(
-                                captions
-                            )
-                        )
-
-                    sharepoint_url = r.get(
-                        "sharepoint_url",
-                        ""
-                    )
-
-                    if sharepoint_url:
-
-                        st.link_button(
-                            "Open Document",
-                            sharepoint_url,
-                            use_container_width=True
-                        )
-
-                    st.markdown(
-                        "---"
-                    )
+                summary = st.session_state[summary_cache_key]
+                
+            if summary and "error" not in summary:
+                st.markdown("### ✨ AI Synthesis")
+                st.info(summary)
 
 st.markdown("---")
 
-st.subheader(
-    "Recent Processing Logs"
-)
-
-logs = get_logs()
-
-if logs.empty:
-
-    st.info(
-        "No logs available."
-    )
-
-else:
-
-    display = logs.copy()
-
-    keep_cols = []
-
-    for c in [
-        "Timestamp",
-        "File Name",
-        "Status",
-        "Processing Time (s)"
-    ]:
-
-        if c in display.columns:
-
-            keep_cols.append(
-                c
-            )
-
-    display = display[
-        keep_cols
-    ]
-
-    st.dataframe(
-        display.tail(20),
-        use_container_width=True,
-        hide_index=True,
-        height=350
-    )
