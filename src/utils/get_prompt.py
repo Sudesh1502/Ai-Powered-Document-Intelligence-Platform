@@ -1,3 +1,9 @@
+from src.validation.document_validation_fields import (
+    ACORD_1_CRITICAL_FIELDS,
+    ACORD_24_CRITICAL_FIELDS,
+    ACORD_36_CRITICAL_FIELDS,
+    CLAIM_CLOSURE_CRITICAL_FIELDS
+)
 
 def get_metadata_extraction_prompt(text: str) -> str:
     return f"""
@@ -21,16 +27,17 @@ Schema:
 Field Definitions:
 
 document_type:
-- invoice
-- claim
-- contract
-- report
-- receipt
-- application
-- policy
-- notice
-- correspondence
-- other
+- MUST be exactly one of the following values:
+  - incident image
+  - claim closure report
+  - acord form
+  - aadhar
+  - pan
+  - invoice
+  - claim settlement
+  - claim
+  - other
+- If the document does not explicitly match one of the specific types above, you MUST return "other".
 
 document_title:
 - the title or heading of the document
@@ -49,14 +56,13 @@ document_number:
   - reference number
 
 entity_name:
-- primary business entity associated with the document
+- MUST be the primary individual or customer the document is about (e.g., the Insured Person, Claimant, or Customer).
+- NEVER use the name of the Insurance Company, Carrier, Agency, or Broker as the entity_name.
 - examples:
   - customer
   - insured person
-  - vendor
   - claimant
-  - company
-  - organization
+  - patient
 
 
 
@@ -77,6 +83,13 @@ metadata:
       "contact_name": ""
   }}
 
+Conditional Metadata Requirements:
+Depending on the document, you MUST include the following exact keys inside the 'metadata' JSON object. If the information is not found in the text, assign the value as "N/A".
+- If document_type is "acord form" and title is "Property Loss Notice", you MUST extract exactly these keys: {list(ACORD_1_CRITICAL_FIELDS)}
+- If document_type is "acord form" and title is "Certification of property insurance", you MUST extract exactly these keys: {list(ACORD_24_CRITICAL_FIELDS)}
+- If document_type is "acord form" and title is "Agent/Broker of Record Change", you MUST extract exactly these keys: {list(ACORD_36_CRITICAL_FIELDS)}
+- If document_type is "claim closure report", you MUST extract exactly these keys: {list(CLAIM_CLOSURE_CRITICAL_FIELDS)}
+
 Rules:
 
 - Fix obvious OCR mistakes when possible.
@@ -90,7 +103,7 @@ Rules:
 - Ignore copyright notices.
 - Ignore instructions and boilerplate text.
 - Do not hallucinate values.
-- If a field is not present, return null.
+- If ANY critical field or metadata value is missing or not explicitly found in the document text, you MUST assign it as "N/A" or null. Do not leave it blank.
 - Return ONLY valid JSON.
 - Do not wrap the response in markdown.
 - Do not include explanations.

@@ -4,7 +4,6 @@ ACORD_1_CRITICAL_FIELDS = {
     "carrier_name",
     "policy_number",
     "date_of_loss",
-    "time_of_loss",
     "property_location",
     "location_of_loss",
     "loss_type",
@@ -35,4 +34,15 @@ ACORD_36_CRITICAL_FIELDS = {
     "line_of_business",
     "insured_signature",
     "signature_date"
+}
+
+CLAIM_CLOSURE_CRITICAL_FIELDS = {
+    "document_type",
+    "claim_number",
+    "policy_number",
+    "insured_name",
+    "date_of_loss",
+    "date_of_closure",
+    "settlement_amount",
+    "claim_status"
 }

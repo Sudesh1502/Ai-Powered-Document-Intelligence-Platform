@@ -200,5 +200,117 @@
         "confidence": 97.69,
         "metadata": "{}",
         "sharepoint_url": ""
+    },
+    {
+        "document_type": "acord form",
+        "document_title": "Property Loss Notice",
+        "document_number": "N/A",
+        "entity_name": "Michael Anderson",
+        "document_date": "2026-06-03",
+        "metadata": {
+            "date_of_loss": "N/A",
+            "carrier_name": "Travelers Property Casualty",
+            "property_location": "4517 Maple Ridge Dr, Chicago, IL 60614",
+            "reported_by": "Michael Anderson",
+            "loss_description": "Kitchen fire caused by electrical short circuit. Fire spread to dining area causing structural and smoke damage.",
+            "policy_number": "N/A",
+            "location_of_loss": "4517 Maple Ridge Dr, Chicago, IL 60614",
+            "insured_name": "Michael Anderson",
+            "document_type": "acord form",
+            "loss_type": "FIRE"
+        },
+        "file_name": "date(loss)&p.number-test.pdf",
+        "review_reason": "Missing critical ACORD fields: date_of_loss, policy_number",
+        "status": "Needs Review"
+    },
+    {
+        "document_type": "acord form",
+        "document_title": "Property Loss Notice",
+        "document_number": "N/A",
+        "entity_name": "Michael Anderson",
+        "document_date": "2026-06-03",
+        "metadata": {
+            "date_of_loss": "N/A",
+            "carrier_name": "Travelers Property Casualty",
+            "property_location": "4517 Maple Ridge Dr, Chicago, IL 60614",
+            "reported_by": "Michael Anderson",
+            "loss_description": "Kitchen fire caused by electrical short circuit. Fire spread to dining area causing structural and smoke damage.",
+            "policy_number": "N/A",
+            "location_of_loss": "4517 Maple Ridge Dr, Chicago, IL 60614",
+            "insured_name": "Michael Anderson",
+            "document_type": "acord form",
+            "loss_type": "FIRE"
+        },
+        "file_name": "date(loss)&p.number-test.pdf",
+        "review_reason": "Missing critical ACORD fields: date_of_loss, policy_number",
+        "status": "Needs Review"
+    },
+    {
+        "document_type": "acord form",
+        "document_title": "Certification of property insurance",
+        "document_number": "SAS-8172654-01",
+        "entity_name": "Oakridge Retail Partners, LP",
+        "document_date": null,
+        "metadata": {
+            "producer": "N/A",
+            "policy_effective_date": "2025-07-01",
+            "policy_expiration_date": "2026-07-01",
+            "company_name": "N/A",
+            "certificate_holder": "JPMorgan Chase Bank, N.A. ISAOA ATIMA Attn: Collateral Administration 383 Madison Avenue, 6th Floor New York, NY 10179",
+            "certificate_date": "N/A",
+            "authorized_representative": "Kevin M. Douglas",
+            "policy_number": "SAS-8172654-01",
+            "insured_name": "Oakridge Retail Partners, LP",
+            "document_type": "acord form",
+            "insurance_type": "Property"
+        },
+        "file_name": "ACCORD-24-Removed.pdf",
+        "review_reason": "Missing critical ACORD fields: producer, company_name, certificate_date",
+        "status": "Needs Review"
+    },
+    {
+        "document_type": "acord form",
+        "document_title": "Agent/Broker of Record Change",
+        "document_number": "ACORD 36",
+        "entity_name": "Greenfield Construction LLC",
+        "document_date": "2025-06-10",
+        "metadata": {
+            "named_insured": "Greenfield Construction LLC",
+            "insurance_company_name": "Travelers Property Casualty Company of America",
+            "line_of_business": "Property, General Liability, Business Auto, Workers' Comp, Cyber Liability",
+            "effective_date": "2026-06-10",
+            "signature_date": "N/A",
+            "new_agency": "Harbor Risk Solutions, LLC",
+            "document_type": "acord form",
+            "insured_signature": "Michelle D. Peterson"
+        },
+        "file_name": "ACCORD36-info-removed.pdf",
+        "review_reason": "Missing critical ACORD fields: signature_date",
+        "status": "Needs Review"
+    },
+    {
+        "document_type": "claim closure report",
+        "document_title": "CLAIM CLOSURE REPORT",
+        "document_number": "N/A",
+        "entity_name": "Rahul Sharma",
+        "document_date": null,
+        "metadata": {
+            "policy_number": "N/A",
+            "date_of_loss": "N/A",
+            "claim_number": "N/A",
+            "settlement_amount": "N/A",
+            "document_type": "claim closure report",
+            "claim_status": "CLOSED — SETTLED",
+            "date_of_closure": "N/A",
+            "insured_name": "Rahul Sharma",
+            "peril": "Water Leakage",
+            "claim_registered_on": "2026-05-06",
+            "survey_completed_on": "2026-05-08",
+            "payment_released_on": "2026-05-16",
+            "closed_by": "Claims Team"
+        },
+        "file_name": "incomplete claim closure report.docx",
+        "review_reason": "Missing critical ACORD fields: policy_number, date_of_loss, claim_number, settlement_amount, date_of_closure",
+        "status": "Needs Review"
     }
 ]

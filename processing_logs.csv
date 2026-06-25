@@ -16,3 +16,16 @@ Message: The request is invalid. Details: The property 'amount' does not exist o
 2026-06-23 16:03:43,CLAIM CLOSURE REPORT.docx.docx,data\CLAIM CLOSURE REPORT.docx.docx,Failed,Waiting for manual review,0,2026-06-23 16:03:34,2026-06-23 16:03:43,9.59
 2026-06-23 16:06:38,Claim MCD.pdf,data\Claim MCD.pdf,Failed,Waiting for manual review,0,2026-06-23 16:06:32,2026-06-23 16:06:38,5.47
 2026-06-23 16:08:16,test_document_processing.png,data\test_document_processing.png,Failed,Waiting for manual review,0,2026-06-23 16:07:55,2026-06-23 16:08:16,20.78
+2026-06-25 15:11:26,date(loss)&p.number-test.pdf,data\date(loss)&p.number-test.pdf,Completed,Indexed Automatically,0,2026-06-25 15:11:14,2026-06-25 15:11:26,11.95
+2026-06-25 15:54:07,date(loss)&p.number-test.pdf,data\date(loss)&p.number-test.pdf,Completed,Indexed Automatically,0,2026-06-25 15:53:53,2026-06-25 15:54:07,14.07
+2026-06-25 16:11:10,date(loss)&p.number-test.pdf,data\date(loss)&p.number-test.pdf,Needs Review,"Validation failed. Missing fields: date_of_loss, policy_number",2,2026-06-25 16:11:00,2026-06-25 16:11:10,10.28
+2026-06-25 16:11:50,filled accord form three (1).pdf,data\filled accord form three (1).pdf,Completed,Indexed Automatically,0,2026-06-25 16:11:40,2026-06-25 16:11:50,9.76
+2026-06-25 16:21:55,ACCORD-24-Removed.pdf,data\ACCORD-24-Removed.pdf,Needs Review,"Validation failed. Missing fields: producer, company_name, certificate_date",1,2026-06-25 16:21:43,2026-06-25 16:21:55,11.41
+2026-06-25 16:22:30,ACCORD-24-Original.pdf,data\ACCORD-24-Original.pdf,Completed,Indexed Automatically,0,2026-06-25 16:22:18,2026-06-25 16:22:30,12.09
+2026-06-25 16:22:59,ACCORD36-info-removed.pdf,data\ACCORD36-info-removed.pdf,Needs Review,Validation failed. Missing fields: signature_date,1,2026-06-25 16:22:49,2026-06-25 16:22:59,9.34
+2026-06-25 16:24:08,ACCORD36-Original.pdf,data\ACCORD36-Original.pdf,Completed,Indexed Automatically,0,2026-06-25 16:23:57,2026-06-25 16:24:08,11.1
+2026-06-25 16:45:01,incomplete claim closure report.docx,data\incomplete claim closure report.docx,Completed,Indexed Automatically,0,2026-06-25 16:44:51,2026-06-25 16:45:01,10.32
+2026-06-25 16:46:16,incomplete claim closure report.docx,data\incomplete claim closure report.docx,Completed,Indexed Automatically,0,2026-06-25 16:46:04,2026-06-25 16:46:16,11.68
+2026-06-25 16:51:15,incomplete claim closure report.docx,data\incomplete claim closure report.docx,Completed,Indexed Automatically,0,2026-06-25 16:51:06,2026-06-25 16:51:15,9.19
+2026-06-25 17:00:00,incomplete claim closure report.docx,data\incomplete claim closure report.docx,Needs Review,"Validation failed. Missing fields: policy_number, date_of_loss, claim_number, settlement_amount, date_of_closure",1,2026-06-25 16:59:51,2026-06-25 17:00:00,9.72
+2026-06-25 17:00:32,CLAIM CLOSURE REPORT.docx (1).docx,data\CLAIM CLOSURE REPORT.docx (1).docx,Completed,Indexed Automatically,0,2026-06-25 17:00:23,2026-06-25 17:00:32,8.7

@@ -13,6 +13,8 @@ from src.indexing.upload_document_service import upload_documents
 from src.utils.logger import log_document_status
 import json
 from datetime import datetime
+from src.validation.validation_engine import validate_document_orchestrator
+from src.utils.review_storage import add_review_document
 
 BASE_DIR = Path(__file__).resolve().parent
 RAW_DATA_DIR = BASE_DIR / "data"
@@ -38,9 +40,37 @@ for doc in documents[:1]:
         word_count = len(result.content.split()) if result.content else 0
         confidence = calculate_confidence(result)
         metadata = extract_metadata(result.content)
-        
         if "error" in metadata:
             raise Exception(f"Metadata extraction failed: {metadata['error']}")
+        #validating the data before indexing
+        missing_fields = validate_document_orchestrator(metadata)
+
+        #if it misses ANY critical fields, route it to Action Centre
+        if len(missing_fields) > 0:
+            print(f"Validation failed for {file_name}. Missing fields: {missing_fields}")
+            
+            # Add exactly what went wrong to the metadata so the user can see it in Action Centre
+            metadata["file_name"] = file_name
+            metadata["review_reason"] = f"Missing critical ACORD fields: {', '.join(missing_fields)}"
+            metadata["status"] = "Needs Review"
+            
+            # Save it to the Action Centre queue
+            add_review_document(metadata)
+            
+            # Log the failure
+            log_document_status(
+                file_name=file_name,
+                url=url,
+                status="Needs Review",
+                note=f"Validation failed. Missing fields: {', '.join(missing_fields)}",
+                start_time=start_time,
+                end_time=datetime.now(),
+                word_count=word_count
+            )
+            
+            # IMPORTANT: Use 'continue' or 'return' here to skip the Azure Search upload!
+            continue
+        
         
         raw_date = str(metadata.get("document_date", ""))
         formatted_date = None
