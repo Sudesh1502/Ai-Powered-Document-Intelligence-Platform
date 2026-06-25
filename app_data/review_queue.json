@@ -312,5 +312,25 @@
         "file_name": "incomplete claim closure report.docx",
         "review_reason": "Missing critical ACORD fields: policy_number, date_of_loss, claim_number, settlement_amount, date_of_closure",
         "status": "Needs Review"
+    },
+    {
+        "document_type": "claim closure report",
+        "document_title": "CLAIM CLOSURE REPORT",
+        "document_number": "N/A",
+        "entity_name": "Rahul Sharma",
+        "document_date": "2026-05-16",
+        "metadata": {
+            "date_of_loss": "N/A",
+            "document_type": "claim closure report",
+            "policy_number": "N/A",
+            "claim_number": "N/A",
+            "claim_status": "CLOSED — SETTLED",
+            "settlement_amount": "N/A",
+            "date_of_closure": "N/A",
+            "insured_name": "Rahul Sharma"
+        },
+        "file_name": "incomplete claim closure report.docx",
+        "review_reason": "Missing critical ACORD fields: date_of_loss, policy_number, claim_number, settlement_amount, date_of_closure",
+        "status": "Needs Review"
     }
 ]
