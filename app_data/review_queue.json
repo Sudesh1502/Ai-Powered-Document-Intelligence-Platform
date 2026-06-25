@@ -221,7 +221,8 @@
         },
         "file_name": "date(loss)&p.number-test.pdf",
         "review_reason": "Missing critical ACORD fields: date_of_loss, policy_number",
-        "status": "Needs Review"
+        "status": "Needs Review",
+        "id": "date(loss)&p.number-test.pdf"
     },
     {
         "document_type": "acord form",
@@ -243,7 +244,8 @@
         },
         "file_name": "date(loss)&p.number-test.pdf",
         "review_reason": "Missing critical ACORD fields: date_of_loss, policy_number",
-        "status": "Needs Review"
+        "status": "Needs Review",
+        "id": "date(loss)&p.number-test.pdf"
     },
     {
         "document_type": "acord form",
@@ -266,7 +268,8 @@
         },
         "file_name": "ACCORD-24-Removed.pdf",
         "review_reason": "Missing critical ACORD fields: producer, company_name, certificate_date",
-        "status": "Needs Review"
+        "status": "Needs Review",
+        "id": "ACCORD-24-Removed.pdf"
     },
     {
         "document_type": "acord form",
@@ -286,31 +289,7 @@
         },
         "file_name": "ACCORD36-info-removed.pdf",
         "review_reason": "Missing critical ACORD fields: signature_date",
-        "status": "Needs Review"
-    },
-    {
-        "document_type": "claim closure report",
-        "document_title": "CLAIM CLOSURE REPORT",
-        "document_number": "N/A",
-        "entity_name": "Rahul Sharma",
-        "document_date": null,
-        "metadata": {
-            "policy_number": "N/A",
-            "date_of_loss": "N/A",
-            "claim_number": "N/A",
-            "settlement_amount": "N/A",
-            "document_type": "claim closure report",
-            "claim_status": "CLOSED — SETTLED",
-            "date_of_closure": "N/A",
-            "insured_name": "Rahul Sharma",
-            "peril": "Water Leakage",
-            "claim_registered_on": "2026-05-06",
-            "survey_completed_on": "2026-05-08",
-            "payment_released_on": "2026-05-16",
-            "closed_by": "Claims Team"
-        },
-        "file_name": "incomplete claim closure report.docx",
-        "review_reason": "Missing critical ACORD fields: policy_number, date_of_loss, claim_number, settlement_amount, date_of_closure",
-        "status": "Needs Review"
+        "status": "Needs Review",
+        "id": "ACCORD36-info-removed.pdf"
     }
 ]
