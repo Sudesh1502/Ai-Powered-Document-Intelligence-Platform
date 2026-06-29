@@ -153,7 +153,7 @@ if uploaded_file:
                 result = extract_text(
                     file_path
                 )
-
+                word_count = len(result.content.split()) if result.content else 0
             confidence = round(
                 calculate_confidence(
                     result
@@ -234,7 +234,7 @@ if uploaded_file:
                     note=f"Validation failed. {reason_str}",
                     start_time=start_time,
                     end_time=datetime.now(),
-                    word_count=page_count
+                    word_count=0,
                 )
                 
                 # 5. Stop the Streamlit script so it doesn't get indexed
@@ -321,7 +321,8 @@ if uploaded_file:
                 text=text,
                 page_count=page_count,
                 confidence=confidence,
-                review_status=review_status
+                review_status=review_status,
+                word_count=word_count
             )
 
             with st.expander(
@@ -391,7 +392,8 @@ if uploaded_file:
                 status=status,
                 note=note,
                 start_time=start_time,
-                end_time=end_time
+                end_time=end_time,
+                word_count=word_count
             )
 
             st.info(
@@ -409,7 +411,8 @@ if uploaded_file:
                 status="Failed",
                 note=str(e),
                 start_time=start_time,
-                end_time=end_time
+                end_time=end_time,
+                word_count=word_count
             )
 
             st.error(

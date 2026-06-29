@@ -28,7 +28,7 @@ if not documents:
 print("\nprocessing documents for extraction")
 print(f"\nTotal {len(documents)} found.")
 
-for doc in documents[:1]:
+for doc in documents[:2]:
     file_name = Path(doc).name
     url = str(Path(doc).resolve())
     

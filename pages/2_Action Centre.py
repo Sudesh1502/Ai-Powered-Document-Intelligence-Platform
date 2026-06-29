@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import datetime
 import streamlit as st
 from datetime import datetime
 import shutil
@@ -266,14 +267,20 @@ else:
                 key=f"entity_{i}"
             )
 
-            document_date = st.text_input(
+            default_date = None
+
+            try:
+                if doc.get("document_date"):
+                    default_date = datetime.strptime(
+                        str(doc["document_date"]),
+                        "%d %B %Y"
+                    ).date()
+            except:
+                pass
+
+            document_date = st.date_input(
                 "Document Date",
-                value=str(
-                    doc.get(
-                        "document_date",
-                        ""
-                    )
-                ),
+                value=default_date,
                 key=f"date_{i}"
             )
 
