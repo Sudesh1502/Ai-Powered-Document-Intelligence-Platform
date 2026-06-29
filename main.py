@@ -43,15 +43,24 @@ for doc in documents[:1]:
         if "error" in metadata:
             raise Exception(f"Metadata extraction failed: {metadata['error']}")
         #validating the data before indexing
-        missing_fields = validate_document_orchestrator(metadata)
+        validation_results = validate_document_orchestrator(metadata)
+        missing_fields = validation_results["missing"]
+        invalid_fields = validation_results["invalid"]
 
-        #if it misses ANY critical fields, route it to Action Centre
-        if len(missing_fields) > 0:
-            print(f"Validation failed for {file_name}. Missing fields: {missing_fields}")
+        # if it misses ANY critical fields or has invalid formats, route it to Action Centre
+        if len(missing_fields) > 0 or len(invalid_fields) > 0:
+            reasons = []
+            if missing_fields:
+                reasons.append(f"Missing: {', '.join(missing_fields)}")
+            if invalid_fields:
+                reasons.append(f"Invalid Format: {', '.join(invalid_fields)}")
+            reason_str = " | ".join(reasons)
+            
+            print(f"Validation failed for {file_name}. {reason_str}")
             
             # Add exactly what went wrong to the metadata so the user can see it in Action Centre
             metadata["file_name"] = file_name
-            metadata["review_reason"] = f"Missing critical ACORD fields: {', '.join(missing_fields)}"
+            metadata["review_reason"] = f"Validation Failed - {reason_str}"
             metadata["status"] = "Needs Review"
             
             # Save it to the Action Centre queue
@@ -62,7 +71,7 @@ for doc in documents[:1]:
                 file_name=file_name,
                 url=url,
                 status="Needs Review",
-                note=f"Validation failed. Missing fields: {', '.join(missing_fields)}",
+                note=f"Validation failed. {reason_str}",
                 start_time=start_time,
                 end_time=datetime.now(),
                 word_count=word_count

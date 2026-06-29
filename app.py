@@ -205,23 +205,33 @@ if uploaded_file:
             )
 
 
-            missing_fields = validate_document_orchestrator(metadata)
-            if len(missing_fields) > 0:
+            validation_results = validate_document_orchestrator(metadata)
+            missing_fields = validation_results["missing"]
+            invalid_fields = validation_results["invalid"]
+            
+            if len(missing_fields) > 0 or len(invalid_fields) > 0:
+                reasons = []
+                if missing_fields:
+                    reasons.append(f"Missing: {', '.join(missing_fields)}")
+                if invalid_fields:
+                    reasons.append(f"Invalid Format: {', '.join(invalid_fields)}")
+                reason_str = " | ".join(reasons)
+                
                 # 3. Give the user INSTANT visual feedback on the screen!
-                st.error(f"**Validation Failed!** Missing required fields: {', '.join(missing_fields)}")
+                st.error(f"**Validation Failed!** {reason_str}")
                 st.warning("This document has been routed to the Action Centre for manual review.")
                 # 4. Save it to the queue
                 metadata["file_name"] = uploaded_file.name
-                metadata["review_reason"] = f"Missing critical ACORD fields: {', '.join(missing_fields)}"
+                metadata["review_reason"] = f"Validation Failed - {reason_str}"
                 metadata["status"] = "Needs Review"
                 add_review_document(metadata)
                 
                 # Log the failure so it appears in metrics
                 log_document_status(
                     file_name=uploaded_file.name,
-                    url=file_path,
+                    url="Streamlit Upload",
                     status="Needs Review",
-                    note=f"Validation failed. Missing fields: {', '.join(missing_fields)}",
+                    note=f"Validation failed. {reason_str}",
                     start_time=start_time,
                     end_time=datetime.now(),
                     word_count=page_count

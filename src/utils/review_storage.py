@@ -81,7 +81,7 @@ def add_review_document(
 
 
 def remove_review_document(
-    document_id
+    document_id_or_name
 ):
 
     documents = (
@@ -89,15 +89,9 @@ def remove_review_document(
     )
 
     documents = [
-
         d
-
         for d in documents
-
-        if d.get(
-            "id"
-        )
-        != document_id
+        if d.get("id") != document_id_or_name and d.get("file_name") != document_id_or_name
     ]
 
     save_review_documents(
