@@ -46,3 +46,49 @@ CLAIM_CLOSURE_CRITICAL_FIELDS = {
     "settlement_amount",
     "claim_status"
 }
+
+MAJOR_CLAIM_CRITICAL_FIELDS = {
+    "document_type",
+    "policy_ref_umr",
+    "claim_ref_ucr",
+    "policy_insured",
+    "claimant_name",
+    "loss_date_from",
+    "incurred_amount_100",
+    "paid_amount_100"
+}
+
+AADHAAR_CRITICAL_FIELDS = {
+    "document_type",
+    "aadhaar_number",
+    "name",
+    "dob",
+    "gender",
+    "address"
+}
+
+CLAIM_SETTLEMENT_CRITICAL_FIELDS = {
+    "document_type",
+    "claim_number",
+    "policy_number",
+    "insured_name",
+    "letter_date",
+    "approved_claim_amount",
+    "net_settlement_amount"
+}
+
+INCIDENT_IMAGE_CRITICAL_FIELDS = {
+    "document_type",
+    "damage_description",
+    "damage_severity"
+}
+
+INVOICE_CRITICAL_FIELDS = {
+    "document_type",
+    "invoice_number",
+    "vendor_name",
+    "invoice_date",
+    "customer_name",
+    "po_number",
+    "total_due"
+}

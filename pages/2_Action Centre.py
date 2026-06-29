@@ -451,7 +451,7 @@ else:
                     )
 
                     remove_review_document(
-                        doc["id"]
+                        doc.get("id", doc.get("file_name"))
                     )
 
                     st.success(
@@ -491,7 +491,7 @@ else:
                     )
 
                     remove_review_document(
-                        doc["id"]
+                        doc.get("id", doc.get("file_name"))
                     )
 
                     st.warning(

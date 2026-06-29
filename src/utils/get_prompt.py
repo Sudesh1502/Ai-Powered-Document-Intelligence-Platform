@@ -2,7 +2,12 @@ from src.validation.document_validation_fields import (
     ACORD_1_CRITICAL_FIELDS,
     ACORD_24_CRITICAL_FIELDS,
     ACORD_36_CRITICAL_FIELDS,
-    CLAIM_CLOSURE_CRITICAL_FIELDS
+    CLAIM_CLOSURE_CRITICAL_FIELDS,
+    MAJOR_CLAIM_CRITICAL_FIELDS,
+    AADHAAR_CRITICAL_FIELDS,
+    CLAIM_SETTLEMENT_CRITICAL_FIELDS,
+    INCIDENT_IMAGE_CRITICAL_FIELDS,
+    INVOICE_CRITICAL_FIELDS
 )
 
 def get_metadata_extraction_prompt(text: str) -> str:
@@ -28,14 +33,13 @@ Field Definitions:
 
 document_type:
 - MUST be exactly one of the following values:
-  - incident image
-  - claim closure report
   - acord form
+  - claim closure report
+  - major claim
   - aadhar
-  - pan
-  - invoice
   - claim settlement
-  - claim
+  - incident image
+  - invoice
   - other
 - If the document does not explicitly match one of the specific types above, you MUST return "other".
 
@@ -54,6 +58,12 @@ document_number:
   - policy number
   - contract number
   - reference number
+
+aadhaar_number:
+- The 12-digit unique Aadhaar identity number (e.g., 4587 2468 1357)
+
+dob:
+- Date of Birth (e.g., 15/07/1990 or 1990-07-15)
 
 entity_name:
 - MUST be the primary individual or customer the document is about (e.g., the Insured Person, Claimant, or Customer).
@@ -89,6 +99,11 @@ Depending on the document, you MUST include the following exact keys inside the 
 - If document_type is "acord form" and title is "Certification of property insurance", you MUST extract exactly these keys: {list(ACORD_24_CRITICAL_FIELDS)}
 - If document_type is "acord form" and title is "Agent/Broker of Record Change", you MUST extract exactly these keys: {list(ACORD_36_CRITICAL_FIELDS)}
 - If document_type is "claim closure report", you MUST extract exactly these keys: {list(CLAIM_CLOSURE_CRITICAL_FIELDS)}
+- If document_type is "claim settlement", you MUST extract exactly these keys: {list(CLAIM_SETTLEMENT_CRITICAL_FIELDS)}
+- If document_type is "aadhar", you MUST extract exactly these keys: {list(AADHAAR_CRITICAL_FIELDS)}
+- If the document is a Major Claim Document, you MUST extract exactly these keys: {list(MAJOR_CLAIM_CRITICAL_FIELDS)}
+- If document_type is "incident image", you MUST generate and extract exactly these keys based on your visual analysis of the damage: {list(INCIDENT_IMAGE_CRITICAL_FIELDS)}
+- If document_type is "invoice", you MUST extract exactly these keys: {list(INVOICE_CRITICAL_FIELDS)}
 
 Rules:
 
@@ -103,6 +118,7 @@ Rules:
 - Ignore copyright notices.
 - Ignore instructions and boilerplate text.
 - Do not hallucinate values.
+- If the document contains multiple languages (e.g., Aadhaar cards with Hindi and English), you MUST extract the English version of the names and text.
 - If ANY critical field or metadata value is missing or not explicitly found in the document text, you MUST assign it as "N/A" or null. Do not leave it blank.
 - Return ONLY valid JSON.
 - Do not wrap the response in markdown.

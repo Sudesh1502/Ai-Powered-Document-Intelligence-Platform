@@ -291,5 +291,184 @@
         "review_reason": "Missing critical ACORD fields: signature_date",
         "status": "Needs Review",
         "id": "ACCORD36-info-removed.pdf"
+    },
+    {
+        "document_type": "aadhar",
+        "document_title": "AADHAAR",
+        "document_number": "N/A",
+        "entity_name": "सचिन कुमार",
+        "document_date": null,
+        "metadata": {
+            "name": "सचिन कुमार",
+            "document_type": "aadhar",
+            "aadhaar_number": "N/A",
+            "address": "S/O: Mahesh Kumar 123, Shanti Vihar Near Green Park Badarwas Tehsil Badarwas District Chhatarpur Madhya Pradesh - 471606",
+            "gender": "Male",
+            "dob": "N/A"
+        },
+        "file_name": "Aaadhar_1.png",
+        "review_reason": "Validation Failed - Missing: aadhaar_number, dob | Invalid Format: name ('सचिन कुमार')",
+        "status": "Needs Review",
+        "id": "3dd5d27b-f350-4f89-a27a-247438da59ba"
+    },
+    {
+        "document_type": "aadhar",
+        "document_title": "AADHAAR",
+        "document_number": "N/A",
+        "entity_name": "सचिन कुमार",
+        "document_date": null,
+        "metadata": {
+            "name": "सचिन कुमार",
+            "document_type": "aadhar",
+            "aadhaar_number": "N/A",
+            "address": "S/O: Mahesh Kumar 123, Shanti Vihar Near Green Park Badarwas Tehsil Badarwas District Chhatarpur Madhya Pradesh - 471606",
+            "gender": "Male",
+            "dob": "N/A"
+        },
+        "file_name": "Aaadhar_1.png",
+        "review_reason": "Validation Failed - Missing: aadhaar_number, dob | Invalid Format: name ('सचिन कुमार')",
+        "status": "Needs Review",
+        "id": "7817b1cc-6d0d-44e8-b371-8c10a157e3be"
+    },
+    {
+        "document_type": "aadhar",
+        "document_title": "AADHAAR",
+        "document_number": "N/A",
+        "entity_name": "सचिन कुमार",
+        "document_date": null,
+        "metadata": {
+            "name": "सचिन कुमार",
+            "document_type": "aadhar",
+            "aadhaar_number": "N/A",
+            "address": "S/O: Mahesh Kumar 123, Shanti Vihar Near Green Park Badarwas Tehsil Badarwas District Chhatarpur Madhya Pradesh - 471606",
+            "gender": "Male",
+            "dob": "N/A"
+        },
+        "file_name": "Aaadhar_1.png",
+        "review_reason": "Validation Failed - Missing: aadhaar_number, dob | Invalid Format: name ('सचिन कुमार')",
+        "status": "Needs Review",
+        "id": "0bdbd8e0-fa25-4e52-83cf-c72db42c42fd"
+    },
+    {
+        "document_type": "aadhar",
+        "document_title": "AADHAAR",
+        "document_number": "N/A",
+        "entity_name": "सचिन कुमार",
+        "document_date": null,
+        "metadata": {
+            "gender": "Male",
+            "name": "सचिन कुमार",
+            "aadhaar_number": "1947 1800 300 1947",
+            "address": "S/O: Mahesh Kumar 123, Shanti Vihar Near Green Park Badarwas Tehsil Badarwas District Chhatarpur Madhya Pradesh - 471606",
+            "document_type": "aadhar",
+            "dob": "N/A"
+        },
+        "file_name": "Aaadhar_1.png",
+        "review_reason": "Validation Failed - Missing: dob | Invalid Format: aadhaar_number ('1947 1800 300 1947')",
+        "status": "Needs Review",
+        "id": "9bd1b6d7-a3e1-4001-b8cd-6cf36d33e722"
+    },
+    {
+        "document_type": "major claim",
+        "document_title": "Major Claim Document",
+        "document_number": "999995 / Z1108BCSA033903",
+        "entity_name": "London Market Claimant",
+        "document_date": null,
+        "metadata": {
+            "paid_amount_100": "N/A",
+            "policy_insured": "ABCD BUREAU P & C INS CO",
+            "claimant_name": "London Market Claimant",
+            "policy_ref_umr": "N/A",
+            "incurred_amount_100": "N/A",
+            "document_type": "major claim",
+            "claim_ref_ucr": "999995 / Z1108BCSA033903",
+            "loss_date_from": "2021-12-13"
+        },
+        "file_name": "Claim MCD.pdf",
+        "review_reason": "Validation Failed - Missing: paid_amount_100, policy_ref_umr, incurred_amount_100",
+        "status": "Needs Review",
+        "id": "837aadd8-47cc-404c-8fac-10615fc8eb43"
+    },
+    {
+        "document_type": "major claim",
+        "document_title": "Major Claim Document",
+        "document_number": "999995 / Z1108BCSA033903",
+        "entity_name": "London Market Claimant",
+        "document_date": "2026-04-29",
+        "metadata": {
+            "paid_amount_100": "118,484,791.20",
+            "policy_insured": "ABCD BUREAU P & C INS CO",
+            "claimant_name": "London Market Claimant",
+            "policy_ref_umr": "ZZ0000 / Z110821BCSA0002",
+            "incurred_amount_100": "118,859,553.79",
+            "document_type": "major claim",
+            "claim_ref_ucr": "999995 / Z1108BCSA033903",
+            "loss_date_from": "2021-12-15"
+        },
+        "file_name": "Claim MCD OG.pdf",
+        "review_reason": "Validation Failed - Invalid Format: paid_amount_100 ('118,484,791.20')",
+        "status": "Needs Review",
+        "id": "c1506477-ceea-4b20-8215-f3d16ede85f1"
+    },
+    {
+        "document_type": "major claim",
+        "document_title": "Major Claim Document",
+        "document_number": "999995 / Z1108BCSA033903",
+        "entity_name": "London Market Claimant",
+        "document_date": "2026-04-29",
+        "metadata": {
+            "paid_amount_100": "118,484,791.20",
+            "policy_insured": "ABCD BUREAU P & C INS CO",
+            "claimant_name": "London Market Claimant",
+            "policy_ref_umr": "ZZ0000 / Z110821BCSA0002",
+            "incurred_amount_100": "118,859,553.79",
+            "document_type": "major claim",
+            "claim_ref_ucr": "999995 / Z1108BCSA033903",
+            "loss_date_from": "2021-12-15"
+        },
+        "file_name": "Claim MCD OG.pdf",
+        "review_reason": "Validation Failed - Invalid Format: paid_amount_100 ('118,484,791.20')",
+        "status": "Needs Review",
+        "id": "dfd74c7d-df01-4370-8fa5-8a2684e67129"
+    },
+    {
+        "document_type": "claim settlement",
+        "document_title": "CLAIM SETTLEMENT LETTER",
+        "document_number": "CLM-2026-01278",
+        "entity_name": "Priya Mehta",
+        "document_date": null,
+        "metadata": {
+            "net_settlement_amount": "₹3,22,000",
+            "claim_number": "CLM-2026-01278",
+            "approved_claim_amount": "₹3,42,000",
+            "policy_number": "N/A",
+            "document_type": "claim settlement",
+            "insured_name": "Priya Mehta",
+            "letter_date": "N/A"
+        },
+        "file_name": "CLAIM SETTLEMENT LETTER.docx (1).docx",
+        "review_reason": "Validation Failed - Missing: policy_number, letter_date",
+        "status": "Needs Review",
+        "id": "da181054-7c62-4e5d-8fb7-4b354ed74e6f"
+    },
+    {
+        "document_type": "invoice",
+        "document_title": "INVOICE",
+        "document_number": "N/A",
+        "entity_name": "Alpha Retail Pvt Ltd",
+        "document_date": null,
+        "metadata": {
+            "po_number": "N/A",
+            "customer_name": "Alpha Retail Pvt Ltd",
+            "invoice_number": "N/A",
+            "invoice_date": "N/A",
+            "document_type": "invoice",
+            "vendor_name": "TechNova Solutions Pvt Ltd",
+            "total_due": "₹84,960"
+        },
+        "file_name": "Sample Contractor Invoice 1.docx",
+        "review_reason": "Validation Failed - Missing: po_number, invoice_number, invoice_date",
+        "status": "Needs Review",
+        "id": "e66c0a71-f207-4da9-8563-58db64d6a48a"
     }
 ]
