@@ -229,5 +229,24 @@
         "review_reason": "Missing critical ACORD fields: settlement_amount, date_of_closure, claim_number, policy_number, date_of_loss",
         "status": "Needs Review",
         "id": "9e2e832e-2842-459d-8cac-ce6ee1474a86"
+    },
+    {
+        "document_type": "aadhar",
+        "document_title": "AADHAAR",
+        "document_number": "N/A",
+        "entity_name": "सचिन कुमार",
+        "document_date": null,
+        "metadata": {
+            "address": "S/O: Mahesh Kumar 123, Shanti Vihar Near Green Park Badarwas Tehsil Badarwas District Chhatarpur Madhya Pradesh - 471606",
+            "dob": "N/A",
+            "aadhaar_number": "N/A",
+            "name": "Sachin Kumar",
+            "document_type": "aadhar",
+            "gender": "Male"
+        },
+        "file_name": "Aaadhar_1.png",
+        "review_reason": "Validation Failed - Missing: dob, aadhaar_number",
+        "status": "Needs Review",
+        "id": "a5084697-7ac9-480b-9561-0606e854714d"
     }
 ]

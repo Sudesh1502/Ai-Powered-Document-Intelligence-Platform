@@ -187,14 +187,22 @@ if "search_results" in st.session_state:
             if cols[3].button("View Document", key=f"view_doc_{i}", use_container_width=True):
                 st.session_state.preview_doc = r
                 st.rerun()
-        # 5. Fetch the AI Summary exactly once after the loop finishes
+        # 5. Fetch the AI Summary using session state caching to save costs
         with summary_placeholder.container():
-            with st.spinner("Summary..."):
-                summary = get_summary(
-                    search_results=results,
-                    user_query=query,
-                    semantic_search=semantic
-                )
+            # Check if we already generated a summary for this EXACT query
+            if st.session_state.get("last_summary_query") != query:
+                with st.spinner("Summary..."):
+                    summary = get_summary(
+                        search_results=results,
+                        user_query=query,
+                        semantic_search=semantic
+                    )
+                    # Cache the new summary and tie it to this query
+                    st.session_state["last_summary_query"] = query
+                    st.session_state["cached_summary"] = summary
+            else:
+                # Fetch it instantly from memory for free!
+                summary = st.session_state["cached_summary"]
 
             if isinstance(summary, str):
                 st.markdown("### Summary")
