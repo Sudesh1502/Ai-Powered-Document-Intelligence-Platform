@@ -153,31 +153,13 @@ SEARCH RESULTS:
 
 INSTRUCTIONS:
 
-1. Analyze all returned documents.
-2. Determine whether the results contain:
-   - Strong/exact matches to the user's intent.
-   - Partial matches.
-   - Only related documents.
-
-3. Generate a professional search summary in natural language.
-
-4. Explain:
-   - How many documents were returned.
-   - Whether the documents directly satisfy the query.
-   - Why the documents were ranked highly.
-   - Which important keywords, entities, captions, titles, or metadata contributed to the ranking.
-
-5. If SEARCH TYPE is "semantic":
-   - Use semantic captions when available.
-   - Mention that ranking considered semantic meaning and contextual relevance.
-
-6. If SEARCH TYPE is "keyword":
-   - Mention that ranking was based primarily on keyword overlap and relevance scoring.
-
-7. If no strong matches exist:
-   - Clearly state that no exact matches were found.
-   - Explain that related documents were returned instead.
-   - Describe what similarities caused them to be retrieved.
+1. Analyze the metadata, captions, and content of all returned documents.
+2. Generate a professional, cohesive summary of the ACTUAL INFORMATION contained within these documents.
+3. Synthesize the key facts, figures, dates, entity names, and narratives found in the search results.
+4. Do NOT explain why the documents were returned. Do NOT discuss search algorithms, keyword overlap, or ranking mechanics.
+5. Focus purely on answering the user's implicit question by extracting the most relevant data from the results.
+6. If the documents contain financial amounts, dates, or specific claim details, ensure you highlight them in your summary.
+7. If no relevant information can be extracted from the documents to satisfy the query, politely state that the retrieved documents do not contain a direct answer.
 
 8. Never invent information.
 9. Never mention internal system details, vector embeddings, LLMs, Azure implementation details, or confidence estimates unless explicitly provided.
@@ -193,18 +175,7 @@ IMPORTANT:
 - Never claim that a document contains information that is not
   present in the provided search results.
 
-OUTPUT FORMAT:
-
-Summary:
-<summary paragraph>
-
-Key Findings:
-- finding 1
-- finding 2
-- finding 3
-
-Relevance Assessment:
-<one sentence explaining whether results are exact, partial, or related matches>
+Provide a highly direct, concise summary of the core facts found in the documents. You may use bullet points to list the findings cleanly, but DO NOT use any headings (like "Summary:", "Key Findings:", or "Relevance Assessment:"). Ensure there is absolutely no repetitive phrasing.
 
 Examples:
 
@@ -213,11 +184,9 @@ User Query:
 "I want all documents that claim insurance for water damage"
 
 Expected Style:
-"Found 7 documents relevant to insurance claims involving water damage. Most highly ranked documents contain references to water-related incidents, claim submissions, damage assessments, and insurance processing details. Documents were ranked based on the strength of their relevance to the requested claim scenario and the presence of supporting claim-related information."
-
-Example 2:
-If no exact matches:
-"No documents explicitly describing insurance claims for water damage were found. However, 5 related documents were retrieved because they contain references to insurance claims, property damage, incident reports, or claim assessment activities that may be relevant to the request."
+The search returned 5 property loss notices:
+* One document (dated May 22, 2024 for Michael James Anderson) explicitly lists a flood claim with an estimated amount of $15,000.
+* The remaining four documents detail other claim submissions involving Liberty Mutual and Harbor Insurance Group, but do not specifically reference water damage.
 
 Return plain text only.
 Do not use markdown code blocks.

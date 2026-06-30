@@ -248,5 +248,25 @@
         "review_reason": "Validation Failed - Missing: dob, aadhaar_number",
         "status": "Needs Review",
         "id": "a5084697-7ac9-480b-9561-0606e854714d"
+    },
+    {
+        "document_type": "invoice",
+        "document_title": "INVOICE",
+        "document_number": "N/A",
+        "entity_name": "Alpha Retail Pvt Ltd",
+        "document_date": null,
+        "metadata": {
+            "invoice_date": "N/A",
+            "vendor_name": "TechNova Solutions Pvt Ltd",
+            "customer_name": "Alpha Retail Pvt Ltd",
+            "po_number": "N/A",
+            "invoice_number": "N/A",
+            "document_type": "invoice",
+            "total_due": "₹84,960"
+        },
+        "file_name": "Sample Contractor Invoice 1.docx",
+        "review_reason": "Validation Failed - Missing: invoice_date, po_number, invoice_number",
+        "status": "Needs Review",
+        "id": "30e15da9-bb12-4d07-84c2-9ffaddacf2f1"
     }
 ]

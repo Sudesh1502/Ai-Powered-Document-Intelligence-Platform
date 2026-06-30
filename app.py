@@ -103,7 +103,7 @@ st.markdown(
     "## 📤 Upload Document"
 )
 
-uploaded_file = st.file_uploader(
+uploaded_files = st.file_uploader(
     "Choose PDF/Image/DOCX",
     type=[
         "pdf",
@@ -111,313 +111,338 @@ uploaded_file = st.file_uploader(
         "jpg",
         "jpeg",
         "docx"
-    ]
+    ],
+    accept_multiple_files=True
 )
 
-if uploaded_file:
+if uploaded_files:
+    if len(uploaded_files) > 5:
+        st.error("⚠️ Maximum 5 documents allowed per batch. Please remove some files.")
+        st.stop()
 
-    st.success(
-        f"Uploaded: {uploaded_file.name}"
-    )
+    st.success(f"Uploaded: {len(uploaded_files)} document(s)")
 
     if st.button(
-        "Process Document",
+        "Process Documents",
         width="stretch"
     ):
+        success_count = 0
+        action_centre_count = 0
+        failed_count = 0
 
-        start_time = datetime.now()
+        for uploaded_file in uploaded_files:
+            with st.status(f"📄 Processing: {uploaded_file.name}", expanded=True) as status_container:
 
-        try:
+                start_time = datetime.now()
 
-            file_bytes = uploaded_file.getvalue()
+                try:
 
-            os.makedirs("data", exist_ok=True)
-            file_path = os.path.join("data", uploaded_file.name)
-            with open(file_path, "wb") as f:
-                f.write(file_bytes)
+                    file_bytes = uploaded_file.getvalue()
 
-            if not is_valid_file(
-                file_path
-            ):
+                    os.makedirs("data", exist_ok=True)
+                    file_path = os.path.join("data", uploaded_file.name)
+                    with open(file_path, "wb") as f:
+                        f.write(file_bytes)
 
-                st.error(
-                    "Invalid file."
-                )
+                    if not is_valid_file(
+                        file_path
+                    ):
 
-                st.stop()
+                        st.error(
+                            "Invalid file."
+                        )
 
-            with st.spinner(
-                "Running OCR..."
-            ):
+                        status_container.update(label=f"❌ Invalid: {uploaded_file.name}", state="error", expanded=False)
+                        failed_count += 1
+                        continue
 
-                result = extract_text(
-                    file_path
-                )
-                word_count = len(result.content.split()) if result.content else 0
-            confidence = round(
-                calculate_confidence(
-                    result
-                ) * 100,
-                2
-            )
+                    with st.spinner(
+                        "Running OCR..."
+                    ):
 
-            text = result.content
-
-            page_count = len(result.pages) if result.pages else 0
-
-            st.markdown(
-                "## 📄 Extracted Text"
-            )
-
-            st.text_area(
-                "OCR Output",
-                value=text,
-                height=300
-            )
-
-            st.markdown(
-                "## 🎯 OCR Confidence"
-            )
-
-            st.progress(
-                confidence / 100
-            )
-
-            st.info(
-                f"Confidence: {confidence}%"
-            )
-
-            with st.spinner(
-                "Extracting Metadata..."
-            ):
-
-                metadata = extract_metadata(
-                    text
-                )
-
-                
-
-            review_status = (
-                get_review_status(
-                    confidence,
-                    metadata
-                )
-            )
-
-
-            validation_results = validate_document_orchestrator(metadata)
-            missing_fields = validation_results["missing"]
-            invalid_fields = validation_results["invalid"]
-            
-            if len(missing_fields) > 0 or len(invalid_fields) > 0:
-                reasons = []
-                if missing_fields:
-                    reasons.append(f"Missing: {', '.join(missing_fields)}")
-                if invalid_fields:
-                    reasons.append(f"Invalid Format: {', '.join(invalid_fields)}")
-                reason_str = " | ".join(reasons)
-                
-                # 3. Give the user INSTANT visual feedback on the screen!
-                st.error(f"**Validation Failed!** {reason_str}")
-                st.warning("This document has been routed to the Action Centre for manual review.")
-                # 4. Save it to the queue
-                metadata["file_name"] = uploaded_file.name
-                metadata["review_reason"] = f"Validation Failed - {reason_str}"
-                metadata["status"] = "Needs Review"
-                add_review_document(metadata)
-                
-                # Log the failure so it appears in metrics
-                log_document_status(
-                    file_name=uploaded_file.name,
-                    url="Streamlit Upload",
-                    status="Needs Review",
-                    note=f"Validation failed. {reason_str}",
-                    start_time=start_time,
-                    end_time=datetime.now(),
-                    word_count=0,
-                )
-                
-                # 5. Stop the Streamlit script so it doesn't get indexed
-                st.stop()
-
-            st.info(
-                f"Review Status: "
-                f"{review_status}"
-            )
-
-            st.markdown(
-                "## 🏷️ Extracted Metadata"
-            )
-
-            c1, c2, c3 = st.columns(3)
-
-            with c1:
-
-                st.metric(
-                    "Document Type",
-                    metadata.get(
-                        "document_type",
-                        "N/A"
+                        result = extract_text(
+                            file_path
+                        )
+                        word_count = len(result.content.split()) if result.content else 0
+                    confidence = round(
+                        calculate_confidence(
+                            result
+                        ) * 100,
+                        2
                     )
-                )
 
-                st.metric(
-                    "Document Number",
-                    metadata.get(
-                        "document_number",
-                        "N/A"
+                    text = result.content
+
+                    page_count = len(result.pages) if result.pages else 0
+
+                    st.markdown(
+                        "## 📄 Extracted Text"
                     )
-                )
 
-            with c2:
-
-                st.metric(
-                    "Entity",
-                    metadata.get(
-                        "entity_name",
-                        "N/A"
+                    st.text_area(
+                        "OCR Output",
+                        value=text,
+                        height=300,
+                        key=f"ocr_output_{uploaded_file.name}"
                     )
-                )
 
+                    st.markdown(
+                        "## 🎯 OCR Confidence"
+                    )
 
-            with c3:
+                    st.progress(
+                        confidence / 100
+                    )
 
-                st.metric(
-                    "Date",
-                    str(
-                        metadata.get(
-                            "document_date",
-                            "N/A"
+                    st.info(
+                        f"Confidence: {confidence}%"
+                    )
+
+                    with st.spinner(
+                        "Extracting Metadata..."
+                    ):
+
+                        metadata = extract_metadata(
+                            text
+                        )
+
+                
+
+                    review_status = (
+                        get_review_status(
+                            confidence,
+                            metadata
                         )
                     )
-                )
 
-                st.metric(
-                    "Pages",
-                    page_count
-                )
 
-            if "error" in metadata:
+                    validation_results = validate_document_orchestrator(metadata)
+                    missing_fields = validation_results["missing"]
+                    invalid_fields = validation_results["invalid"]
+            
+                    if len(missing_fields) > 0 or len(invalid_fields) > 0:
+                        reasons = []
+                        if missing_fields:
+                            reasons.append(f"Missing: {', '.join(missing_fields)}")
+                        if invalid_fields:
+                            reasons.append(f"Invalid Format: {', '.join(invalid_fields)}")
+                        reason_str = " | ".join(reasons)
+                
+                        # 3. Give the user INSTANT visual feedback on the screen!
+                        st.error(f"**Validation Failed!** {reason_str}")
+                        st.warning("This document has been routed to the Action Centre for manual review.")
+                        # 4. Save it to the queue
+                        metadata["file_name"] = uploaded_file.name
+                        metadata["review_reason"] = f"Validation Failed - {reason_str}"
+                        metadata["status"] = "Needs Review"
+                        add_review_document(metadata)
+                
+                        # Log the failure so it appears in metrics
+                        log_document_status(
+                            file_name=uploaded_file.name,
+                            url="Streamlit Upload",
+                            status="Needs Review",
+                            note=f"Validation failed. {reason_str}",
+                            start_time=start_time,
+                            end_time=datetime.now(),
+                            word_count=0,
+                        )
+                
+                        # 5. Continue to the next file instead of stopping the batch
+                        status_container.update(label=f"⚠️ Action Centre: {uploaded_file.name}", state="complete", expanded=False)
+                        action_centre_count += 1
+                        continue
 
-                st.error(
-                    metadata[
-                        "error"
-                    ]
-                )
-
-            else:
-
-                with st.expander(
-                    "Additional Metadata"
-                ):
-
-                    st.json(
-                        metadata
+                    st.info(
+                        f"Review Status: "
+                        f"{review_status}"
                     )
 
-            document = build_document(
-                uploaded_file=uploaded_file,
-                metadata=metadata,
-                text=text,
-                page_count=page_count,
-                confidence=confidence,
-                review_status=review_status,
-                word_count=word_count
-            )
-
-            with st.expander(
-                "Azure Search Document Preview"
-            ):
-
-                preview = document.copy()
-
-                preview.pop(
-                    "review_status",
-                    None
-                )
-
-                st.json(
-                    preview
-                )
-
-            if review_status == "Completed":
-
-                with st.spinner(
-                    "Uploading to Azure Search..."
-                ):
-
-                    upload_documents(
-                        [document]
+                    st.markdown(
+                        "## 🏷️ Extracted Metadata"
                     )
 
-                # Removed folder creation and file moving to keep files in data/
-                pass
+                    c1, c2, c3 = st.columns(3)
 
-                status = "Completed"
-                note = "Indexed Automatically"
+                    with c1:
 
-                st.success(
-                    "✅ Document Indexed Successfully."
-                )
+                        st.metric(
+                            "Document Type",
+                            metadata.get(
+                                "document_type",
+                                "N/A"
+                            )
+                        )
 
-            else:
+                        st.metric(
+                            "Document Number",
+                            metadata.get(
+                                "document_number",
+                                "N/A"
+                            )
+                        )
 
-                add_review_document(
-                    document
-                )
+                    with c2:
 
-                status = review_status
-                note = "Waiting for manual review"
+                        st.metric(
+                            "Entity",
+                            metadata.get(
+                                "entity_name",
+                                "N/A"
+                            )
+                        )
 
-                st.warning(
-                    f"Document marked as "
-                    f"'{review_status}'. "
-                    f"Go to the Action Centre for review."
-                )
 
-            end_time = datetime.now()
+                    with c3:
 
-            execution_time = round(
-                (
-                    end_time
-                    -
-                    start_time
-                ).total_seconds(),
-                2
-            )
+                        st.metric(
+                            "Date",
+                            str(
+                                metadata.get(
+                                    "document_date",
+                                    "N/A"
+                                )
+                            )
+                        )
 
-            log_document_status(
-                file_name=uploaded_file.name,
-                url=file_path,
-                status=status,
-                note=note,
-                start_time=start_time,
-                end_time=end_time,
-                word_count=word_count
-            )
+                        st.metric(
+                            "Pages",
+                            page_count
+                        )
 
-            st.info(
-                f"Execution Time: "
-                f"{execution_time} sec"
-            )
+                    if "error" in metadata:
 
-        except Exception as e:
+                        st.error(
+                            metadata[
+                                "error"
+                            ]
+                        )
 
-            end_time = datetime.now()
+                    else:
 
-            log_document_status(
-                file_name=uploaded_file.name,
-                url="",
-                status="Failed",
-                note=str(e),
-                start_time=start_time,
-                end_time=end_time,
-                word_count=word_count
-            )
+                        with st.expander(
+                            "Additional Metadata"
+                        ):
 
-            st.error(
-                str(e)
-            )
+                            st.json(
+                                metadata
+                            )
+
+                    document = build_document(
+                        uploaded_file=uploaded_file,
+                        metadata=metadata,
+                        text=text,
+                        page_count=page_count,
+                        confidence=confidence,
+                        review_status=review_status
+                    )
+
+                    with st.expander(
+                        "Azure Search Document Preview"
+                    ):
+
+                        preview = document.copy()
+
+                        preview.pop(
+                            "review_status",
+                            None
+                        )
+
+                        st.json(
+                            preview
+                        )
+
+                    if review_status == "Completed":
+
+                        with st.spinner(
+                            "Uploading to Azure Search..."
+                        ):
+
+                            upload_documents(
+                                [document]
+                            )
+
+                        # Removed folder creation and file moving to keep files in data/
+                        pass
+
+                        status = "Completed"
+                        note = "Indexed Automatically"
+
+                        st.success(
+                            "✅ Document Indexed Successfully."
+                        )
+                        status_container.update(label=f"✅ Completed: {uploaded_file.name}", state="complete", expanded=False)
+                        success_count += 1
+
+                    else:
+
+                        add_review_document(
+                            document
+                        )
+
+                        status = review_status
+                        note = "Waiting for manual review"
+
+                        st.warning(
+                            f"Document marked as "
+                            f"'{review_status}'. "
+                            f"Go to the Action Centre for review."
+                        )
+                        status_container.update(label=f"⚠️ Action Centre: {uploaded_file.name}", state="complete", expanded=False)
+
+                    end_time = datetime.now()
+
+                    execution_time = round(
+                        (
+                            end_time
+                            -
+                            start_time
+                        ).total_seconds(),
+                        2
+                    )
+
+                    log_document_status(
+                        file_name=uploaded_file.name,
+                        url=file_path,
+                        status=status,
+                        note=note,
+                        start_time=start_time,
+                        end_time=end_time,
+                        word_count=word_count
+                    )
+
+                    st.info(
+                        f"Execution Time: "
+                        f"{execution_time} sec"
+                    )
+
+                except Exception as e:
+                    status_container.update(label=f"❌ Failed: {uploaded_file.name}", state="error", expanded=False)
+                    failed_count += 1
+                    end_time = datetime.now()
+
+                    log_document_status(
+                        file_name=uploaded_file.name,
+                        url="",
+                        status="Failed",
+                        note=str(e),
+                        start_time=start_time,
+                        end_time=end_time,
+                        word_count=word_count
+                    )
+
+                    st.error(
+                        str(e)
+                    )
+
+
+        # --- End of Batch Summary ---
+        st.markdown("### 📊 Batch Upload Summary")
+        sc1, sc2, sc3 = st.columns(3)
+        sc1.metric("✅ Indexed Successfully", success_count)
+        sc2.metric("⚠️ Action Centre", action_centre_count)
+        sc3.metric("❌ Failed", failed_count)
+
 
 st.markdown("---")
 
