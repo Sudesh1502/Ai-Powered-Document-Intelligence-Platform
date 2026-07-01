@@ -75,6 +75,7 @@ For every statement, reference the document(s) it came from. You MUST use the ex
 
 ### AI Recommendations
 [Provide next steps for the claims handler based on the findings]
+"""
 
     try:
         response = client.models.generate_content(
