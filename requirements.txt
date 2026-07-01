@@ -13,3 +13,5 @@ pillow>=11.0.0
 requests>=2.32.0
 mammoth>=1.12.0
 streamlit-pdf-viewer>=0.0.29
+markdown2>=2.4.13
+xhtml2pdf>=0.2.16
