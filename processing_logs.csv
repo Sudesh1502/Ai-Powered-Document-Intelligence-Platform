@@ -70,3 +70,8 @@ Message: The request is invalid. Details: The property 'amount' does not exist o
 2026-06-30 14:10:43,Claim MCD OG.pdf,data\Claim MCD OG.pdf,Completed,Indexed Automatically,255,2026-06-30 14:10:35,2026-06-30 14:10:43,8.21
 2026-06-30 14:10:48,Sample Contractor Invoice 1.docx,Streamlit Upload,Needs Review,"Validation failed. Missing: invoice_date, po_number, invoice_number",0,2026-06-30 14:10:43,2026-06-30 14:10:48,4.8
 2026-06-30 14:10:54,Sample Contractor Invoice 3.docx,data\Sample Contractor Invoice 3.docx,Completed,Indexed Automatically,171,2026-06-30 14:10:48,2026-06-30 14:10:54,5.77
+2026-06-30 17:34:18,Claim MCD OG.pdf,data\Claim MCD OG.pdf,Completed,Indexed Automatically,255,2026-06-30 17:34:10,2026-06-30 17:34:18,7.56
+2026-06-30 17:34:23,Sample Contractor Invoice 1.docx,data\Sample Contractor Invoice 1.docx,Completed,Indexed Automatically,175,2026-06-30 17:34:18,2026-06-30 17:34:23,5.08
+2026-06-30 17:34:28,Sample Contractor Invoice 2.docx,data\Sample Contractor Invoice 2.docx,Completed,Indexed Automatically,170,2026-06-30 17:34:23,2026-06-30 17:34:28,5.14
+2026-06-30 17:34:33,Sample Contractor Invoice 3.docx,data\Sample Contractor Invoice 3.docx,Completed,Indexed Automatically,171,2026-06-30 17:34:28,2026-06-30 17:34:33,4.88
+2026-06-30 17:34:38,Sample Contractor Invoice 4.docx,data\Sample Contractor Invoice 4.docx,Completed,Indexed Automatically,155,2026-06-30 17:34:33,2026-06-30 17:34:38,5.13
