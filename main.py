@@ -13,6 +13,8 @@ from src.indexing.upload_document_service import upload_documents
 from src.utils.logger import log_document_status
 import json
 from datetime import datetime
+from src.validation.validation_engine import validate_document_orchestrator
+from src.utils.review_storage import add_review_document
 
 BASE_DIR = Path(__file__).resolve().parent
 RAW_DATA_DIR = BASE_DIR / "data"
@@ -26,7 +28,7 @@ if not documents:
 print("\nprocessing documents for extraction")
 print(f"\nTotal {len(documents)} found.")
 
-for doc in documents[:1]:
+for doc in documents[:2]:
     file_name = Path(doc).name
     url = str(Path(doc).resolve())
     
@@ -38,9 +40,46 @@ for doc in documents[:1]:
         word_count = len(result.content.split()) if result.content else 0
         confidence = calculate_confidence(result)
         metadata = extract_metadata(result.content)
-        
         if "error" in metadata:
             raise Exception(f"Metadata extraction failed: {metadata['error']}")
+        #validating the data before indexing
+        validation_results = validate_document_orchestrator(metadata)
+        missing_fields = validation_results["missing"]
+        invalid_fields = validation_results["invalid"]
+
+        # if it misses ANY critical fields or has invalid formats, route it to Action Centre
+        if len(missing_fields) > 0 or len(invalid_fields) > 0:
+            reasons = []
+            if missing_fields:
+                reasons.append(f"Missing: {', '.join(missing_fields)}")
+            if invalid_fields:
+                reasons.append(f"Invalid Format: {', '.join(invalid_fields)}")
+            reason_str = " | ".join(reasons)
+            
+            print(f"Validation failed for {file_name}. {reason_str}")
+            
+            # Add exactly what went wrong to the metadata so the user can see it in Action Centre
+            metadata["file_name"] = file_name
+            metadata["review_reason"] = f"Validation Failed - {reason_str}"
+            metadata["status"] = "Needs Review"
+            
+            # Save it to the Action Centre queue
+            add_review_document(metadata)
+            
+            # Log the failure
+            log_document_status(
+                file_name=file_name,
+                url=url,
+                status="Needs Review",
+                note=f"Validation failed. {reason_str}",
+                start_time=start_time,
+                end_time=datetime.now(),
+                word_count=word_count
+            )
+            
+            # IMPORTANT: Use 'continue' or 'return' here to skip the Azure Search upload!
+            continue
+        
         
         raw_date = str(metadata.get("document_date", ""))
         formatted_date = None

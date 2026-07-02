@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import datetime
 import streamlit as st
 from datetime import datetime
 import shutil
@@ -159,7 +160,7 @@ else:
         st.markdown("---")
 
         left, right = st.columns(
-            [3, 2]
+            [5, 4]
         )
 
         # Exclusively read from data/ folder
@@ -266,14 +267,20 @@ else:
                 key=f"entity_{i}"
             )
 
-            document_date = st.text_input(
+            default_date = None
+
+            try:
+                if doc.get("document_date"):
+                    default_date = datetime.strptime(
+                        str(doc["document_date"]),
+                        "%d %B %Y"
+                    ).date()
+            except:
+                pass
+
+            document_date = st.date_input(
                 "Document Date",
-                value=str(
-                    doc.get(
-                        "document_date",
-                        ""
-                    )
-                ),
+                value=default_date,
                 key=f"date_{i}"
             )
 
@@ -310,18 +317,51 @@ else:
                     
                 st.session_state[metadata_fields_key] = df
 
-            # Render metadata data_editor (natively supports add/remove and scrolling!)
+            df = st.session_state[metadata_fields_key]
+            
+            df = st.session_state[metadata_fields_key]
+            
+            # Ensure Delete column exists
+            if "Delete" not in df.columns:
+                df["Delete"] = False
+
+            # Render metadata data_editor with fixed rows to prevent auto-appending
             edited_metadata = st.data_editor(
-                st.session_state[metadata_fields_key],
-                num_rows="dynamic",
+                df,
+                num_rows="fixed",
                 column_config={
-                    "Key": st.column_config.TextColumn("Key"),
-                    "Value": st.column_config.TextColumn("Value")
+                    "Key": st.column_config.TextColumn(
+                        "Key",
+                        width="medium"
+                    ),
+                    "Value": st.column_config.TextColumn(
+                        "Value",
+                        width="medium"
+                    ),
+                    "Delete": st.column_config.CheckboxColumn(
+                        "Del",
+                        default=False
+                    )
                 },
                 hide_index=True,
-                use_container_width=True,
+                use_container_width=False,  # Important
                 key=f"editor_{i}"
             )
+            
+            # Process deletions instantly
+            if any(edited_metadata["Delete"] == True):
+                new_df = edited_metadata[edited_metadata["Delete"] == False].reset_index(drop=True)
+                st.session_state[metadata_fields_key] = new_df
+                st.rerun()
+
+            # Custom gray button to add a new row
+            if st.button("➕ Add Metadata Field", type="secondary", key=f"add_row_{i}"):
+                new_row = pd.DataFrame([{"Key": "", "Value": "", "Delete": False}])
+                new_df = pd.concat([edited_metadata, new_row], ignore_index=True)
+                st.session_state[metadata_fields_key] = new_df
+                st.rerun()
+            
+            edited_metadata = st.session_state[metadata_fields_key]
             
             if len(edited_metadata) > 50:
                 st.warning("Warning: Only the first 50 entries will be saved.")
@@ -451,7 +491,7 @@ else:
                     )
 
                     remove_review_document(
-                        doc["id"]
+                        doc.get("id", doc.get("file_name"))
                     )
 
                     st.success(
@@ -491,7 +531,7 @@ else:
                     )
 
                     remove_review_document(
-                        doc["id"]
+                        doc.get("id", doc.get("file_name"))
                     )
 
                     st.warning(
