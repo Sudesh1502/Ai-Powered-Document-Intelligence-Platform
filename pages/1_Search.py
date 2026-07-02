@@ -6,38 +6,58 @@ import mammoth
 from streamlit_pdf_viewer import pdf_viewer
 
 from src.search.search_service import search_documents, get_summary
+from src.search.report_service import generate_investigation_report, generate_pdf_from_markdown
 
 st.set_page_config(
     page_title="Search",
     page_icon="🔍",
     layout="wide"
 )
+# Hide sidebar instantly to prevent flash before login
+st.markdown(
+    """
+    <style>
+        [data-testid="stSidebar"] { display: none; }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+from src.auth.auth_service import login_user, logout_user
+
+# --- Authentication Wall ---
+user = login_user()
+if not user:
+    st.stop()
+
+# If user is logged in, restore the sidebar
+st.markdown(
+    """
+    <style>
+        [data-testid="stSidebar"] { display: block !important; }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+# ---------------------------
+
+with st.sidebar:
+    st.markdown(f"**Signed in as:** {user['name']}")
+    logout_user()
+    st.markdown("---")
+
 header1, header2 = st.columns(
     [1, 8]
 )
 
 with header1:
-
     logo_path = "pages/LOGO.png"
-
-    if os.path.exists(
-        logo_path
-    ):
-
-        st.image(
-            logo_path,
-            width=150
-        )
+    if os.path.exists(logo_path):
+        st.image(logo_path, width=150)
 
 with header2:
-
-    st.title(
-        "Document Search"
-    )
-
-    st.caption(
-        "Search indexed documents using keyword and semantic search."
-    )
+    st.title("Document Search")
+    st.caption("Search indexed documents using keyword and semantic search.")
 
 st.markdown("---")
 
@@ -159,6 +179,7 @@ if "search_results" in st.session_state:
 
     else:
 
+        report_placeholder = st.container()
         summary_placeholder = st.empty()
                 
         st.markdown("### Search Results")
@@ -209,3 +230,66 @@ if "search_results" in st.session_state:
                 st.info(summary)
             elif isinstance(summary, dict) and "error" in summary:
                 st.error(f"Summary Error: {summary['error']}")
+                
+        # 6. Investigation Report Button
+        with report_placeholder:
+            st.markdown("---")
+            
+            has_report = "investigation_report_pdf" in st.session_state
+            
+            # Dynamically set columns so there isn't a weird gap before generation
+            if has_report:
+                header_col, gen_btn_col, dl_btn_col = st.columns([3, 1.5, 1.5])
+            else:
+                header_col, gen_btn_col = st.columns([4, 2])
+            
+            with header_col:
+                st.markdown("<h3 style='margin-bottom: 0;'>Investigation Report</h3>", unsafe_allow_html=True)
+                st.caption("Generate a comprehensive investigation report using the retrieved documents.")
+                
+            with gen_btn_col:
+                st.markdown("<div style='margin-top: 22px;'></div>", unsafe_allow_html=True)
+                generate_clicked = st.button("Generate Investigation Report", type="primary", use_container_width=True)
+                
+            if has_report:
+                with dl_btn_col:
+                    st.markdown("<div style='margin-top: 22px;'></div>", unsafe_allow_html=True)
+                    st.download_button(
+                        label="Download Report",
+                        data=st.session_state["investigation_report_pdf"],
+                        file_name="Investigation_Report.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+            
+            if generate_clicked:
+                with st.spinner("Analyzing documents and generating report..."):
+                    report_markdown = generate_investigation_report(
+                        search_results=results,
+                        user_query=query
+                    )
+                    
+                    if report_markdown.startswith("Error"):
+                        st.error(report_markdown)
+                    else:
+                        st.session_state["investigation_report_markdown"] = report_markdown
+                        
+                        # Generate PDF bytes
+                        try:
+                            pdf_bytes = generate_pdf_from_markdown(report_markdown)
+                            st.session_state["investigation_report_pdf"] = pdf_bytes
+                            st.rerun() # Rerun to show the download button immediately
+                        except Exception as e:
+                            st.error(f"Failed to generate PDF: {e}")
+                            
+            # Display the PDF preview if it exists in session state
+            if "investigation_report_pdf" in st.session_state:
+                st.markdown("<br>", unsafe_allow_html=True) # Give a little breathing room
+                
+                show_preview = st.toggle("Show PDF Preview", value=True)
+                if show_preview:
+                    with st.container(border=True):
+                        try:
+                            pdf_viewer(st.session_state["investigation_report_pdf"], width=700, height=800)
+                        except Exception as e:
+                            st.error(f"Failed to preview PDF: {e}")

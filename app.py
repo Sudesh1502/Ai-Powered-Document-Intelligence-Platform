@@ -36,32 +36,51 @@ st.set_page_config(
     layout="wide"
 )
 
+# Hide sidebar instantly to prevent flash before login
+st.markdown(
+    """
+    <style>
+        [data-testid="stSidebar"] { display: none; }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+from src.auth.auth_service import login_user, logout_user
+
+# --- Authentication Wall ---
+user = login_user()
+if not user:
+    st.stop()
+
+# If user is logged in, restore the sidebar
+st.markdown(
+    """
+    <style>
+        [data-testid="stSidebar"] { display: block !important; }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+# ---------------------------
+
+with st.sidebar:
+    st.markdown(f"**Signed in as:** {user['name']}")
+    logout_user()
+    st.markdown("---")
+
 header1, header2 = st.columns(
     [1, 8]
 )
 
 with header1:
-
     logo_path = "pages/LOGO.png"
-
-    if os.path.exists(
-        logo_path
-    ):
-
-        st.image(
-            logo_path,
-            width=150
-        )
+    if os.path.exists(logo_path):
+        st.image(logo_path, width=150)
 
 with header2:
-
-    st.title(
-        "AI Powered Document Intelligence Platform"
-    )
-
-    st.caption(
-        "Transforming unstructured documents into searchable business intelligence."
-    )
+    st.title("AI Powered Document Intelligence Platform")
+    st.caption("Transforming unstructured documents into searchable business intelligence.")
 
 st.markdown("---")
 
@@ -328,6 +347,16 @@ if uploaded_files:
                                 metadata
                             )
 
+                    user_info = {
+                        "user_id": user.get("user_id", ""),
+                        "email": user.get("email", ""),
+                        "name": user.get("name", ""),
+                        "uploaded_at": datetime.utcnow().isoformat() + "Z"
+                    }
+                    
+                    # Option B: Inject user tracking directly into the metadata blob
+                    metadata["user_tracking"] = user_info
+                    
                     document = build_document(
                         uploaded_file=uploaded_file,
                         metadata=metadata,
