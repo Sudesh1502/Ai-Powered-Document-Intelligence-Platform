@@ -12,32 +12,51 @@ st.set_page_config(
     page_icon="🔍",
     layout="wide"
 )
+# Hide sidebar instantly to prevent flash before login
+st.markdown(
+    """
+    <style>
+        [data-testid="stSidebar"] { display: none; }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+from src.auth.auth_service import login_user, logout_user
+
+# --- Authentication Wall ---
+user = login_user()
+if not user:
+    st.stop()
+
+# If user is logged in, restore the sidebar
+st.markdown(
+    """
+    <style>
+        [data-testid="stSidebar"] { display: block !important; }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+# ---------------------------
+
+with st.sidebar:
+    st.markdown(f"**Signed in as:** {user['name']}")
+    logout_user()
+    st.markdown("---")
+
 header1, header2 = st.columns(
     [1, 8]
 )
 
 with header1:
-
     logo_path = "pages/LOGO.png"
-
-    if os.path.exists(
-        logo_path
-    ):
-
-        st.image(
-            logo_path,
-            width=150
-        )
+    if os.path.exists(logo_path):
+        st.image(logo_path, width=150)
 
 with header2:
-
-    st.title(
-        "Document Search"
-    )
-
-    st.caption(
-        "Search indexed documents using keyword and semantic search."
-    )
+    st.title("Document Search")
+    st.caption("Search indexed documents using keyword and semantic search.")
 
 st.markdown("---")
 

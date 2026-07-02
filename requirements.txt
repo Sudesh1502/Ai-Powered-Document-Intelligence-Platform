@@ -13,3 +13,5 @@ pillow>=11.0.0
 requests>=2.32.0
 mammoth>=1.12.0
 streamlit-pdf-viewer>=0.0.29
+streamlit-authenticator>=0.4.0
+pyyaml>=6.0.1
