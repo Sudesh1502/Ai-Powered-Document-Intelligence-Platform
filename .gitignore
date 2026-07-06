@@ -1,0 +1,12 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+
+# Ignore test scripts
+test_search.py
+
+# Ignore auth config
+auth_config.yaml
