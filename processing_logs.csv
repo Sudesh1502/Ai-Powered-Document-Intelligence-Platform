@@ -75,3 +75,6 @@ Message: The request is invalid. Details: The property 'amount' does not exist o
 2026-06-30 17:34:28,Sample Contractor Invoice 2.docx,data\Sample Contractor Invoice 2.docx,Completed,Indexed Automatically,170,2026-06-30 17:34:23,2026-06-30 17:34:28,5.14
 2026-06-30 17:34:33,Sample Contractor Invoice 3.docx,data\Sample Contractor Invoice 3.docx,Completed,Indexed Automatically,171,2026-06-30 17:34:28,2026-06-30 17:34:33,4.88
 2026-06-30 17:34:38,Sample Contractor Invoice 4.docx,data\Sample Contractor Invoice 4.docx,Completed,Indexed Automatically,155,2026-06-30 17:34:33,2026-06-30 17:34:38,5.13
+2026-07-02 15:55:39,ACCORD-24-Original.pdf,data\ACCORD-24-Original.pdf,Completed,Indexed Automatically,454,2026-07-02 15:55:27,2026-07-02 15:55:39,12.33
+2026-07-02 15:55:58,ACCORD36-Original.pdf,data\ACCORD36-Original.pdf,Completed,Indexed Automatically,242,2026-07-02 15:55:39,2026-07-02 15:55:58,18.77
+2026-07-02 15:56:09,ACCORD-24-Removed.pdf,Streamlit Upload,Needs Review,"Validation failed. Missing: certificate_date, company_name, producer",0,2026-07-02 15:55:58,2026-07-02 15:56:09,11.29

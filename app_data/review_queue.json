@@ -268,5 +268,29 @@
         "review_reason": "Validation Failed - Missing: invoice_date, po_number, invoice_number",
         "status": "Needs Review",
         "id": "30e15da9-bb12-4d07-84c2-9ffaddacf2f1"
+    },
+    {
+        "document_type": "acord form",
+        "document_title": "Certification of property insurance",
+        "document_number": "N/A",
+        "entity_name": "Oakridge Retail Partners, LP",
+        "document_date": null,
+        "metadata": {
+            "certificate_date": "N/A",
+            "authorized_representative": "Kevin M. Douglas",
+            "policy_number": "SAS-8172654-01",
+            "company_name": "N/A",
+            "insurance_type": "Property",
+            "insured_name": "Oakridge Retail Partners, LP",
+            "document_type": "acord form",
+            "policy_expiration_date": "2026-07-01",
+            "certificate_holder": "JPMorgan Chase Bank, N.A. ISAOA ATIMA",
+            "producer": "N/A",
+            "policy_effective_date": "2025-07-01"
+        },
+        "file_name": "ACCORD-24-Removed.pdf",
+        "review_reason": "Validation Failed - Missing: certificate_date, company_name, producer",
+        "status": "Needs Review",
+        "id": "45ed3c52-fd6b-4a45-b8f3-6546b129a22c"
     }
 ]
