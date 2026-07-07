@@ -1,28 +1,53 @@
-import yaml
-from yaml.loader import SafeLoader
 import streamlit_authenticator as stauth
-from pathlib import Path
 import streamlit as st
 
 class LocalAuthProvider:
-    def __init__(self, config_path: str = "auth_config.yaml"):
-        self.config_path = Path(config_path)
+    def __init__(self):
         self.authenticator = self._load_authenticator()
 
     def _load_authenticator(self):
-        if not self.config_path.exists():
-            st.error(f"Authentication config not found at {self.config_path}")
+        import os
+        from azure.data.tables import TableServiceClient
+        
+        connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+        if not connection_string:
+            st.error("Azure Storage connection string is missing.")
             return None
-
-        with open(self.config_path) as file:
-            config = yaml.load(file, Loader=SafeLoader)
-
-        return stauth.Authenticate(
-            config['credentials'],
-            config['cookie']['name'],
-            config['cookie']['key'],
-            config['cookie']['expiry_days']
-        )
+            
+        try:
+            table_service_client = TableServiceClient.from_connection_string(connection_string)
+            table_client = table_service_client.get_table_client("Users")
+            
+            usernames = {}
+            # Dynamically build the configuration dictionary from the Azure Table
+            for entity in table_client.list_entities():
+                email = entity.get("RowKey")
+                if email:
+                    usernames[email] = {
+                        "email": entity.get("Email"),
+                        "name": entity.get("Name"),
+                        "password": entity.get("Password")
+                    }
+                    
+            config = {
+                'credentials': {'usernames': usernames},
+                'cookie': {
+                    'name': 'doc_intel_auth_v2',
+                    'key': 'adrosonic_secret_auth_key_8492',
+                    'expiry_days': 30
+                }
+            }
+            
+            return stauth.Authenticate(
+                config['credentials'],
+                config['cookie']['name'],
+                config['cookie']['key'],
+                config['cookie']['expiry_days']
+            )
+            
+        except Exception as e:
+            st.error(f"Failed to load users from Azure Table Storage: {e}")
+            return None
 
     def login(self):
         if not self.authenticator:
