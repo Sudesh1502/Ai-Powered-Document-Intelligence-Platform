@@ -85,3 +85,5 @@ Message: The request is invalid. Details: The property 'amount' does not exist o
 2026-07-06 16:31:12,AadhaarCard.jpg,Streamlit Upload,Needs Review,Validation failed. Invalid Format: aadhaar_number ('XXXX XXXX 9898'),0,2026-07-06 16:31:02,2026-07-06 16:31:12,9.31
 2026-07-06 16:40:58,AadhaarCard-dumy.pdf,data\AadhaarCard-dumy.pdf,Review Required,Waiting for manual review,273,2026-07-06 16:40:48,2026-07-06 16:40:58,9.41
 2026-07-06 16:42:56,Screenshot 2026-07-06 164228.png,Streamlit Upload,Needs Review,Duplicate routed to action centre: Data-Level Duplicate (Matching ID & Vendor),420,2026-07-06 16:42:46,2026-07-06 16:42:56,9.87
+2026-07-07 16:15:36,Claim MCD OG.pdf,Gmail Ingestion,Needs Review,Data-Level Duplicate (Matching ID & Vendor),255,2026-07-07 16:15:23,2026-07-07 16:15:36,12.7
+2026-07-07 16:15:47,test4.docx,Gmail Ingestion,Completed,Indexed Automatically,97,2026-07-07 16:15:36,2026-07-07 16:15:47,11.67

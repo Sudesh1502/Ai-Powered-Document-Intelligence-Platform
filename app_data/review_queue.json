@@ -368,5 +368,46 @@
         "review_reason": "Duplicate Detected - Data-Level Duplicate (Matching ID & Vendor)",
         "status": "Needs Review",
         "id": "0e1e01f0-ceaf-4fa4-bce6-81c46df37ac5"
+    },
+    {
+        "document_type": "major claim",
+        "document_title": "Major Claim Document",
+        "document_number": "999995 / Z1108BCSA033903",
+        "entity_name": "London Market Claimant",
+        "document_date": "2026-04-29",
+        "metadata": {
+            "document_type": "major claim",
+            "claimant_name": "London Market Claimant",
+            "claim_ref_ucr": "999995 / Z1108BCSA033903",
+            "policy_ref_umr": "ZZ0000 / Z110821BCSA0002",
+            "paid_amount_100": "118,484,791.20",
+            "policy_insured": "ABCD BUREAU P & C INS CO",
+            "incurred_amount_100": "118,859,553.79",
+            "loss_date_from": "2021-12-15"
+        },
+        "status": "Needs Review",
+        "validation_reason": "Data-Level Duplicate (Matching ID & Vendor)",
+        "id": "60983d70-f8c7-4094-b325-9d02e4874e7b"
+    },
+    {
+        "document_type": "major claim",
+        "document_title": "Major Claim Document",
+        "document_number": "999995 / Z1108BCSA033903",
+        "entity_name": "London Market Claimant",
+        "document_date": "2026-04-29",
+        "metadata": {
+            "policy_ref_umr": "ZZ0000 / Z110821BCSA0002",
+            "incurred_amount_100": "118,859,553.79",
+            "paid_amount_100": "118,484,791.20",
+            "policy_insured": "ABCD BUREAU P & C INS CO",
+            "document_type": "major claim",
+            "claimant_name": "London Market Claimant",
+            "claim_ref_ucr": "999995 / Z1108BCSA033903",
+            "loss_date_from": "2021-12-15"
+        },
+        "file_name": "Claim MCD OG.pdf",
+        "status": "Needs Review",
+        "review_reason": "Data-Level Duplicate (Matching ID & Vendor)",
+        "id": "6a823306-6422-46d5-a1d0-c4ee19033b58"
     }
 ]
