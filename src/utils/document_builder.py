@@ -61,5 +61,5 @@ def build_document(
             ),
 
         "sharepoint_url":
-            ""
+            metadata.get("sharepoint_url", "")
     }

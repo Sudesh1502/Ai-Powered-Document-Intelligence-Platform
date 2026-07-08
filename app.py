@@ -25,6 +25,10 @@ from src.utils.review_service import (
 from src.utils.document_builder import (
     build_document
 )
+from src.utils.blob_service import (
+    upload_to_blob,
+    generate_sas_url
+)
 from src.utils.review_storage import (
     add_review_document
 )
@@ -167,12 +171,8 @@ if uploaded_files:
                         continue
 
                     os.makedirs("data", exist_ok=True)
-                    file_path = os.path.join("data", uploaded_file.name)
-                    with open(file_path, "wb") as f:
-                        f.write(file_bytes)
-
                     if not is_valid_file(
-                        file_path
+                        uploaded_file.name
                     ):
 
                         st.error(
@@ -188,7 +188,7 @@ if uploaded_files:
                     ):
 
                         result = extract_text(
-                            file_path
+                            file_bytes
                         )
                         word_count = len(result.content.split()) if result.content else 0
                     confidence = round(
@@ -232,6 +232,10 @@ if uploaded_files:
                         metadata = extract_metadata(
                             text
                         )
+
+                    # Upload to Azure Blob Storage EARLY so that even rejected/duplicate documents can be previewed in the Action Centre
+                    unique_blob_name = upload_to_blob(file_bytes, uploaded_file.name)
+                    metadata["sharepoint_url"] = unique_blob_name
 
                     # Layer 2 & 3: Near-Duplicate (MinHash/pHash) and Data-Level Duplicate Detection
                     is_near_dup = dedupe_service.is_near_duplicate(text, file_bytes, uploaded_file.name)
@@ -395,6 +399,7 @@ if uploaded_files:
                     metadata["minhash_signature"] = dedupe_service.generate_minhash(text)
                     metadata["phash_signature"] = dedupe_service.generate_phash(file_bytes, uploaded_file.name)
                     
+                    # (Blob upload moved to the top of the pipeline)
                     document = build_document(
                         uploaded_file=uploaded_file,
                         metadata=metadata,
@@ -473,7 +478,7 @@ if uploaded_files:
 
                     log_document_status(
                         file_name=uploaded_file.name,
-                        url=file_path,
+                        url=unique_blob_name,
                         status=status,
                         note=note,
                         start_time=start_time,

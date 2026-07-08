@@ -5,9 +5,11 @@ import streamlit as st
 from datetime import datetime
 import shutil
 import pandas as pd
-import base64
-import mammoth
 from streamlit_pdf_viewer import pdf_viewer
+import io
+import requests
+from src.utils.blob_service import generate_sas_url, delete_blob
+from src.indexing.duplicate_detection_service import DuplicateDetectionService
 
 from src.indexing.upload_document_service import (
     upload_documents
@@ -182,67 +184,50 @@ else:
             [5, 4]
         )
 
-        # Exclusively read from data/ folder
-        file_path = os.path.join(
-            "data",
-            doc["file_name"]
-        )
-
+        blob_name = doc.get("sharepoint_url", "")
+        
         with left:
+            st.subheader(doc["file_name"])
+            st.caption("Document Preview")
 
-            st.subheader(
-                doc["file_name"]
-            )
-
-            st.caption(
-                "Document Preview"
-            )
-
-            if os.path.exists(
-                file_path
-            ):
-
-                extension = os.path.splitext(
-                    file_path
-                )[1].lower()
-
-                with st.container(border=True):
-                    if extension in [
-                        ".png",
-                        ".jpg",
-                        ".jpeg"
-                    ]:
-
-                        st.image(
-                            file_path,
-                            use_container_width=True
-                        )
-
-                    elif extension == ".pdf":
-                        try:
-                            pdf_viewer(file_path, width=700, height=800)
-                        except Exception as e:
-                            st.error(f"Failed to preview PDF: {e}")
-
-                    elif extension == ".docx":
-                        try:
-                            with open(file_path, "rb") as docx_file:
-                                result = mammoth.convert_to_html(docx_file)
-                                html = result.value
-                            
-                            # Render DOCX content inside a scrollable container
-                            st.markdown(
-                                f'<div style="height: 800px; overflow-y: auto; padding: 1rem; background: white; color: black; font-family: sans-serif;">{html}</div>', 
-                                unsafe_allow_html=True
-                            )
-                        except Exception as e:
-                            st.error(f"Failed to preview DOCX: {e}")
-
+            if blob_name:
+                sas_url = generate_sas_url(blob_name)
+                if sas_url:
+                    extension = os.path.splitext(blob_name)[1].lower()
+                    
+                    try:
+                        # Fetch securely into RAM
+                        response = requests.get(sas_url)
+                        response.raise_for_status()
+                        file_bytes = response.content
+                        
+                        with st.container(border=True):
+                            if extension in [".png", ".jpg", ".jpeg"]:
+                                st.image(file_bytes, use_container_width=True)
+                            elif extension == ".pdf":
+                                try:
+                                    pdf_viewer(file_bytes, width=700, height=800)
+                                except Exception as e:
+                                    st.error(f"Failed to preview PDF: {e}")
+                            elif extension == ".docx":
+                                try:
+                                    docx_file = io.BytesIO(file_bytes)
+                                    result = mammoth.convert_to_html(docx_file)
+                                    html = result.value
+                                    
+                                    # Render DOCX content inside a scrollable container
+                                    st.markdown(
+                                        f'<div style="height: 800px; overflow-y: auto; padding: 1rem; background: white; color: black; font-family: sans-serif;">{html}</div>', 
+                                        unsafe_allow_html=True
+                                    )
+                                except Exception as e:
+                                    st.error(f"Failed to preview DOCX: {e}")
+                    except Exception as e:
+                        st.error(f"Failed to load document from cloud: {e}")
+                else:
+                    st.warning("Failed to generate secure preview link.")
             else:
-
-                st.warning(
-                    "Original document not found."
-                )
+                st.warning("Original document URL not found in metadata.")
 
         with right:
 
@@ -492,7 +477,7 @@ else:
                         file_name=doc[
                             "file_name"
                         ],
-                        url=file_path,
+                        url=doc.get("sharepoint_url", ""),
                         status="Approved Manually",
                         note="Reviewed and indexed by human reviewer",
                         start_time=datetime.now(),
@@ -532,7 +517,7 @@ else:
                         file_name=doc[
                             "file_name"
                         ],
-                        url=file_path,
+                        url=doc.get("sharepoint_url", ""),
                         status="Rejected",
                         note="Rejected by human reviewer",
                         start_time=datetime.now(),
@@ -552,9 +537,21 @@ else:
                     remove_review_document(
                         doc.get("id", doc.get("file_name"))
                     )
+                    
+                    # --- DEEP REJECT: Purge from Azure Ecosystem ---
+                    # 1. Delete Blob
+                    blob_name = doc.get("sharepoint_url", "")
+                    if blob_name:
+                        delete_blob(blob_name)
+                        
+                    # 2. Delete Hashes
+                    sha256_hash = doc.get("sha256_signature", "")
+                    if sha256_hash:
+                        dedupe_service = DuplicateDetectionService()
+                        dedupe_service.delete_document_hashes(sha256_hash)
 
                     st.warning(
-                        "Document rejected."
+                        "Document completely rejected and purged from Azure."
                     )
 
                     st.session_state.selected_doc_index = None
