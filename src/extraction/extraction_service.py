@@ -20,15 +20,22 @@ def get_client():
     )
 
 
-def extract_text(file_path):
-    """Extracts text from a given document using Azure OCR."""
+def extract_text(file_input):
+    """Extracts text from a given document using Azure OCR. Accepts a file path or raw bytes."""
     print("\nExtraction service hit, text is being extracted.")
     client = get_client()
 
-    with open(file_path, "rb") as file:
+    if isinstance(file_input, str):
+        with open(file_input, "rb") as file:
+            poller = client.begin_analyze_document(
+                "prebuilt-read",
+                body=file
+            )
+    else:
+        # Assuming file_input is raw bytes
         poller = client.begin_analyze_document(
             "prebuilt-read",
-            body=file
+            body=file_input
         )
         
     print("\nExtraction completed...")

@@ -24,6 +24,21 @@ class DuplicateDetectionService:
             except Exception as e:
                 print(f"Failed to initialize DuplicateDetectionService: {e}")
 
+    def delete_document_hashes(self, sha256_hash: str) -> bool:
+        """Deletes the SHA-256 exact match hash from Azure Table Storage."""
+        if not self.table_client or not sha256_hash:
+            return False
+            
+        try:
+            self.table_client.delete_entity(partition_key="Files", row_key=sha256_hash)
+            print(f"[+] Deleted SHA256 Hash from DocumentHashes: {sha256_hash}")
+            return True
+        except ResourceNotFoundError:
+            return True # If it's already gone, that's fine
+        except Exception as e:
+            print(f"[-] Failed to delete document hashes: {e}")
+            return False
+
     def generate_sha256_hash(self, file_content: bytes) -> str:
         """Generates a SHA-256 hash for the raw file contents."""
         sha256_hash = hashlib.sha256()

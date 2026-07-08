@@ -21,7 +21,7 @@ def validate_acord_form(metadata: dict) -> dict:
     """
     Validates an ACORD form. Returns a dictionary of missing and invalid fields.
     """
-    doc_title = metadata.get("document_title", "").lower()
+    doc_title = str(metadata.get("document_title") or "").lower()
     critical_fields = set()
     
     # Strictly map based on title
@@ -108,9 +108,8 @@ def validate_document_orchestrator(metadata: dict) -> dict:
     """
     The main routing hub for all document validations.
     """
-    doc_type = metadata.get("document_type", "").lower()
-    
-    doc_title = metadata.get("document_title", "").lower()
+    doc_type = str(metadata.get("document_type") or "").lower()
+    doc_title = str(metadata.get("document_title") or "").lower()
     
     # Route to ACORD validation
     if "acord" in doc_type or "accord" in doc_type:

@@ -11,6 +11,7 @@ from src.validation.validation_engine import validate_document_orchestrator, val
 from src.utils.review_storage import add_review_document
 from src.utils.document_builder import build_document
 from src.utils.logger import log_document_status
+from src.utils.blob_service import upload_to_blob
 
 class MockFile:
     def __init__(self, name):
@@ -28,16 +29,10 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
         print(f"[-] Exact duplicate detected for {filename}. Skipping.")
         return
 
-    # Save file to disk temporarily for Azure OCR
-    file_path = os.path.join("data", filename)
-    os.makedirs("data", exist_ok=True)
-    with open(file_path, "wb") as f:
-        f.write(file_bytes)
-
     # Extract Text via OCR
     print(f"[*] Extracting text...")
     try:
-        ocr_result = extract_text(file_path)
+        ocr_result = extract_text(file_bytes)
         text = ocr_result.content if ocr_result else ""
         confidence = calculate_confidence(ocr_result) if ocr_result else 0.0
         page_count = len(ocr_result.pages) if ocr_result and hasattr(ocr_result, "pages") else 1
@@ -51,6 +46,9 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
         print(f"[-] Failed to extract text from {filename}. Skipping.")
         return
 
+    # Upload to Azure Blob Storage EARLY so that even rejected/duplicate documents can be previewed in the Action Centre
+    unique_blob_name = upload_to_blob(file_bytes, filename)
+    
     # Layer 2: Near-Duplicate Detection
     if dedupe_service.is_near_duplicate(text, file_bytes, filename):
         print(f"[-] Near duplicate detected for {filename}. Routing to Action Centre.")
@@ -59,7 +57,8 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
             "file_name": filename,
             "document_title": filename,
             "status": "Needs Review",
-            "review_reason": "Near-Duplicate (Text/Visual Similarity)"
+            "review_reason": "Near-Duplicate (Text/Visual Similarity)",
+            "sharepoint_url": unique_blob_name  # Injected here for the preview!
         }
         add_review_document(metadata_review)
         return
@@ -74,6 +73,7 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
         metadata["file_name"] = filename
         metadata["status"] = "Needs Review"
         metadata["review_reason"] = "Data-Level Duplicate (Matching ID & Vendor)"
+        metadata["sharepoint_url"] = unique_blob_name  # Injected here for the preview!
         add_review_document(metadata)
         log_document_status(
             file_name=filename, url="Gmail Ingestion", status="Needs Review",
@@ -104,6 +104,9 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
             metadata["document_date"] = raw_date.strip()
     else:
         metadata["document_date"] = None
+
+    # Assign the Blob Name we generated earlier to the main index payload
+    metadata["sharepoint_url"] = unique_blob_name
 
     # Build final document using the exact same builder as app.py
     mock_file = MockFile(filename)
