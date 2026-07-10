@@ -375,6 +375,22 @@ else:
                 f"{doc.get('confidence')}%"
             )
 
+            # Display flagged high-value tokens cleanly if they exist
+            if "metadata" in doc:
+                try:
+                    import json
+                    meta_dict = json.loads(doc.get("metadata", "{}")) if isinstance(doc.get("metadata"), str) else doc.get("metadata", {})
+                    flagged_tokens = meta_dict.get("flagged_tokens", [])
+                    if flagged_tokens:
+                        with st.expander("⚠️ View Low-Confidence Important Words Details"):
+                            st.write(f"The OCR engine struggled to read the following {len(flagged_tokens)} important words/numbers:")
+                            for token in flagged_tokens:
+                                word = token.get("word", "")
+                                conf = round(token.get("confidence", 0.0), 2)
+                                st.write(f"- **{word}** ({conf}%)")
+                except Exception:
+                    pass
+
             st.write(
                 f"Current Status : "
                 f"{doc.get('review_status')}"
@@ -449,6 +465,15 @@ else:
                         "review_status",
                         None
                     )
+                    
+                    if "metadata" in doc_to_upload:
+                        try:
+                            import json
+                            meta_dict = json.loads(doc_to_upload["metadata"]) if isinstance(doc_to_upload["metadata"], str) else doc_to_upload["metadata"]
+                            meta_dict.pop("flagged_tokens", None)
+                            doc_to_upload["metadata"] = json.dumps(meta_dict) if isinstance(doc_to_upload["metadata"], str) else meta_dict
+                        except Exception:
+                            pass
 
                     os.makedirs(
                         "data/",
