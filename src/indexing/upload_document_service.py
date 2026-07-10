@@ -10,12 +10,12 @@ from src.config.config import (
 )
 
 
-def upload_documents(documents):
+def upload_documents(documents, index_name="generic-documents-index"):
     """Uploads a list of formatted documents to the Azure search index."""
-    print("\nUploading documents to index...")
+    print(f"\nUploading documents to index: {index_name}...")
     search_client = SearchClient(
         endpoint=AZURE_SEARCH_ENDPOINT,
-        index_name="generic-documents-index",
+        index_name=index_name,
         credential=AzureKeyCredential(AZURE_SEARCH_ADMIN_KEY)
     )
     print("\nIndex uploaded!")

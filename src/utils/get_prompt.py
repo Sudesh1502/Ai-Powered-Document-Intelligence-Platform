@@ -184,3 +184,54 @@ INSTRUCTIONS:
  
 11. Maximum length: 500 words.
 """
+
+def get_policy_extraction_prompt(text: str) -> str:
+    return f"""
+You are an expert insurance underwriter and policy analyst AI.
+
+Analyze the insurance policy document and extract structured metadata corresponding strictly to the Master Policy Index Schema.
+
+Return ONLY valid JSON.
+
+Schema:
+{{
+    "policy_number": "",
+    "insured_name": "",
+    "class_of_business": "",
+    "policy_effective_date": null,
+    "policy_expiration_date": null,
+    "risk_locations": [],
+    "policy_limit": 0.0,
+    "sub_limits": [],
+    "deductible_excess": 0.0,
+    "relevant_clauses": [],
+    "exclusions": [],
+    "notification_conditions": ""
+}}
+
+Field Definitions & Rules:
+- policy_number: The primary policy identification number.
+- insured_name: The name of the insured entity or person.
+- class_of_business: The type of insurance (e.g., "Property", "Cyber", "General Liability").
+- policy_effective_date: The start date of the policy coverage. Must be ISO format: YYYY-MM-DD. If unavailable, return null.
+- policy_expiration_date: The end date of the policy coverage. Must be ISO format: YYYY-MM-DD. If unavailable, return null.
+- risk_locations: An array of strings representing covered locations. (e.g., ["123 Main St, NY", "London Office"]).
+- policy_limit: The maximum financial payout limit of the policy. Must be a float/double number. Strip all currency symbols. If unavailable, return 0.0.
+- sub_limits: An array of strings describing specific limits (e.g., ["Water Damage: 50000", "Cyber Extortion: 250000"]).
+- deductible_excess: The deductible or excess amount the insured must pay. Must be a float/double number. Strip currency symbols. If unavailable, return 0.0.
+- relevant_clauses: An array of strings highlighting critical insuring clauses.
+- exclusions: An array of strings listing what is NOT covered.
+- notification_conditions: String describing the conditions for notifying the insurer of a claim (e.g., "Must notify within 30 days").
+
+Rules:
+- If a string field is missing, return "N/A".
+- If a numeric field is missing, return 0.0.
+- If a date field is missing, return null.
+- If an array field is missing, return an empty array [].
+- Return ONLY valid JSON.
+- Do not wrap the response in markdown.
+- Do not include explanations.
+
+DOCUMENT:
+{text}
+"""

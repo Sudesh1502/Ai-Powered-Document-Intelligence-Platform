@@ -7,6 +7,9 @@ from streamlit_pdf_viewer import pdf_viewer
 
 from src.search.search_service import search_documents, get_summary
 from src.search.report_service import generate_investigation_report, generate_pdf_from_markdown
+from src.utils.blob_service import generate_sas_url
+import requests
+import io
 
 st.set_page_config(
     page_title="Search",
@@ -73,32 +76,42 @@ if st.session_state.get("preview_doc"):
     st.subheader(doc.get("file_name", ""))
     st.caption("Document Preview")
 
-    file_name = doc.get("file_name", "")
-    if file_name:
-        file_path = os.path.abspath(os.path.join("data", file_name))
-        if os.path.exists(file_path):
-            extension = os.path.splitext(file_path)[1].lower()
-            with st.container(border=True):
-                if extension in [".png", ".jpg", ".jpeg"]:
-                    st.image(file_path, use_container_width=True)
-                elif extension == ".pdf":
-                    try:
-                        pdf_viewer(file_path, width=700, height=800)
-                    except Exception as e:
-                        st.error(f"Failed to preview PDF: {e}")
-                elif extension == ".docx":
-                    try:
-                        with open(file_path, "rb") as docx_file:
+    blob_name = doc.get("sharepoint_url", "")
+    if blob_name:
+        sas_url = generate_sas_url(blob_name)
+        if sas_url:
+            extension = os.path.splitext(blob_name)[1].lower()
+            try:
+                # Fetch securely into RAM
+                response = requests.get(sas_url)
+                response.raise_for_status()
+                file_bytes = response.content
+                
+                with st.container(border=True):
+                    if extension in [".png", ".jpg", ".jpeg"]:
+                        st.image(file_bytes, use_container_width=True)
+                    elif extension == ".pdf":
+                        try:
+                            pdf_viewer(file_bytes, width=700, height=800)
+                        except Exception as e:
+                            st.error(f"Failed to preview PDF: {e}")
+                    elif extension == ".docx":
+                        try:
+                            docx_file = io.BytesIO(file_bytes)
                             result = mammoth.convert_to_html(docx_file)
                             html = result.value
-                        st.markdown(
-                            f'<div style="height: 800px; overflow-y: auto; padding: 1rem; background: white; color: black; font-family: sans-serif;">{html}</div>', 
-                            unsafe_allow_html=True
-                        )
-                    except Exception as e:
-                        st.error(f"Failed to preview DOCX: {e}")
+                            st.markdown(
+                                f'<div style="height: 800px; overflow-y: auto; padding: 1rem; background: white; color: black; font-family: sans-serif;">{html}</div>', 
+                                unsafe_allow_html=True
+                            )
+                        except Exception as e:
+                            st.error(f"Failed to preview DOCX: {e}")
+            except Exception as e:
+                st.error(f"Failed to load document from cloud: {e}")
         else:
-            st.warning("Original document not found locally.")
+            st.warning("Failed to generate secure preview link.")
+    else:
+        st.warning("Original document URL not found.")
     st.stop()
 
 c1, c2, c3 = st.columns(

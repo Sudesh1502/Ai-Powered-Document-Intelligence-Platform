@@ -21,7 +21,7 @@ def validate_acord_form(metadata: dict) -> dict:
     """
     Validates an ACORD form. Returns a dictionary of missing and invalid fields.
     """
-    doc_title = metadata.get("document_title", "").lower()
+    doc_title = str(metadata.get("document_title") or "").lower()
     critical_fields = set()
     
     # Strictly map based on title
@@ -108,9 +108,8 @@ def validate_document_orchestrator(metadata: dict) -> dict:
     """
     The main routing hub for all document validations.
     """
-    doc_type = metadata.get("document_type", "").lower()
-    
-    doc_title = metadata.get("document_title", "").lower()
+    doc_type = str(metadata.get("document_type") or "").lower()
+    doc_title = str(metadata.get("document_title") or "").lower()
     
     # Route to ACORD validation
     if "acord" in doc_type or "accord" in doc_type:
@@ -142,3 +141,42 @@ def validate_document_orchestrator(metadata: dict) -> dict:
         
     # If we don't have a specific validator for this type yet, let it pass
     return {"missing": [], "invalid": []}
+
+def validate_email_intent_match(email_body: str, metadata: dict) -> dict:
+    """
+    Uses Gemini to cross-validate if the attached document matches the email intent.
+    Returns {"is_mismatch": bool, "reason": str}
+    """
+    if not email_body or len(email_body.strip()) < 5:
+        return {"is_mismatch": False, "reason": ""}
+        
+    try:
+        import google.generativeai as genai
+        from src.config.config import GEMINI_API_KEY
+        import json
+        
+        genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel('gemini-1.5-pro')
+        
+        prompt = f"""
+        You are a compliance officer for an insurance company.
+        A user has sent an email with an attached document. You need to verify if the attached document matches the intent of the email.
+        
+        Email Body: "{email_body}"
+        
+        Attached Document Metadata: {metadata}
+        
+        Is there a mismatch? (e.g. if the email says "Here is my ACORD 1 claim" but the document metadata shows it's an ACORD 24, that is a mismatch. Or if they state an amount but the invoice amount differs).
+        
+        Reply strictly in this JSON format:
+        {{"is_mismatch": true/false, "reason": "Brief explanation"}}
+        """
+        
+        response = model.generate_content(prompt)
+        text = response.text.strip().replace('```json', '').replace('```', '')
+        
+        result = json.loads(text)
+        return result
+    except Exception as e:
+        print(f"Failed to validate email intent: {e}")
+        return {"is_mismatch": False, "reason": str(e)}

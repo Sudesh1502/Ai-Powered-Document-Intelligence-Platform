@@ -25,6 +25,10 @@ from src.utils.review_service import (
 from src.utils.document_builder import (
     build_document
 )
+from src.utils.blob_service import (
+    upload_to_blob,
+    generate_sas_url
+)
 from src.utils.review_storage import (
     add_review_document
 )
@@ -140,6 +144,7 @@ if uploaded_files:
         st.stop()
 
     st.success(f"Uploaded: {len(uploaded_files)} document(s)")
+    is_policy_doc = st.toggle("This is a Policy Master Document")
 
     if st.button(
         "Process Documents",
@@ -167,12 +172,8 @@ if uploaded_files:
                         continue
 
                     os.makedirs("data", exist_ok=True)
-                    file_path = os.path.join("data", uploaded_file.name)
-                    with open(file_path, "wb") as f:
-                        f.write(file_bytes)
-
                     if not is_valid_file(
-                        file_path
+                        uploaded_file.name
                     ):
 
                         st.error(
@@ -188,7 +189,7 @@ if uploaded_files:
                     ):
 
                         result = extract_text(
-                            file_path
+                            file_bytes
                         )
                         word_count = len(result.content.split()) if result.content else 0
                     confidence = round(
@@ -228,10 +229,17 @@ if uploaded_files:
                     with st.spinner(
                         "Extracting Metadata..."
                     ):
+                        if is_policy_doc:
+                            from src.extraction.metadata_service import extract_policy_metadata
+                            metadata = extract_policy_metadata(text)
+                            target_index = "policy-master-index"
+                        else:
+                            metadata = extract_metadata(text)
+                            target_index = "generic-documents-index"
 
-                        metadata = extract_metadata(
-                            text
-                        )
+                    # Upload to Azure Blob Storage EARLY so that even rejected/duplicate documents can be previewed in the Action Centre
+                    unique_blob_name = upload_to_blob(file_bytes, uploaded_file.name)
+                    metadata["sharepoint_url"] = unique_blob_name
 
                     # Layer 2 & 3: Near-Duplicate (MinHash/pHash) and Data-Level Duplicate Detection
                     is_near_dup = dedupe_service.is_near_duplicate(text, file_bytes, uploaded_file.name)
@@ -304,6 +312,34 @@ if uploaded_files:
                         status_container.update(label=f"⚠️ Action Centre: {uploaded_file.name}", state="complete", expanded=False)
                         action_centre_count += 1
                         continue
+
+                    # Cross Validation against Policy Master Index
+                    doc_type = metadata.get("document_type", "").lower()
+                    if doc_type in ["major claim", "claim closure", "claim settlement"]:
+                        from src.validation.cross_validation_service import cross_validate_claim
+                        breach_errors = cross_validate_claim(metadata)
+                        
+                        if breach_errors:
+                            reason_str = " | ".join(breach_errors)
+                            st.error(f"**Policy Breach!** {reason_str}")
+                            st.warning("This document breached a Master Policy rule and has been routed to the Action Centre.")
+                            metadata["file_name"] = uploaded_file.name
+                            metadata["review_reason"] = f"Policy Breach - {reason_str}"
+                            metadata["status"] = "Needs Review"
+                            add_review_document(metadata)
+                            
+                            log_document_status(
+                                file_name=uploaded_file.name,
+                                url="Streamlit Upload",
+                                status="Needs Review",
+                                note=f"Policy Breach. {reason_str}",
+                                start_time=start_time,
+                                end_time=datetime.now(),
+                                word_count=0,
+                            )
+                            status_container.update(label=f"⚠️ Action Centre (Policy Breach): {uploaded_file.name}", state="complete", expanded=False)
+                            action_centre_count += 1
+                            continue
 
                     st.info(
                         f"Review Status: "
@@ -395,14 +431,23 @@ if uploaded_files:
                     metadata["minhash_signature"] = dedupe_service.generate_minhash(text)
                     metadata["phash_signature"] = dedupe_service.generate_phash(file_bytes, uploaded_file.name)
                     
-                    document = build_document(
-                        uploaded_file=uploaded_file,
-                        metadata=metadata,
-                        text=text,
-                        page_count=page_count,
-                        confidence=confidence,
-                        review_status=review_status
-                    )
+                    # (Blob upload moved to the top of the pipeline)
+                    # Build the document payload based on the index schema
+                    if is_policy_doc:
+                        from src.utils.document_builder import build_policy_document
+                        document = build_policy_document(
+                            uploaded_file=uploaded_file,
+                            metadata=metadata
+                        )
+                    else:
+                        document = build_document(
+                            uploaded_file=uploaded_file,
+                            metadata=metadata,
+                            text=text,
+                            page_count=page_count,
+                            confidence=confidence,
+                            review_status=review_status
+                        )
 
                     with st.expander(
                         "Azure Search Document Preview"
@@ -426,7 +471,8 @@ if uploaded_files:
                         ):
 
                             upload_documents(
-                                [document]
+                                [document],
+                                index_name=target_index
                             )
                         
                         # Log the hashes to Azure Table Storage to prevent future duplicates
@@ -473,7 +519,7 @@ if uploaded_files:
 
                     log_document_status(
                         file_name=uploaded_file.name,
-                        url=file_path,
+                        url=unique_blob_name,
                         status=status,
                         note=note,
                         start_time=start_time,
