@@ -5,3 +5,13 @@ Timestamp,File Name,URL,Status,Note,Word Count,Start Time,End Time,Processing Ti
 2026-07-08 16:17:22,ACCORD-24-Removed.pdf,0e610392-b12f-4dce-9b02-3f9b1b1a33b3.pdf,Rejected,Rejected by human reviewer,0,2026-07-08 16:17:22,2026-07-08 16:17:22,0.0
 2026-07-08 16:25:53,Claim MCD OG.pdf,Gmail Ingestion,Completed,Indexed Automatically,255,2026-07-08 16:25:42,2026-07-08 16:25:53,11.23
 2026-07-08 16:26:04,test1.docx,Gmail Ingestion,Completed,Indexed Automatically,100,2026-07-08 16:25:53,2026-07-08 16:26:04,10.75
+2026-07-09 14:49:25,MR.X_SBI_General_Flexi_Home_Insurance_Proposal_Form.pdf,,Failed,"() The request is invalid. Details: The property 'document_type' does not exist on type 'search.documentFields' or is not present in the API version '2026-04-01'. Make sure to only use property names that are defined by the type.
+Code: 
+Message: The request is invalid. Details: The property 'document_type' does not exist on type 'search.documentFields' or is not present in the API version '2026-04-01'. Make sure to only use property names that are defined by the type.",1024,2026-07-09 14:49:03,2026-07-09 14:49:25,21.88
+2026-07-09 14:58:40,MR.X_SBI_General_Flexi_Home_Insurance_Proposal_Form.pdf,,Failed,"() The request is invalid. Details: An unexpected 'StartArray' node was found when reading from the JSON reader. A 'PrimitiveValue' node was expected.
+Code: 
+Message: The request is invalid. Details: An unexpected 'StartArray' node was found when reading from the JSON reader. A 'PrimitiveValue' node was expected.",1024,2026-07-09 14:58:21,2026-07-09 14:58:40,18.93
+2026-07-09 15:11:26,MR.X_SBI_General_Flexi_Home_Insurance_Proposal_Form.pdf,c49d49dd-d976-4472-b5dd-eb8df67676d9.pdf,Completed,Indexed Automatically,1024,2026-07-09 15:11:06,2026-07-09 15:11:26,19.91
+2026-07-09 16:09:24,PolicyMasterRecord (1).docx,e900e312-0de0-45c0-af21-362ab73f624d.docx,Completed,Indexed Automatically,599,2026-07-09 16:09:12,2026-07-09 16:09:24,12.01
+2026-07-09 16:27:25,Claim_MCD_Mock_Rajan_Mehta.docx,Streamlit Upload,Needs Review,Policy Breach. Missing Policy Number on Claim,0,2026-07-09 16:27:16,2026-07-09 16:27:25,9.13
+2026-07-09 16:36:58,Claim_MCD_Mock_Rajan_Mehta.pdf,Streamlit Upload,Needs Review,Policy Breach. Identity Mismatch: Claim says 'sbi general insurance co ltd' but Policy says 'rajan suresh mehta' | Temporal Breach: Loss Date (2026-06-12) occurred after Policy Expiration Date (2026-03-31),0,2026-07-09 16:36:44,2026-07-09 16:36:58,14.01
