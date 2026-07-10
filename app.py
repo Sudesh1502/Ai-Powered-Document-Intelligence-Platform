@@ -195,7 +195,7 @@ if uploaded_files:
                         word_count = len(result.content.split()) if result.content else 0
                     
                     ocr_analysis = calculate_weighted_confidence(result)
-                    confidence = round(ocr_analysis.get("weighted_score", 0.0) * 100, 2)
+                    confidence = round(ocr_analysis.get("weighted_score", 0.0), 2)
                     
                     # Store flagged tokens in metadata so Action Centre can read them
                     # Assuming we inject this logic into the loop scope later
