@@ -139,7 +139,7 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
     else:
         # Cross Validation against Policy Master Index
         doc_type = metadata.get("document_type", "").lower()
-        if doc_type in ["major claim", "claim closure", "claim settlement"]:
+        if doc_type in ["major claim", "claim form", "claim closure", "claim settlement"]:
             from src.validation.cross_validation_service import cross_validate_claim
             breach_errors = cross_validate_claim(metadata)
             
