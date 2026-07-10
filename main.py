@@ -5,8 +5,8 @@ Main script that orchestrates the entire document processing pipeline: ingestion
 import uuid
 from pathlib import Path
 from src.ingestion.ingestion_service import get_unprocessed_documents
-from src.extraction.extraction_service import calculate_confidence
 from src.extraction.extraction_service import extract_text
+from src.utils.ocr_scoring import calculate_weighted_confidence
 from src.extraction.metadata_service import extract_metadata
 from src.indexing.indexing_service import create_index
 from src.indexing.upload_document_service import upload_documents
@@ -38,7 +38,8 @@ for doc in documents[:2]:
         
         result = extract_text(doc)
         word_count = len(result.content.split()) if result.content else 0
-        confidence = calculate_confidence(result)
+        ocr_analysis = calculate_weighted_confidence(result)
+        confidence = round(ocr_analysis.get("weighted_score", 0.0) * 100, 2)
         metadata = extract_metadata(result.content)
         if "error" in metadata:
             raise Exception(f"Metadata extraction failed: {metadata['error']}")
