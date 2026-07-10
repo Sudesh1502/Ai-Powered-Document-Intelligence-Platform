@@ -5,8 +5,7 @@ from datetime import datetime
 import shutil
 from src.validation.file_validator import is_valid_file
 from src.extraction.extraction_service import (
-    extract_text,
-    calculate_confidence
+    extract_text
 )
 from src.utils.ocr_scoring import calculate_weighted_confidence
 from src.extraction.metadata_service import (
