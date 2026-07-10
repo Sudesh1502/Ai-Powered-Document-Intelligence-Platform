@@ -92,6 +92,10 @@ def extract_metadata(text):
         output = output.strip()
 
         metadata = json.loads(output)
+        
+        # Safety net: If Gemini hallucinates and returns a list, unwrap it
+        if isinstance(metadata, list) and len(metadata) > 0:
+            metadata = metadata[0]
 
         print("\nMetadata extraction completed...")
 
@@ -140,6 +144,11 @@ def extract_policy_metadata(text):
         output = output.strip()
 
         metadata = json.loads(output)
+        
+        # Safety net: If Gemini returns a single dict instead of a list, wrap it in a list
+        if isinstance(metadata, dict):
+            metadata = [metadata]
+            
         print("\nPolicy Metadata extraction completed...")
         return metadata
 

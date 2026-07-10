@@ -8,7 +8,8 @@ from src.validation.document_validation_fields import (
     AADHAAR_CRITICAL_FIELDS,
     CLAIM_SETTLEMENT_CRITICAL_FIELDS,
     INCIDENT_IMAGE_CRITICAL_FIELDS,
-    INVOICE_CRITICAL_FIELDS
+    INVOICE_CRITICAL_FIELDS,
+    CLAIM_FORM_CRITICAL_FIELDS
 )
 
 def validate_claim_closure(metadata: dict) -> dict:
@@ -91,6 +92,9 @@ def _validate_fields(metadata: dict, fields_set: set) -> dict:
 def validate_major_claim(metadata: dict) -> dict:
     return _validate_fields(metadata, MAJOR_CLAIM_CRITICAL_FIELDS)
 
+def validate_claim_form(metadata: dict) -> dict:
+    return _validate_fields(metadata, CLAIM_FORM_CRITICAL_FIELDS)
+
 def validate_aadhaar(metadata: dict) -> dict:
     return _validate_fields(metadata, AADHAAR_CRITICAL_FIELDS)
 
@@ -122,6 +126,10 @@ def validate_document_orchestrator(metadata: dict) -> dict:
     # Route to Major Claim validation
     elif "major claim" in doc_type or "major claim" in doc_title:
         return validate_major_claim(metadata)
+        
+    # Route to Claim Form validation
+    elif "claim form" in doc_type or "claim form" in doc_title:
+        return validate_claim_form(metadata)
         
     # Route to Aadhaar validation
     elif "aadhar" in doc_type or "aadhaar" in doc_type or "adhar" in doc_title:

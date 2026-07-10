@@ -7,7 +7,8 @@ from src.validation.document_validation_fields import (
     AADHAAR_CRITICAL_FIELDS,
     CLAIM_SETTLEMENT_CRITICAL_FIELDS,
     INCIDENT_IMAGE_CRITICAL_FIELDS,
-    INVOICE_CRITICAL_FIELDS
+    INVOICE_CRITICAL_FIELDS,
+    CLAIM_FORM_CRITICAL_FIELDS
 )
 
 def get_metadata_extraction_prompt(text: str) -> str:
@@ -34,6 +35,7 @@ Field Definitions:
 document_type:
 - MUST be exactly one of the following values:
   - acord form
+  - claim form
   - claim closure report
   - major claim
   - aadhar
@@ -101,7 +103,8 @@ Depending on the document, you MUST include the following exact keys inside the 
 - If document_type is "claim closure report", you MUST extract exactly these keys: {list(CLAIM_CLOSURE_CRITICAL_FIELDS)}
 - If document_type is "claim settlement", you MUST extract exactly these keys: {list(CLAIM_SETTLEMENT_CRITICAL_FIELDS)}
 - If document_type is "aadhar", you MUST extract exactly these keys: {list(AADHAAR_CRITICAL_FIELDS)}
-- If the document is a Major Claim Document, you MUST extract exactly these keys: {list(MAJOR_CLAIM_CRITICAL_FIELDS)}
+- If document_type is "major claim", you MUST extract exactly these keys: {list(MAJOR_CLAIM_CRITICAL_FIELDS)}
+- If document_type is "claim form", you MUST extract exactly these keys: {list(CLAIM_FORM_CRITICAL_FIELDS)}
 - If document_type is "incident image", you MUST generate and extract exactly these keys based on your visual analysis of the damage: {list(INCIDENT_IMAGE_CRITICAL_FIELDS)}
 - If document_type is "invoice", you MUST extract exactly these keys: {list(INVOICE_CRITICAL_FIELDS)}
 
@@ -189,25 +192,28 @@ def get_policy_extraction_prompt(text: str) -> str:
     return f"""
 You are an expert insurance underwriter and policy analyst AI.
 
-Analyze the insurance policy document and extract structured metadata corresponding strictly to the Master Policy Index Schema.
+Analyze the insurance policy document. A single document may contain multiple distinct policies (e.g., a commercial fleet schedule or property booklet). 
+Extract structured metadata for EVERY policy found.
 
-Return ONLY valid JSON.
+Return ONLY a valid JSON Array of objects. Do not return a single object.
 
 Schema:
-{{
-    "policy_number": "",
-    "insured_name": "",
-    "class_of_business": "",
-    "policy_effective_date": null,
-    "policy_expiration_date": null,
-    "risk_locations": [],
-    "policy_limit": 0.0,
-    "sub_limits": [],
-    "deductible_excess": 0.0,
-    "relevant_clauses": [],
-    "exclusions": [],
-    "notification_conditions": ""
-}}
+[
+    {{
+        "policy_number": "",
+        "insured_name": "",
+        "class_of_business": "",
+        "policy_effective_date": null,
+        "policy_expiration_date": null,
+        "risk_locations": [],
+        "policy_limit": 0.0,
+        "sub_limits": [],
+        "deductible_excess": 0.0,
+        "relevant_clauses": [],
+        "exclusions": [],
+        "notification_conditions": ""
+    }}
+]
 
 Field Definitions & Rules:
 - policy_number: The primary policy identification number.

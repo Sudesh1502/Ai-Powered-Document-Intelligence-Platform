@@ -162,5 +162,3 @@ for doc in documents[:2]:
         print(f"Failed to process {file_name}: {error_msg}")
 
 
-# index = create_index()
-# print(index)

@@ -234,6 +234,10 @@ else:
             st.subheader(
                 "Metadata Review"
             )
+            
+            review_reason = doc.get("review_reason")
+            if review_reason:
+                st.error(f"**Reason for Review:** {review_reason}")
 
             document_type = st.text_input(
                 "Document Type",

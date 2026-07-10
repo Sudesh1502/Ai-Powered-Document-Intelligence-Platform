@@ -239,44 +239,51 @@ if uploaded_files:
 
                     # Upload to Azure Blob Storage EARLY so that even rejected/duplicate documents can be previewed in the Action Centre
                     unique_blob_name = upload_to_blob(file_bytes, uploaded_file.name)
-                    metadata["sharepoint_url"] = unique_blob_name
+                    if not is_policy_doc:
+                        metadata["sharepoint_url"] = unique_blob_name
+                        
+                        # Layer 2 & 3: Near-Duplicate (MinHash/pHash) and Data-Level Duplicate Detection
+                        is_near_dup = dedupe_service.is_near_duplicate(text, file_bytes, uploaded_file.name)
+                        is_data_dup = dedupe_service.is_data_level_duplicate(metadata)
+                        
+                        if is_near_dup or is_data_dup:
+                            reason = "Near-Duplicate (Text Similarity)" if is_near_dup else "Data-Level Duplicate (Matching ID & Vendor)"
+                            st.warning(f"**Duplicate Detected!** {reason}. Routed to Action Centre.")
+                            
+                            metadata["file_name"] = uploaded_file.name
+                            metadata["review_reason"] = f"Duplicate Detected - {reason}"
+                            metadata["status"] = "Needs Review"
+                            add_review_document(metadata)
+                            
+                            log_document_status(
+                                file_name=uploaded_file.name,
+                                url="Streamlit Upload",
+                                status="Needs Review",
+                                note=f"Duplicate routed to action centre: {reason}",
+                                start_time=start_time,
+                                end_time=datetime.now(),
+                                word_count=word_count,
+                            )
+                            
+                            status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
+                            action_centre_count += 1
+                            continue
 
-                    # Layer 2 & 3: Near-Duplicate (MinHash/pHash) and Data-Level Duplicate Detection
-                    is_near_dup = dedupe_service.is_near_duplicate(text, file_bytes, uploaded_file.name)
-                    is_data_dup = dedupe_service.is_data_level_duplicate(metadata)
+                        review_status = (
+                            get_review_status(
+                                confidence,
+                                metadata
+                            )
+                        )
+                    else:
+                        review_status = "Completed"
+
+                    if is_policy_doc:
+                        # Policies bypass structural validation
+                        validation_results = {"missing": [], "invalid": []}
+                    else:
+                        validation_results = validate_document_orchestrator(metadata)
                     
-                    if is_near_dup or is_data_dup:
-                        reason = "Near-Duplicate (Text Similarity)" if is_near_dup else "Data-Level Duplicate (Matching ID & Vendor)"
-                        st.warning(f"**Duplicate Detected!** {reason}. Routed to Action Centre.")
-                        
-                        metadata["file_name"] = uploaded_file.name
-                        metadata["review_reason"] = f"Duplicate Detected - {reason}"
-                        metadata["status"] = "Needs Review"
-                        add_review_document(metadata)
-                        
-                        log_document_status(
-                            file_name=uploaded_file.name,
-                            url="Streamlit Upload",
-                            status="Needs Review",
-                            note=f"Duplicate routed to action centre: {reason}",
-                            start_time=start_time,
-                            end_time=datetime.now(),
-                            word_count=word_count,
-                        )
-                        
-                        status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
-                        action_centre_count += 1
-                        continue
-
-                    review_status = (
-                        get_review_status(
-                            confidence,
-                            metadata
-                        )
-                    )
-
-
-                    validation_results = validate_document_orchestrator(metadata)
                     missing_fields = validation_results["missing"]
                     invalid_fields = validation_results["invalid"]
             
@@ -314,107 +321,109 @@ if uploaded_files:
                         continue
 
                     # Cross Validation against Policy Master Index
-                    doc_type = metadata.get("document_type", "").lower()
-                    if doc_type in ["major claim", "claim closure", "claim settlement"]:
-                        from src.validation.cross_validation_service import cross_validate_claim
-                        breach_errors = cross_validate_claim(metadata)
-                        
-                        if breach_errors:
-                            reason_str = " | ".join(breach_errors)
-                            st.error(f"**Policy Breach!** {reason_str}")
-                            st.warning("This document breached a Master Policy rule and has been routed to the Action Centre.")
-                            metadata["file_name"] = uploaded_file.name
-                            metadata["review_reason"] = f"Policy Breach - {reason_str}"
-                            metadata["status"] = "Needs Review"
-                            add_review_document(metadata)
+                    if not is_policy_doc:
+                        doc_type = metadata.get("document_type", "").lower()
+                        if doc_type in ["major claim", "claim form", "claim closure", "claim settlement"]:
+                            from src.validation.cross_validation_service import cross_validate_claim
+                            breach_errors = cross_validate_claim(metadata)
                             
-                            log_document_status(
-                                file_name=uploaded_file.name,
-                                url="Streamlit Upload",
-                                status="Needs Review",
-                                note=f"Policy Breach. {reason_str}",
-                                start_time=start_time,
-                                end_time=datetime.now(),
-                                word_count=0,
-                            )
-                            status_container.update(label=f"⚠️ Action Centre (Policy Breach): {uploaded_file.name}", state="complete", expanded=False)
-                            action_centre_count += 1
-                            continue
+                            if breach_errors:
+                                reason_str = " | ".join(breach_errors)
+                                st.error(f"**Policy Breach!** {reason_str}")
+                                st.warning("This document breached a Master Policy rule and has been routed to the Action Centre.")
+                                metadata["file_name"] = uploaded_file.name
+                                metadata["review_reason"] = f"Policy Breach - {reason_str}"
+                                metadata["status"] = "Needs Review"
+                                add_review_document(metadata)
+                                
+                                log_document_status(
+                                    file_name=uploaded_file.name,
+                                    url="Streamlit Upload",
+                                    status="Needs Review",
+                                    note=f"Policy Breach. {reason_str}",
+                                    start_time=start_time,
+                                    end_time=datetime.now(),
+                                    word_count=0,
+                                )
+                                status_container.update(label=f"⚠️ Action Centre (Policy Breach): {uploaded_file.name}", state="complete", expanded=False)
+                                action_centre_count += 1
+                                continue
 
-                    st.info(
-                        f"Review Status: "
-                        f"{review_status}"
-                    )
-
-                    st.markdown(
-                        "## 🏷️ Extracted Metadata"
-                    )
-
-                    c1, c2, c3 = st.columns(3)
-
-                    with c1:
-
-                        st.metric(
-                            "Document Type",
-                            metadata.get(
-                                "document_type",
-                                "N/A"
-                            )
+                    if not is_policy_doc:
+                        st.info(
+                            f"Review Status: "
+                            f"{review_status}"
                         )
 
-                        st.metric(
-                            "Document Number",
-                            metadata.get(
-                                "document_number",
-                                "N/A"
-                            )
+                        st.markdown(
+                            "## 🏷️ Extracted Metadata"
                         )
 
-                    with c2:
+                        c1, c2, c3 = st.columns(3)
 
-                        st.metric(
-                            "Entity",
-                            metadata.get(
-                                "entity_name",
-                                "N/A"
-                            )
-                        )
+                        with c1:
 
-
-                    with c3:
-
-                        st.metric(
-                            "Date",
-                            str(
+                            st.metric(
+                                "Document Type",
                                 metadata.get(
-                                    "document_date",
+                                    "document_type",
                                     "N/A"
                                 )
                             )
-                        )
 
-                        st.metric(
-                            "Pages",
-                            page_count
-                        )
-
-                    if "error" in metadata:
-
-                        st.error(
-                            metadata[
-                                "error"
-                            ]
-                        )
-
-                    else:
-
-                        with st.expander(
-                            "Additional Metadata"
-                        ):
-
-                            st.json(
-                                metadata
+                            st.metric(
+                                "Document Number",
+                                metadata.get(
+                                    "document_number",
+                                    "N/A"
+                                )
                             )
+
+                        with c2:
+
+                            st.metric(
+                                "Entity",
+                                metadata.get(
+                                    "entity_name",
+                                    "N/A"
+                                )
+                            )
+
+
+                        with c3:
+
+                            st.metric(
+                                "Date",
+                                str(
+                                    metadata.get(
+                                        "document_date",
+                                        "N/A"
+                                    )
+                                )
+                            )
+
+                            st.metric(
+                                "Pages",
+                                page_count
+                            )
+
+                        if "error" in metadata:
+
+                            st.error(
+                                metadata[
+                                    "error"
+                                ]
+                            )
+
+                        else:
+
+                            with st.expander(
+                                "Additional Metadata"
+                            ):
+
+                                st.json(
+                                    metadata
+                                )
 
                     user_info = {
                         "user_id": user.get("user_id", ""),
@@ -424,59 +433,61 @@ if uploaded_files:
                     }
                     
                     # Option B: Inject user tracking directly into the metadata blob
-                    metadata["user_tracking"] = user_info
                     
                     # Store fingerprints directly inside the metadata JSON blob
-                    metadata["sha256_signature"] = dedupe_service.generate_sha256_hash(file_bytes)
-                    metadata["minhash_signature"] = dedupe_service.generate_minhash(text)
-                    metadata["phash_signature"] = dedupe_service.generate_phash(file_bytes, uploaded_file.name)
+                    if not is_policy_doc:
+                        metadata["user_tracking"] = user_info
+                        metadata["sha256_signature"] = dedupe_service.generate_sha256_hash(file_bytes)
+                        metadata["minhash_signature"] = dedupe_service.generate_minhash(text)
+                        metadata["phash_signature"] = dedupe_service.generate_phash(file_bytes, uploaded_file.name)
                     
                     # (Blob upload moved to the top of the pipeline)
                     # Build the document payload based on the index schema
                     if is_policy_doc:
                         from src.utils.document_builder import build_policy_document
-                        document = build_policy_document(
-                            uploaded_file=uploaded_file,
-                            metadata=metadata
-                        )
+                        
+                        policies = metadata if isinstance(metadata, list) else [metadata]
+                        documents = []
+                        
+                        st.markdown(f"### 📋 Extracted Policies ({len(policies)} Found)")
+                        
+                        table_data = []
+                        for pol in policies:
+                            table_data.append({
+                                "Policy Number": pol.get("policy_number", "N/A"),
+                                "Insured Name": pol.get("insured_name", "N/A"),
+                                "Class": pol.get("class_of_business", "N/A"),
+                                "Limit": pol.get("policy_limit", 0)
+                            })
+                        st.dataframe(table_data, use_container_width=True)
+                        
+                        for policy_meta in policies:
+                            policy_meta["sharepoint_url"] = unique_blob_name
+                            documents.append(build_policy_document(uploaded_file, policy_meta))
+                            
                     else:
-                        document = build_document(
+                        documents = [build_document(
                             uploaded_file=uploaded_file,
                             metadata=metadata,
                             text=text,
                             page_count=page_count,
                             confidence=confidence,
                             review_status=review_status
-                        )
-
-                    with st.expander(
-                        "Azure Search Document Preview"
-                    ):
-
-                        preview = document.copy()
-
-                        preview.pop(
-                            "review_status",
-                            None
-                        )
-
-                        st.json(
-                            preview
-                        )
+                        )]
+                        
+                        with st.expander("Azure Search Document Preview"):
+                            preview = documents[0].copy()
+                            preview.pop("review_status", None)
+                            st.json(preview)
 
                     if review_status == "Completed":
 
-                        with st.spinner(
-                            "Uploading to Azure Search..."
-                        ):
-
-                            upload_documents(
-                                [document],
-                                index_name=target_index
-                            )
+                        with st.spinner("Uploading to Azure Search..."):
+                            upload_documents(documents, index_name=target_index)
                         
                         # Log the hashes to Azure Table Storage to prevent future duplicates
-                        dedupe_service.log_document(file_bytes, document.get("id", ""), text, uploaded_file.name)
+                        doc_id = documents[0].get("id", "") if len(documents) > 0 else ""
+                        dedupe_service.log_document(file_bytes, doc_id, text, uploaded_file.name)
 
                         # Removed folder creation and file moving to keep files in data/
                         pass

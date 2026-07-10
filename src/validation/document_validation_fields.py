@@ -58,6 +58,14 @@ MAJOR_CLAIM_CRITICAL_FIELDS = {
     "paid_amount_100"
 }
 
+CLAIM_FORM_CRITICAL_FIELDS = {
+    "document_type",
+    "policy_number",
+    "insured_name",
+    "date_of_loss",
+    "claim_amount"
+}
+
 AADHAAR_CRITICAL_FIELDS = {
     "document_type",
     "aadhaar_number",

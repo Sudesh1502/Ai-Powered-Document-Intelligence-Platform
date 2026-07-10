@@ -47,14 +47,17 @@ def cross_validate_claim(claim_metadata: dict) -> list:
     
     # 2. Identity Check
     print("[Cross-Validation] 👤 Running Identity Check...")
-    claim_insured = str(get_field("insured_name") or get_field("claimant_name") or get_field("policy_insured") or "").strip().lower()
-    policy_insured = str(policy.get("insured_name") or "").strip().lower()
+    claim_insured_raw = str(get_field("insured_name") or get_field("claimant_name") or get_field("policy_insured") or "").strip()
+    policy_insured_raw = str(policy.get("insured_name") or "").strip()
     
-    # Simple fuzzy check: do they share words?
+    claim_insured = claim_insured_raw.replace(" ", "").lower()
+    policy_insured = policy_insured_raw.replace(" ", "").lower()
+    
+    # Strict exact match (ignoring spaces and case)
     if claim_insured and policy_insured and claim_insured not in ["n/a"]:
-        if not any(word in policy_insured for word in claim_insured.split()):
-            print(f"[Cross-Validation] ❌ Identity Mismatch: Claim ({claim_insured}) vs Policy ({policy_insured})")
-            breaches.append(f"Identity Mismatch: Claim says '{claim_insured}' but Policy says '{policy_insured}'")
+        if claim_insured != policy_insured:
+            print(f"[Cross-Validation] ❌ Identity Mismatch: Claim ({claim_insured_raw}) vs Policy ({policy_insured_raw})")
+            breaches.append(f"Identity Mismatch: Claim says '{claim_insured_raw}' but Policy says '{policy_insured_raw}'")
         else:
             print("[Cross-Validation] ✅ Identity Check passed.")
     else:
@@ -62,7 +65,7 @@ def cross_validate_claim(claim_metadata: dict) -> list:
 
     # 3. Financial Check
     print("[Cross-Validation] 💰 Running Financial Limits Check...")
-    claim_amount_str = str(get_field("settlement_amount") or get_field("paid_amount_100") or get_field("net_settlement_amount") or "0")
+    claim_amount_str = str(get_field("settlement_amount") or get_field("paid_amount_100") or get_field("net_settlement_amount") or get_field("claim_amount") or "0")
     
     try:
         claim_amount = float(claim_amount_str.replace(",", "").replace("$", "").replace("£", "").strip())
