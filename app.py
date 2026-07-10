@@ -225,6 +225,15 @@ if uploaded_files:
                     st.info(
                         f"Confidence: {confidence}%"
                     )
+                    
+                    flagged_tokens = ocr_analysis.get("flagged_tokens", [])
+                    if flagged_tokens:
+                        with st.expander("Details"):
+                            st.write(f"High-value words with low confidence:")
+                            for token in flagged_tokens:
+                                word = token.get("word", "")
+                                conf = round(token.get("confidence", 0.0), 2)
+                                st.write(f"- **{word}** ({conf}%)")
 
                     with st.spinner(
                         "Extracting Metadata..."
