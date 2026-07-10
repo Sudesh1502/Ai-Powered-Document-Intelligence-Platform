@@ -80,6 +80,33 @@ for doc in documents[:2]:
             # IMPORTANT: Use 'continue' or 'return' here to skip the Azure Search upload!
             continue
         
+        # Cross Validation against Policy Master Index
+        doc_type = metadata.get("document_type", "").lower()
+        if doc_type in ["major claim", "claim closure", "claim settlement"]:
+            from src.validation.cross_validation_service import cross_validate_claim
+            breach_errors = cross_validate_claim(metadata)
+            
+            if breach_errors:
+                reason_str = " | ".join(breach_errors)
+                print(f"Policy Breach for {file_name}. {reason_str}")
+                
+                metadata["file_name"] = file_name
+                metadata["review_reason"] = f"Policy Breach - {reason_str}"
+                metadata["status"] = "Needs Review"
+                
+                add_review_document(metadata)
+                
+                log_document_status(
+                    file_name=file_name,
+                    url=url,
+                    status="Needs Review",
+                    note=f"Policy Breach. {reason_str}",
+                    start_time=start_time,
+                    end_time=datetime.now(),
+                    word_count=word_count
+                )
+                continue
+        
         
         raw_date = str(metadata.get("document_date", ""))
         formatted_date = None

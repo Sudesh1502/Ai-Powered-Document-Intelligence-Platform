@@ -137,7 +137,31 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
             note=metadata["review_reason"], start_time=start_time, end_time=datetime.datetime.now(), word_count=len(text.split()) if text else 0
         )
     else:
-        print(f"[+] Document is valid! Uploading to Azure AI Search...")
+        # Cross Validation against Policy Master Index
+        doc_type = metadata.get("document_type", "").lower()
+        if doc_type in ["major claim", "claim closure", "claim settlement"]:
+            from src.validation.cross_validation_service import cross_validate_claim
+            breach_errors = cross_validate_claim(metadata)
+            
+            if breach_errors:
+                reason_str = " | ".join(breach_errors)
+                print(f"[-] Policy Breach for {filename}. Routing to Action Centre.")
+                
+                metadata["file_name"] = filename
+                metadata["status"] = "Needs Review"
+                metadata["review_reason"] = f"Policy Breach - {reason_str}"
+                
+                # Update the document payload status so it renders correctly if previewed
+                document["status"] = "Needs Review"
+                
+                add_review_document(metadata)
+                log_document_status(
+                    file_name=filename, url="Gmail Ingestion", status="Needs Review",
+                    note=f"Policy Breach. {reason_str}", start_time=start_time, end_time=datetime.datetime.now(), word_count=len(text.split()) if text else 0
+                )
+                return # Skip Azure Search upload
+                
+        print(f"[+] Document is valid and passed all checks! Uploading to Azure AI Search...")
         upload_documents([document])
         log_document_status(
             file_name=filename, url="Gmail Ingestion", status="Completed",
