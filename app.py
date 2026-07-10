@@ -158,6 +158,14 @@ if uploaded_files:
 
                     file_bytes = uploaded_file.getvalue()
 
+                    from src.indexing.duplicate_detection_service import DuplicateDetectionService
+                    dedupe_service = DuplicateDetectionService()
+
+                    if dedupe_service.is_exact_duplicate(file_bytes):
+                        st.warning("Exact duplicate document detected. Skipping.")
+                        status_container.update(label=f"⏭️ Skipped Duplicate: {uploaded_file.name}", state="complete", expanded=False)
+                        continue
+
                     os.makedirs("data", exist_ok=True)
                     file_path = os.path.join("data", uploaded_file.name)
                     with open(file_path, "wb") as f:
@@ -225,7 +233,32 @@ if uploaded_files:
                             text
                         )
 
-                
+                    # Layer 2 & 3: Near-Duplicate (MinHash/pHash) and Data-Level Duplicate Detection
+                    is_near_dup = dedupe_service.is_near_duplicate(text, file_bytes, uploaded_file.name)
+                    is_data_dup = dedupe_service.is_data_level_duplicate(metadata)
+                    
+                    if is_near_dup or is_data_dup:
+                        reason = "Near-Duplicate (Text Similarity)" if is_near_dup else "Data-Level Duplicate (Matching ID & Vendor)"
+                        st.warning(f"**Duplicate Detected!** {reason}. Routed to Action Centre.")
+                        
+                        metadata["file_name"] = uploaded_file.name
+                        metadata["review_reason"] = f"Duplicate Detected - {reason}"
+                        metadata["status"] = "Needs Review"
+                        add_review_document(metadata)
+                        
+                        log_document_status(
+                            file_name=uploaded_file.name,
+                            url="Streamlit Upload",
+                            status="Needs Review",
+                            note=f"Duplicate routed to action centre: {reason}",
+                            start_time=start_time,
+                            end_time=datetime.now(),
+                            word_count=word_count,
+                        )
+                        
+                        status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
+                        action_centre_count += 1
+                        continue
 
                     review_status = (
                         get_review_status(
@@ -357,6 +390,11 @@ if uploaded_files:
                     # Option B: Inject user tracking directly into the metadata blob
                     metadata["user_tracking"] = user_info
                     
+                    # Store fingerprints directly inside the metadata JSON blob
+                    metadata["sha256_signature"] = dedupe_service.generate_sha256_hash(file_bytes)
+                    metadata["minhash_signature"] = dedupe_service.generate_minhash(text)
+                    metadata["phash_signature"] = dedupe_service.generate_phash(file_bytes, uploaded_file.name)
+                    
                     document = build_document(
                         uploaded_file=uploaded_file,
                         metadata=metadata,
@@ -390,6 +428,9 @@ if uploaded_files:
                             upload_documents(
                                 [document]
                             )
+                        
+                        # Log the hashes to Azure Table Storage to prevent future duplicates
+                        dedupe_service.log_document(file_bytes, document.get("id", ""), text, uploaded_file.name)
 
                         # Removed folder creation and file moving to keep files in data/
                         pass

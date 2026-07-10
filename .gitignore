@@ -10,3 +10,6 @@ test_search.py
 
 # Ignore auth config
 auth_config.yaml
+
+# Ignore API credentials
+Sudesh API Credentials.txt

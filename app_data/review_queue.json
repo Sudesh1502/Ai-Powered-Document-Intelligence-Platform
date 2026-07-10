@@ -292,5 +292,81 @@
         "review_reason": "Validation Failed - Missing: certificate_date, company_name, producer",
         "status": "Needs Review",
         "id": "45ed3c52-fd6b-4a45-b8f3-6546b129a22c"
+    },
+    {
+        "document_type": "aadhar",
+        "document_title": "AADHAAR",
+        "document_number": "4587 2468 1357",
+        "entity_name": "Sachin Kumar",
+        "document_date": null,
+        "metadata": {
+            "gender": "Male",
+            "dob": "1990-07-15",
+            "name": "Sachin Kumar",
+            "aadhaar_number": "4587 2468 1357",
+            "document_type": "aadhar",
+            "address": "S/O: Mahesh Kumar 123, Shanti Vihar Near Green Park Badarwas Tehsil Badarwas District Chhatarpur Madhya Pradesh - 471606"
+        },
+        "file_name": "Aadhar Card Sample.png",
+        "review_reason": "Duplicate Detected - Data-Level Duplicate (Matching ID & Vendor)",
+        "status": "Needs Review",
+        "id": "28f8be9f-79fb-452a-810b-3cbc6a6fc1a7"
+    },
+    {
+        "document_type": "aadhar",
+        "document_title": "AADHAAR",
+        "document_number": "XXXX XXXX 9898",
+        "entity_name": "Sudesh Janardan Mhamankar",
+        "document_date": "2013-04-24",
+        "metadata": {
+            "gender": "MALE",
+            "dob": "02/09/2004",
+            "name": "Sudesh Janardan Mhamankar",
+            "aadhaar_number": "XXXX XXXX 9898",
+            "document_type": "aadhar",
+            "address": "C/O: Prakash Bandu Pawar, H.N 599, Durga Nivas, Dattamandir, Kherdi, Chiplun, Ratnagiri, Maharashtra, 415605"
+        },
+        "file_name": "AadhaarCard.jpg",
+        "review_reason": "Validation Failed - Invalid Format: aadhaar_number ('XXXX XXXX 9898')",
+        "status": "Needs Review",
+        "id": "3465e32a-aeb6-4f76-ab43-34181686dade"
+    },
+    {
+        "id": "79b54f51-fd71-4fa9-8da4-66dcac802fd0",
+        "file_name": "AadhaarCard-dumy.pdf",
+        "document_type": "aadhar",
+        "document_title": "AADHAAR",
+        "content": "भारत सरकार\nआधार\nAADHAAR\nभारत सरकार Government of India\nभारतीय विशिष्ट ओळख प्राधिकरण Unique Identification Authority of India\nनोंदणी क्रमांक:/ Enrolment No 12345678979854532\nDownload Date:15/11/2022\nTo सुदेश जनार्दन म्हामणकर Sudesh Janardan Mhamankar C/O: Prakash Bandu Pawar H.N 599, Durga Nivas Dattamandir Kherdi\nChiplun Ratnagini Maharashtra-415605\nIssue Date: 24/04/2013\nआपला आधार क्रमांक / Your Andhaar No. : 1234 5678 9102 माझे आधार, माझी ओळख\nDownload Date: 16/11/2022\nभारत सरकार Government of India\nसुदेश जनार्दन म्हामणकर Sudesh Janardan Mhamankar जन्म तारीख/DOB: 02/09/2004 you MALE\nIssue Date:24/04/2013\n1234 5678 9102\nमाझे आधार, माझी ओळख\nमाहिती\n· आधार ओळखीचा पुरावा आहे नागरिकत्वाचा नाही\n· सुरक्षित QR कोड / ऑफलाइन XML/ ऑनलाइन प्रमाणीकरण वापरून ओळख सत्यापित करा.\n· है इलेक्ट्रॉनिक प्रक्रिये द्वारा तयार झालेले एक पत्र आहे.\nINFORMATION\n\" Aadhaar is a proof of identity, not of citizenship,\n· Verify identity using Secure QR Code/ Offline XML/ Online Authentication.\n· This is electronically generated letter.\n· आधार देशभरात वैध आहे\nआधार आपल्याला विविध सरकारी आणि खाजगी सेवा सुलभतेने घेण्यास मदत करते\nआपला मोबाइल नंबर आणि ईमेल आयडी आधारमध्ये अद्यावत ठेवा\n· आपल्या स्मार्ट फोनमध्ये आधार घ्या- mAadhaar App वापरा\n# Aadhaar is valid throughout the country.\n# Aadhaar helps you avail various Government and non-Government services easily.\n· Keep your mobile number & email ID updated in Aadhaar.\n· Carry Aadhaar in your smart phone - use mAadhaar App.\nभारतीय विशिष्ट ओळख प्राधिकरण Unique Identification Authority of India\nAACHARR\nपत्ता: मार्फत: प्रकाश बंदू पवार, एच. में. 599, दुर्गा निवास, दत्तमंदिर, खेड़ी, चिपलून, रत्नागिरी, महाराष्ट्र, 415605\nAddress: C/O: Prakash Bandu Pawar, H.N 599. Durga Nivas, Dattamandir, Kherdi, Chiplun, Ratnagiri. Maharashtra, 415605\n1234 5678 9102\n1947 1 help@uidal.gov.in 1 www.uidai.gov.in",
+        "document_number": "1234 5678 9102",
+        "entity_name": "Sudesh Janardan Mhamankar",
+        "document_date": "2013-04-24",
+        "page_count": 1,
+        "confidence": 84.78,
+        "metadata": "{\"document_type\": \"aadhar\", \"document_title\": \"AADHAAR\", \"document_number\": \"1234 5678 9102\", \"entity_name\": \"Sudesh Janardan Mhamankar\", \"document_date\": \"2013-04-24\", \"metadata\": {\"gender\": \"MALE\", \"dob\": \"02/09/2004\", \"name\": \"Sudesh Janardan Mhamankar\", \"aadhaar_number\": \"1234 5678 9102\", \"document_type\": \"aadhar\", \"address\": \"C/O: Prakash Bandu Pawar, H.N 599, Durga Nivas, Dattamandir, Kherdi, Chiplun, Ratnagiri, Maharashtra, 415605\"}, \"user_tracking\": {\"user_id\": \"sudesh.mhamankar@adrosonic.com\", \"email\": \"Sudesh.Mhamankar@adrosonic.com\", \"name\": \"Sudesh Mhamankar\", \"uploaded_at\": \"2026-07-06T11:10:57.983857Z\"}, \"sha256_signature\": \"bc1b8961ddbb86a701e7850cc5503f2ae5a6bff79238c539038057b1810f7ce7\", \"minhash_signature\": \"29024695,22187098,4899965,12425303,4698838,25595485,17612125,18018218,16871890,12860865,28839107,41902837,24217803,28839148,5174061,42490593,21350867,59353182,32134817,32413643,10444794,27926208,20391646,18902536,12994955,24409470,54729243,6672301,3104268,7394928,15909494,10602687,49273115,8404017,19091447,3693414,21953810,34168145,20309246,19294298,853641,56614551,21457377,8419974,26872722,30927206,10124436,19752480,18790819,141922896,51024858,20202598,10538710,14561242,5587241,2658142,5467219,26032360,7691147,7005025,32416143,3365132,6496819,5296886,62554171,3506375,6685219,16556744,17477877,10484581,67464347,12819032,41034834,7931589,3308366,47741812,95900614,2240343,16581050,4735024,20821011,63551749,10051332,10939176,14388041,3788730,14596079,30264323,37908755,26870647,27108334,59023583,12532024,2511718,3279093,98511786,21503236,10414938,27984223,9889205,14218357,13317265,10923312,9074970,7249153,18814238,2469009,39910434,36830638,19330382,27653844,23577302,53612581,4345675,30346787,20524783,20080048,4152557,13978170,16618458,6828539,66264147,3288701,34427376,44583466,3839013,8912378,5654273\", \"phash_signature\": \"\"}",
+        "sharepoint_url": ""
+    },
+    {
+        "document_type": "acord form",
+        "document_title": "Certification of property insurance",
+        "document_number": "SAS-8172654-01",
+        "entity_name": "Oakridge Retail Partners, LP",
+        "document_date": "2025-08-25",
+        "metadata": {
+            "insured_name": "Oakridge Retail Partners, LP",
+            "authorized_representative": "Kevin M. Douglas",
+            "certificate_date": "2025-08-25",
+            "certificate_holder": "JPMorgan Chase Bank, N.A. ISAOA ATIMA Attn: Collateral Administration 383 Madison Avenue, 6th Floor New York, NY 10179",
+            "document_type": "acord form",
+            "producer": "MetroPoint Insurance Agency, Inc. 4700 Stonecrest Parkway, Suite 600 Cleveland, OH 44131",
+            "policy_expiration_date": "2026-07-01",
+            "policy_number": "SAS-8172654-01",
+            "company_name": "State Auto Insurance Companies",
+            "policy_effective_date": "2025-07-01",
+            "insurance_type": "Property"
+        },
+        "file_name": "Screenshot 2026-07-06 164228.png",
+        "review_reason": "Duplicate Detected - Data-Level Duplicate (Matching ID & Vendor)",
+        "status": "Needs Review",
+        "id": "0e1e01f0-ceaf-4fa4-bce6-81c46df37ac5"
     }
 ]
