@@ -46,6 +46,20 @@ def extract_metadata(text):
 
             print(usage)
 
+            print(
+                "Prompt Tokens:",
+                usage.prompt_token_count
+            )
+
+            print(
+                "Output Tokens:",
+                usage.candidates_token_count
+            )
+
+            print(
+                "Total Tokens:",
+                usage.total_token_count
+            )
             calculate_gemini_cost(
             prompt_tokens=usage.prompt_token_count,
             output_tokens=usage.candidates_token_count,

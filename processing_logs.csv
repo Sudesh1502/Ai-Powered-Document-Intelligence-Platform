@@ -75,3 +75,13 @@ Message: The request is invalid. Details: The property 'amount' does not exist o
 2026-06-30 17:34:28,Sample Contractor Invoice 2.docx,data\Sample Contractor Invoice 2.docx,Completed,Indexed Automatically,170,2026-06-30 17:34:23,2026-06-30 17:34:28,5.14
 2026-06-30 17:34:33,Sample Contractor Invoice 3.docx,data\Sample Contractor Invoice 3.docx,Completed,Indexed Automatically,171,2026-06-30 17:34:28,2026-06-30 17:34:33,4.88
 2026-06-30 17:34:38,Sample Contractor Invoice 4.docx,data\Sample Contractor Invoice 4.docx,Completed,Indexed Automatically,155,2026-06-30 17:34:33,2026-06-30 17:34:38,5.13
+2026-07-02 15:55:39,ACCORD-24-Original.pdf,data\ACCORD-24-Original.pdf,Completed,Indexed Automatically,454,2026-07-02 15:55:27,2026-07-02 15:55:39,12.33
+2026-07-02 15:55:58,ACCORD36-Original.pdf,data\ACCORD36-Original.pdf,Completed,Indexed Automatically,242,2026-07-02 15:55:39,2026-07-02 15:55:58,18.77
+2026-07-02 15:56:09,ACCORD-24-Removed.pdf,Streamlit Upload,Needs Review,"Validation failed. Missing: certificate_date, company_name, producer",0,2026-07-02 15:55:58,2026-07-02 15:56:09,11.29
+2026-07-06 16:09:38,ACCORD-24-Original.pdf,data\ACCORD-24-Original.pdf,Completed,Indexed Automatically,454,2026-07-06 16:08:58,2026-07-06 16:09:38,39.18
+2026-07-06 16:26:59,images.jpg,data\images.jpg,Failed,Waiting for manual review,0,2026-07-06 16:26:46,2026-07-06 16:26:59,12.8
+2026-07-06 16:28:46,images.jpg,data\images.jpg,Rejected,Rejected by human reviewer,0,2026-07-06 16:28:46,2026-07-06 16:28:46,0.0
+2026-07-06 16:29:33,Aadhar Card Sample.png,Streamlit Upload,Needs Review,Duplicate routed to action centre: Data-Level Duplicate (Matching ID & Vendor),91,2026-07-06 16:29:21,2026-07-06 16:29:33,12.03
+2026-07-06 16:31:12,AadhaarCard.jpg,Streamlit Upload,Needs Review,Validation failed. Invalid Format: aadhaar_number ('XXXX XXXX 9898'),0,2026-07-06 16:31:02,2026-07-06 16:31:12,9.31
+2026-07-06 16:40:58,AadhaarCard-dumy.pdf,data\AadhaarCard-dumy.pdf,Review Required,Waiting for manual review,273,2026-07-06 16:40:48,2026-07-06 16:40:58,9.41
+2026-07-06 16:42:56,Screenshot 2026-07-06 164228.png,Streamlit Upload,Needs Review,Duplicate routed to action centre: Data-Level Duplicate (Matching ID & Vendor),420,2026-07-06 16:42:46,2026-07-06 16:42:56,9.87
