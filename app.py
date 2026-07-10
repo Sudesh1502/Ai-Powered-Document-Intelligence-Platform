@@ -123,7 +123,7 @@ with c4:
 st.markdown("---")
 
 st.markdown(
-    "## 📤 Upload Document"
+    "## ⬆️ Upload Document"
 )
 
 uploaded_files = st.file_uploader(
@@ -214,7 +214,7 @@ if uploaded_files:
                     )
 
                     st.markdown(
-                        "## 🎯 OCR Confidence"
+                        "## ⭕ OCR Confidence"
                     )
 
                     st.progress(
@@ -348,7 +348,7 @@ if uploaded_files:
                     )
 
                     st.markdown(
-                        "## 🏷️ Extracted Metadata"
+                        "## 👁️‍🗨️ Extracted Metadata"
                     )
 
                     c1, c2, c3 = st.columns(3)
