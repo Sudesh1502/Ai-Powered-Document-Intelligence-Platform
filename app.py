@@ -269,7 +269,11 @@ if uploaded_files:
                             target_index = "generic-documents-index"
                             
                         # Tag source for Action Centre tracking
-                        metadata["source"] = "Manual Ingestion"
+                        if isinstance(metadata, list):
+                            for item in metadata:
+                                item["source"] = "Manual Ingestion"
+                        else:
+                            metadata["source"] = "Manual Ingestion"
 
                     # Upload to Azure Blob Storage EARLY so that even rejected/duplicate documents can be previewed in the Action Centre
                     unique_blob_name = upload_to_blob(file_bytes, uploaded_file.name)
