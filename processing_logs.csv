@@ -15,3 +15,16 @@ Message: The request is invalid. Details: An unexpected 'StartArray' node was fo
 2026-07-09 16:09:24,PolicyMasterRecord (1).docx,e900e312-0de0-45c0-af21-362ab73f624d.docx,Completed,Indexed Automatically,599,2026-07-09 16:09:12,2026-07-09 16:09:24,12.01
 2026-07-09 16:27:25,Claim_MCD_Mock_Rajan_Mehta.docx,Streamlit Upload,Needs Review,Policy Breach. Missing Policy Number on Claim,0,2026-07-09 16:27:16,2026-07-09 16:27:25,9.13
 2026-07-09 16:36:58,Claim_MCD_Mock_Rajan_Mehta.pdf,Streamlit Upload,Needs Review,Policy Breach. Identity Mismatch: Claim says 'sbi general insurance co ltd' but Policy says 'rajan suresh mehta' | Temporal Breach: Loss Date (2026-06-12) occurred after Policy Expiration Date (2026-03-31),0,2026-07-09 16:36:44,2026-07-09 16:36:58,14.01
+2026-07-10 12:47:11,Filled-2-AcordForm36Agent-BrokerofRecordChangeBOR.pdf (2).pdf,045124d1-000d-4a19-9dad-74a65f70add0.pdf,Completed,Indexed Automatically,255,2026-07-10 12:46:54,2026-07-10 12:47:11,17.12
+2026-07-10 13:05:59,Sample Blur Doc.png,,Failed,"Progress Value has invalid value [0.0, 1.0]: 76.05",1272,2026-07-10 13:05:49,2026-07-10 13:05:59,10.2
+2026-07-10 13:06:15,Sample Blur Doc.png,,Failed,"Progress Value has invalid value [0.0, 1.0]: 76.05",1272,2026-07-10 13:06:06,2026-07-10 13:06:15,8.68
+2026-07-10 13:07:47,Filled ACORD Property Loss Notice S-4.pdf,,Failed,"Progress Value has invalid value [0.0, 1.0]: 72.07",667,2026-07-10 13:07:40,2026-07-10 13:07:47,7.23
+2026-07-10 13:11:16,Acord-24-Certificate-Of-Property-Insurance.pdf,,Failed,"Progress Value has invalid value [0.0, 1.0]: 99.26",298,2026-07-10 13:11:10,2026-07-10 13:11:16,5.89
+2026-07-10 13:46:43,Filled-2-AcordForm36Agent-BrokerofRecordChangeBOR.pdf (2).pdf,82b9c854-e2a5-49bf-9cd0-a8826156273d.pdf,Completed,Indexed Automatically,255,2026-07-10 13:46:23,2026-07-10 13:46:43,19.9
+2026-07-10 15:03:22,Filled-3-Acord-24-Certificate-Of-Property-Insurance.pdf (4).pdf,b0c79a06-7f3b-4c09-924d-3417e6b17a7f.pdf,Completed,Indexed Automatically,448,2026-07-10 15:03:08,2026-07-10 15:03:22,14.33
+2026-07-10 15:03:53,Sample Blur Doc.png,fd7a67cc-a5f3-42db-bccb-95ca856d932a.png,Review Required,Waiting for manual review,1272,2026-07-10 15:03:37,2026-07-10 15:03:53,15.9
+2026-07-10 15:18:01,Sample Blur Doc.png,a09e65f7-2b75-48b6-9e2e-c643d08d62ed.png,Review Required,Waiting for manual review,1272,2026-07-10 15:17:45,2026-07-10 15:18:01,16.22
+2026-07-10 15:45:44,Sample Blur Doc.png,c88e58e4-5804-4c9b-a31d-c3051dea9121.png,Review Required,Waiting for manual review,1272,2026-07-10 15:45:26,2026-07-10 15:45:44,17.99
+2026-07-10 15:46:14,Sample Blur Doc.png,c88e58e4-5804-4c9b-a31d-c3051dea9121.png,Approved Manually,Reviewed and indexed by human reviewer,0,2026-07-10 15:46:14,2026-07-10 15:46:14,0.0
+2026-07-10 15:46:43,Sample Blur Doc.png,Streamlit Upload,Needs Review,Duplicate routed to action centre: Data-Level Duplicate (Matching ID & Vendor),1272,2026-07-10 15:46:27,2026-07-10 15:46:43,15.77
+2026-07-10 15:50:41,Sample Blur Doc.png,47df2d9e-7f99-44e5-8190-111cf575b8d9.png,Rejected,Rejected by human reviewer,0,2026-07-10 15:50:41,2026-07-10 15:50:41,0.0

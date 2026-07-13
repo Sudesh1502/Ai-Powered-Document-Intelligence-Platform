@@ -449,6 +449,15 @@ else:
                         "review_status",
                         None
                     )
+                    
+                    if "metadata" in doc_to_upload:
+                        try:
+                            import json
+                            meta_dict = json.loads(doc_to_upload["metadata"]) if isinstance(doc_to_upload["metadata"], str) else doc_to_upload["metadata"]
+                            meta_dict.pop("flagged_tokens", None)
+                            doc_to_upload["metadata"] = json.dumps(meta_dict) if isinstance(doc_to_upload["metadata"], str) else meta_dict
+                        except Exception:
+                            pass
 
                     os.makedirs(
                         "data/",

@@ -5,9 +5,9 @@ from datetime import datetime
 import shutil
 from src.validation.file_validator import is_valid_file
 from src.extraction.extraction_service import (
-    extract_text,
-    calculate_confidence
+    extract_text
 )
+from src.utils.ocr_scoring import calculate_weighted_confidence
 from src.extraction.metadata_service import (
     extract_metadata
 )
@@ -123,7 +123,7 @@ with c4:
 st.markdown("---")
 
 st.markdown(
-    "## 📤 Upload Document"
+    "## ⬆️ Upload Document"
 )
 
 uploaded_files = st.file_uploader(
@@ -192,13 +192,12 @@ if uploaded_files:
                             file_bytes
                         )
                         word_count = len(result.content.split()) if result.content else 0
-                    confidence = round(
-                        calculate_confidence(
-                            result
-                        ) * 100,
-                        2
-                    )
-
+                    
+                    ocr_analysis = calculate_weighted_confidence(result)
+                    confidence = round(ocr_analysis.get("weighted_score", 0.0), 2)
+                    
+                    # Store flagged tokens in metadata so Action Centre can read them
+                    # Assuming we inject this logic into the loop scope later
                     text = result.content
 
                     page_count = len(result.pages) if result.pages else 0
@@ -215,7 +214,7 @@ if uploaded_files:
                     )
 
                     st.markdown(
-                        "## 🎯 OCR Confidence"
+                        "## ⭕ OCR Confidence"
                     )
 
                     st.progress(
@@ -236,6 +235,8 @@ if uploaded_files:
                         else:
                             metadata = extract_metadata(text)
                             target_index = "generic-documents-index"
+                        
+                        metadata["flagged_tokens"] = ocr_analysis.get("flagged_tokens", [])
 
                     # Upload to Azure Blob Storage EARLY so that even rejected/duplicate documents can be previewed in the Action Centre
                     unique_blob_name = upload_to_blob(file_bytes, uploaded_file.name)
@@ -347,7 +348,7 @@ if uploaded_files:
                     )
 
                     st.markdown(
-                        "## 🏷️ Extracted Metadata"
+                        "## 👁️‍🗨️ Extracted Metadata"
                     )
 
                     c1, c2, c3 = st.columns(3)
@@ -469,9 +470,20 @@ if uploaded_files:
                         with st.spinner(
                             "Uploading to Azure Search..."
                         ):
-
+                            
+                            # Clean up metadata before upload to Azure Search
+                            doc_to_upload = document.copy()
+                            if "metadata" in doc_to_upload:
+                                try:
+                                    import json
+                                    meta_dict = json.loads(doc_to_upload["metadata"])
+                                    meta_dict.pop("flagged_tokens", None)
+                                    doc_to_upload["metadata"] = json.dumps(meta_dict)
+                                except Exception:
+                                    pass
+                                    
                             upload_documents(
-                                [document],
+                                [doc_to_upload],
                                 index_name=target_index
                             )
                         
