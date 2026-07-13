@@ -1,5 +1,23 @@
 import os
 import streamlit as st
+import subprocess
+import sys
+import atexit
+
+@st.cache_resource
+def start_background_worker():
+    print("[SYSTEM] Spawning Gmail Ingestion background worker...")
+    process = subprocess.Popen([sys.executable, "run_ingestion.py"])
+    
+    def cleanup():
+        print("[SYSTEM] Shutting down Gmail Ingestion worker...")
+        process.terminate()
+        
+    atexit.register(cleanup)
+    return process
+
+start_background_worker()
+
 import tempfile
 from datetime import datetime
 import shutil
@@ -40,6 +58,19 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown("""
+    <style>
+    /* Prevent Streamlit from graying out elements during auto-refresh */
+    [data-testid="stFragment"] {
+        opacity: 1 !important;
+        transition: none !important;
+    }
+    .element-container {
+        opacity: 1 !important;
+        transition: none !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 # Hide sidebar instantly to prevent flash before login
 st.markdown(
     """
@@ -88,37 +119,41 @@ with header2:
 
 st.markdown("---")
 
-metrics = get_metrics()
+@st.fragment(run_every="5s")
+def render_real_time_metrics():
+    metrics = get_metrics()
 
-c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3, c4 = st.columns(4)
 
-with c1:
+    with c1:
 
-    st.metric(
-        "Documents Processed",
-        metrics["processed"]
-    )
+        st.metric(
+            "Documents Processed",
+            metrics["processed"]
+        )
 
-with c2:
+    with c2:
 
-    st.metric(
-        "Documents Indexed",
-        metrics["indexed"]
-    )
+        st.metric(
+            "Documents Indexed",
+            metrics["indexed"]
+        )
 
-with c3:
+    with c3:
 
-    st.metric(
-        "OCR Confidence",
-        "--"
-    )
+        st.metric(
+            "OCR Confidence",
+            "--"
+        )
 
-with c4:
+    with c4:
 
-    st.metric(
-        "Avg Processing Time",
-        f"{metrics['avg_time']} sec"
-    )
+        st.metric(
+            "Avg Processing Time",
+            f"{metrics['avg_time']} sec"
+        )
+
+render_real_time_metrics()
 
 st.markdown("---")
 
@@ -236,6 +271,9 @@ if uploaded_files:
                         else:
                             metadata = extract_metadata(text)
                             target_index = "generic-documents-index"
+                            
+                        # Tag source for Action Centre tracking
+                        metadata["source"] = "Manual Ingestion"
 
                     # Upload to Azure Blob Storage EARLY so that even rejected/duplicate documents can be previewed in the Action Centre
                     unique_blob_name = upload_to_blob(file_bytes, uploaded_file.name)
@@ -323,7 +361,7 @@ if uploaded_files:
                     # Cross Validation against Policy Master Index
                     if not is_policy_doc:
                         doc_type = metadata.get("document_type", "").lower()
-                        if doc_type in ["major claim", "claim form", "claim closure", "claim settlement"]:
+                        if doc_type in ["major claim", "claim form", "claim closure", "claim closure report", "claim settlement"]:
                             from src.validation.cross_validation_service import cross_validate_claim
                             breach_errors = cross_validate_claim(metadata)
                             
@@ -501,11 +539,18 @@ if uploaded_files:
                         status_container.update(label=f"✅ Completed: {uploaded_file.name}", state="complete", expanded=False)
                         success_count += 1
 
-                    else:
+                    elif review_status == "Failed":
+                        st.error(f"❌ Document Rejected: OCR Confidence is too low ({confidence}%).")
+                        status = "Failed"
+                        note = "Rejected due to extremely low confidence"
+                        status_container.update(label=f"❌ Rejected: {uploaded_file.name}", state="error", expanded=False)
+                        
+                    else: # "Review Required"
 
-                        add_review_document(
-                            document
-                        )
+                        metadata["file_name"] = uploaded_file.name
+                        metadata["status"] = "Needs Review"
+                        metadata["review_reason"] = f"Low OCR Confidence ({confidence}%)"
+                        add_review_document(metadata)
 
                         status = review_status
                         note = "Waiting for manual review"

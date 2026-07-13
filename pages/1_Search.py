@@ -114,29 +114,33 @@ if st.session_state.get("preview_doc"):
         st.warning("Original document URL not found.")
     st.stop()
 
-c1, c2, c3 = st.columns(
-    [5, 2, 2]
+c1, c2, c3, c4 = st.columns(
+    [4, 2, 2, 2]
 )
 
 with c1:
-
     query = st.text_input(
         "Search Query",
-        placeholder="Enter keywords, document number, entity name or phrases..."
+        placeholder="Enter keywords, document number, entity name..."
     )
 
 with c2:
-
-    semantic = st.checkbox(
-        "Semantic Search"
-    )
+    semantic = st.checkbox("Semantic Search")
 
 with c3:
+    index_display = st.selectbox(
+        "Search Index",
+        ["General Index", "Policy Index"],
+        index=0
+    )
+    
+    target_index = "generic-documents-index" if index_display == "General Index" else "policy-master-index"
 
+with c4:
     top = st.selectbox(
         "Top Results",
         [5, 10, 20],
-        index=0
+        index=1
     )
 
 st.markdown("")
@@ -161,10 +165,12 @@ if st.button(
             st.session_state.search_results = search_documents(
                 query=query,
                 use_semantic_ranker=semantic,
-                top=top
+                top=top,
+                index_name=target_index
             )
             st.session_state.search_query = query
             st.session_state.search_semantic = semantic
+            st.session_state.search_index = target_index
 
 if "search_results" in st.session_state:
 
@@ -203,20 +209,29 @@ if "search_results" in st.session_state:
             [data-testid="column"] { padding-bottom: 0rem !important; padding-top: 0rem !important; }
             </style>
         """, unsafe_allow_html=True)
+        is_policy = st.session_state.get("search_index") == "policy-master-index"
+        
         # 2. Draw the Master List Header
         hcols = st.columns([4, 3, 2, 2])
         hcols[0].markdown("**File Name**")
-        hcols[1].markdown("**Entity Name**")
-        hcols[2].markdown("**Date**")
+        hcols[1].markdown("**Insured Name**" if is_policy else "**Entity Name**")
+        hcols[2].markdown("**Effective Date**" if is_policy else "**Date**")
         hcols[3].markdown("**Action**")
         st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid rgba(200,200,200,0.3);'/>", unsafe_allow_html=True)
+        
         # 3. Loop through results and draw the rows
         for i, r in enumerate(results, start=1):
             cols = st.columns([4, 3, 2, 2], gap="small")
             
             cols[0].write(r.get('file_name', 'N/A'))
-            cols[1].write(r.get('entity_name', 'N/A'))
-            cols[2].write(str(r.get('document_date', 'N/A')))
+            
+            # Map fields based on index
+            if is_policy:
+                cols[1].write(r.get('insured_name', 'N/A'))
+                cols[2].write(str(r.get('policy_effective_date', 'N/A'))[:10])
+            else:
+                cols[1].write(r.get('entity_name', 'N/A'))
+                cols[2].write(str(r.get('document_date', 'N/A'))[:10])
             
             if cols[3].button("View Document", key=f"view_doc_{i}", use_container_width=True):
                 st.session_state.preview_doc = r

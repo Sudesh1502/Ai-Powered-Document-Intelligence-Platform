@@ -58,7 +58,7 @@ def calculate_confidence(result):
     if not confidences:
         return 0
 
-    return sum(confidences) / len(confidences)
-
+    average_confidence = sum(confidences) / len(confidences)
+    return round(average_confidence * 100, 2)
 
 
