@@ -227,12 +227,7 @@ if uploaded_files:
                             file_bytes
                         )
                         word_count = len(result.content.split()) if result.content else 0
-                    confidence = round(
-                        calculate_confidence(
-                            result
-                        ) * 100,
-                        2
-                    )
+                    confidence = calculate_confidence(result)
 
                     text = result.content
 
@@ -253,8 +248,9 @@ if uploaded_files:
                         "## 🎯 OCR Confidence"
                     )
 
+                    # Ensure it is passed as a valid integer [0, 100] to avoid float errors
                     st.progress(
-                        confidence / 100
+                        int(confidence)
                     )
 
                     st.info(
