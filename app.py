@@ -248,9 +248,9 @@ if uploaded_files:
                         "## 🎯 OCR Confidence"
                     )
 
-                    # Ensure it is passed as a valid integer [0, 100] to avoid float errors
+                    # Ensure it is passed as a valid float [0.0, 1.0] to avoid type errors in older Streamlit versions
                     st.progress(
-                        int(confidence)
+                        confidence / 100.0
                     )
 
                     st.info(
