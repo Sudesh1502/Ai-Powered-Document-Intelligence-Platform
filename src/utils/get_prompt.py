@@ -11,9 +11,21 @@ from src.validation.document_validation_fields import (
     CLAIM_FORM_CRITICAL_FIELDS
 )
 
-def get_metadata_extraction_prompt(text: str) -> str:
+def get_metadata_extraction_prompt(text: str, user_id: str = "default_global") -> str:
+    from src.config.config_service import load_custom_attributes
+    
+    data = load_custom_attributes(user_id)
+    custom_attrs = [attr["name"] for attr in data if attr.get("active")]
+    
+    custom_attr_instruction = ""
+    if custom_attrs:
+        custom_attr_instruction = f"""
+- If you determine the document_type is one of [claim closure report, major claim, claim settlement, claim form], you MUST ALSO extract exactly these user-defined keys into the metadata block: {custom_attrs}. If missing, assign 'N/A'.
+"""
+
     return f"""
 You are an expert document understanding system.
+{custom_attr_instruction}
 
 Analyze the document and extract structured metadata.
 
@@ -188,9 +200,21 @@ INSTRUCTIONS:
 11. Maximum length: 500 words.
 """
 
-def get_policy_extraction_prompt(text: str) -> str:
+def get_policy_extraction_prompt(text: str, user_id: str = "default_global") -> str:
+    from src.config.config_service import load_custom_attributes
+    
+    data = load_custom_attributes(user_id)
+    custom_attrs = [attr["name"] for attr in data if attr.get("active")]
+    
+    custom_attr_instruction = ""
+    if custom_attrs:
+        custom_attr_instruction = f"""
+- You MUST ensure the following specific user-defined keys are always present inside the `metadata` dictionary: {custom_attrs}. If missing, assign 'N/A'.
+"""
+
     return f"""
 You are an expert insurance underwriter and policy analyst AI.
+{custom_attr_instruction}
 
 Analyze the insurance policy document. A single document may contain multiple distinct policies (e.g., a commercial fleet schedule or property booklet). 
 Extract structured metadata for EVERY policy found.
@@ -211,7 +235,8 @@ Schema:
         "deductible_excess": 0.0,
         "relevant_clauses": [],
         "exclusions": [],
-        "notification_conditions": ""
+        "notification_conditions": "",
+        "metadata": {{}}
     }}
 ]
 
@@ -228,6 +253,7 @@ Field Definitions & Rules:
 - relevant_clauses: An array of strings highlighting critical insuring clauses.
 - exclusions: An array of strings listing what is NOT covered.
 - notification_conditions: String describing the conditions for notifying the insurer of a claim (e.g., "Must notify within 30 days").
+- metadata: A JSON dictionary where you MUST extract ANY AND ALL additional business-relevant key-value pairs you find in the policy (e.g., broker code, deductibles for specific items, endorsements, contact names). Extract as much granular data as possible into this dictionary to enrich the system's semantic search capabilities.
 
 Rules:
 - If a string field is missing, return "N/A".

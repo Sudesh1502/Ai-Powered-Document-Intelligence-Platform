@@ -1,3 +1,7 @@
 Timestamp,File Name,URL,Status,Note,Word Count,Start Time,End Time,Processing Time (s)
 2026-07-13 17:26:45,ACCORD-24-Original.pdf,,Failed,"Progress Value has invalid value [0.0, 1.0]: 95.96",454,2026-07-13 17:26:38,2026-07-13 17:26:45,6.97
 2026-07-13 17:41:39,ACCORD-24-Original.pdf,03884a84-dfe6-49e2-977d-1ee8b918151e.pdf,Completed,Indexed Automatically,454,2026-07-13 17:41:25,2026-07-13 17:41:39,14.35
+2026-07-14 17:16:45,PolicyMasterRecord 1.docx,8e0318b5-26c5-4c4f-a41b-469551bdeda3.docx,Completed,Indexed Automatically,599,2026-07-14 17:16:17,2026-07-14 17:16:45,27.3
+2026-07-14 17:24:20,CLAIM CLOSURE REPORT.docx (4).docx,Gmail Ingestion,Needs Review,Policy Breach. Identity Mismatch: Claim says 'Sanjay Rao' but Policy says 'Deepak Ramesh Nair',81,2026-07-14 17:24:03,2026-07-14 17:24:20,16.59
+2026-07-14 17:24:33,ACCORD-24-producer-tremoved.pdf,Gmail Ingestion,Needs Review,Data-Level Duplicate (Matching ID & Vendor),439,2026-07-14 17:24:20,2026-07-14 17:24:33,13.44
+2026-07-14 17:28:45,Claim_MCD_Mock_Rajan_Mehta.docx,Streamlit Upload,Needs Review,"Policy Breach. Temporal Breach: Loss Date (2026-06-12) occurred after Policy Expiration Date (2026-03-31) | Custom Validation Breach: Claim 'agreed_bank_clause' (hdfc bank, loan a/c: hdfc00489201) does not match Policy Master Index ()",0,2026-07-14 17:28:32,2026-07-14 17:28:44,12.03

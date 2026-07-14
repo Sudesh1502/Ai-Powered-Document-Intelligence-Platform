@@ -260,12 +260,13 @@ if uploaded_files:
                     with st.spinner(
                         "Extracting Metadata..."
                     ):
+                        user_id = user.get("user_id", "default_global") if user else "default_global"
                         if is_policy_doc:
                             from src.extraction.metadata_service import extract_policy_metadata
-                            metadata = extract_policy_metadata(text)
+                            metadata = extract_policy_metadata(text, user_id)
                             target_index = "policy-master-index"
                         else:
-                            metadata = extract_metadata(text)
+                            metadata = extract_metadata(text, user_id)
                             target_index = "generic-documents-index"
                             
                         # Tag source for Action Centre tracking
@@ -363,7 +364,8 @@ if uploaded_files:
                         doc_type = metadata.get("document_type", "").lower()
                         if doc_type in ["major claim", "claim form", "claim closure", "claim closure report", "claim settlement"]:
                             from src.validation.cross_validation_service import cross_validate_claim
-                            breach_errors = cross_validate_claim(metadata)
+                            user_id = user.get("user_id", "default_global") if user else "default_global"
+                            breach_errors = cross_validate_claim(metadata, user_id)
                             
                             if breach_errors:
                                 reason_str = " | ".join(breach_errors)

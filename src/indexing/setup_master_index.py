@@ -2,7 +2,8 @@ import os
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import (
-    SearchIndex, SimpleField, SearchableField, SearchFieldDataType
+    SearchIndex, SimpleField, SearchableField, SearchFieldDataType,
+    SemanticConfiguration, SemanticPrioritizedFields, SemanticField, SemanticSearch
 )
 
 from src.config.config import AZURE_SEARCH_ENDPOINT, AZURE_SEARCH_ADMIN_KEY
@@ -33,10 +34,27 @@ def create_master_index():
         SearchableField(name="exclusions", collection=True),
         SearchableField(name="notification_conditions", type=SearchFieldDataType.String),
         SearchableField(name="file_name", type=SearchFieldDataType.String),
-        SearchableField(name="sharepoint_url", type=SearchFieldDataType.String)
+        SearchableField(name="sharepoint_url", type=SearchFieldDataType.String),
+        SearchableField(name="metadata", type=SearchFieldDataType.String)
     ]
     
-    index = SearchIndex(name="policy-master-index", fields=fields)
+    semantic_config = SemanticConfiguration(
+        name="policy-semantic-config",
+        prioritized_fields=SemanticPrioritizedFields(
+            title_field=SemanticField(field_name="policy_number"),
+            content_fields=[
+                SemanticField(field_name="relevant_clauses"),
+                SemanticField(field_name="exclusions")
+            ],
+            keywords_fields=[
+                SemanticField(field_name="insured_name"),
+                SemanticField(field_name="class_of_business")
+            ]
+        )
+    )
+    semantic_search = SemanticSearch(configurations=[semantic_config])
+    
+    index = SearchIndex(name="policy-master-index", fields=fields, semantic_search=semantic_search)
     print("Creating/Updating policy-master-index...")
     client.create_or_update_index(index)
     print("Successfully created policy-master-index!")

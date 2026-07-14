@@ -3,7 +3,7 @@ from azure.search.documents import SearchClient
 from src.config.config import AZURE_SEARCH_ENDPOINT, AZURE_SEARCH_ADMIN_KEY
 from datetime import datetime
 
-def cross_validate_claim(claim_metadata: dict) -> list:
+def cross_validate_claim(claim_metadata: dict, user_id: str = "default_global") -> list:
     """
     Cross-references a claim against the Ground Truth policy in the Master Index.
     Returns a list of breach reasons. If empty, the claim is valid.
@@ -106,5 +106,41 @@ def cross_validate_claim(claim_metadata: dict) -> list:
     else:
         print("[Cross-Validation] ⚠️ Temporal Check skipped (missing loss date).")
             
+    # 5. Dynamic Custom Attribute Checks
+    print("[Cross-Validation] ⚙️ Running User-Defined Custom Attribute Checks...")
+    
+    try:
+        from src.config.config_service import load_custom_attributes
+        custom_attrs = load_custom_attributes(user_id)
+        
+        for attr in custom_attrs:
+            if attr.get("active"):
+                key = attr["name"]
+                claim_val = str(get_field(key) or "").strip().lower()
+                
+                policy_custom_data = {}
+                try:
+                    import json
+                    policy_custom_data = json.loads(policy.get("metadata", "{}"))
+                except:
+                    pass
+                
+                # Check root of Azure Search document, then root of Gemini extraction, then nested metadata dict
+                val = policy.get(key) or policy_custom_data.get(key)
+                if val is None and "metadata" in policy_custom_data and isinstance(policy_custom_data["metadata"], dict):
+                    val = policy_custom_data["metadata"].get(key)
+                    
+                policy_val = str(val or "").strip().lower()
+                
+                # Compare the fields
+                if claim_val and claim_val not in ["n/a", "null", "none", ""]:
+                    if claim_val != policy_val:
+                        print(f"[Cross-Validation] ❌ Custom Breach: Claim '{key}' ({claim_val}) != Policy '{key}' ({policy_val})")
+                        breaches.append(f"Custom Validation Breach: Claim '{key}' ({claim_val}) does not match Policy Master Index ({policy_val})")
+                    else:
+                        print(f"[Cross-Validation] ✅ Custom Check '{key}' passed.")
+    except Exception as e:
+        print(f"[Cross-Validation] ⚠️ Error running custom attribute checks: {e}")
+
     print(f"[Cross-Validation] 🏁 Cross-validation ended. Found {len(breaches)} breach(es).")
     return breaches

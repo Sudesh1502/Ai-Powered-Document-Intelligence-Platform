@@ -77,8 +77,11 @@ for rule in rules:
             st.toggle("Active", value=True, disabled=True, key=f"toggle_{rule['id']}", label_visibility="collapsed")
 
 # Custom Attributes Management
+from src.config.config_service import load_custom_attributes, save_custom_attributes
+user_id = user.get("user_id", "default_global")
+
 if "custom_attributes" not in st.session_state:
-    st.session_state.custom_attributes = []
+    st.session_state.custom_attributes = load_custom_attributes(user_id)
 
 attributes_to_keep = []
 
@@ -89,7 +92,10 @@ for custom_attr in st.session_state.custom_attributes:
             st.markdown(f"`{custom_attr['name']}`")
         with col_toggle:
             # Custom attributes can be toggled by the user
-            custom_attr["active"] = st.toggle("Active", value=custom_attr["active"], disabled=False, key=f"toggle_{custom_attr['id']}", label_visibility="collapsed")
+            new_active = st.toggle("Active", value=custom_attr["active"], disabled=False, key=f"toggle_{custom_attr['id']}", label_visibility="collapsed")
+            if new_active != custom_attr["active"]:
+                custom_attr["active"] = new_active
+                save_custom_attributes(st.session_state.custom_attributes, user_id)
         with col_del:
             if st.button("Delete", key=f"del_{custom_attr['id']}"):
                 continue # Skip appending this item to effectively delete it
@@ -99,6 +105,7 @@ for custom_attr in st.session_state.custom_attributes:
 # If an item was deleted, update state and refresh UI immediately
 if len(attributes_to_keep) != len(st.session_state.custom_attributes):
     st.session_state.custom_attributes = attributes_to_keep
+    save_custom_attributes(st.session_state.custom_attributes, user_id)
     st.rerun()
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -119,6 +126,7 @@ with st.expander("Add Custom Attribute", expanded=False):
                         "name": new_attr_name.strip(),
                         "active": True
                     })
+                    save_custom_attributes(st.session_state.custom_attributes, user_id)
                     st.rerun()
                 else:
                     st.error("Attribute already exists.")

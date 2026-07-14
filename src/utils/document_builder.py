@@ -94,5 +94,6 @@ def build_policy_document(
         "exclusions": metadata.get("exclusions") if isinstance(metadata.get("exclusions"), list) else [],
         "notification_conditions": str(metadata.get("notification_conditions", "N/A")),
         "file_name": uploaded_file.name,
-        "sharepoint_url": metadata.get("sharepoint_url", "")
+        "sharepoint_url": metadata.get("sharepoint_url", ""),
+        "metadata": json.dumps(metadata)
     }

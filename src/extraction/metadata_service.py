@@ -24,11 +24,11 @@ def _generate_content_with_retry(prompt):
     )
 
 
-def extract_metadata(text):
+def extract_metadata(text, user_id="default_global"):
     """Extracts structured metadata (JSON) from raw text using Gemini."""
     print("\nExtracting metadata...")
 
-    prompt = get_metadata_extraction_prompt(text)
+    prompt = get_metadata_extraction_prompt(text, user_id)
 
     try:
 
@@ -106,12 +106,12 @@ def extract_metadata(text):
         return {}
 
 
-def extract_policy_metadata(text):
+def extract_policy_metadata(text, user_id="default_global"):
     """Extracts structured policy metadata (JSON) for the Master Index using Gemini."""
     print("\nExtracting policy metadata...")
 
     from src.utils.get_prompt import get_policy_extraction_prompt
-    prompt = get_policy_extraction_prompt(text)
+    prompt = get_policy_extraction_prompt(text, user_id)
 
     try:
         response = _generate_content_with_retry(prompt)
