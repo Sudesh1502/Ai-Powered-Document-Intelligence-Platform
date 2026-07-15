@@ -302,15 +302,14 @@ if uploaded_files:
                             metadata = extract_metadata(text, user_id)
                             target_index = "generic-documents-index"
                             
-                        # Keep Abhishek's flagged_tokens addition
-                        metadata["flagged_tokens"] = ocr_analysis.get("flagged_tokens", [])
-                            
-                        # Tag source for Action Centre tracking
+                        # Tag source for Action Centre tracking and keep Abhishek's flagged_tokens addition
                         if isinstance(metadata, list):
                             for item in metadata:
                                 item["source"] = "Manual Ingestion"
+                                item["flagged_tokens"] = ocr_analysis.get("flagged_tokens", [])
                         else:
                             metadata["source"] = "Manual Ingestion"
+                            metadata["flagged_tokens"] = ocr_analysis.get("flagged_tokens", [])
 
                     # Upload to Azure Blob Storage EARLY so that even rejected/duplicate documents can be previewed in the Action Centre
                     unique_blob_name = upload_to_blob(file_bytes, uploaded_file.name)
