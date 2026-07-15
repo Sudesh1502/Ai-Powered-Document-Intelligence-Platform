@@ -264,7 +264,8 @@ else:
                         from src.extraction.extraction_service import extract_text
                         from src.extraction.metadata_service import extract_metadata
                         
-                        text = extract_text(file_bytes)
+                        extension = os.path.splitext(doc.get("file_name", ""))[1].lower()
+                        text = extract_text(file_bytes, extension=extension)
                         user_id = user.get("user_id", "default_global") if user else "default_global"
                         new_metadata = extract_metadata(text, user_id=user_id)
                         

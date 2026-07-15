@@ -223,8 +223,9 @@ if uploaded_files:
                         "Running OCR..."
                     ):
 
+                        extension = os.path.splitext(uploaded_file.name)[1].lower()
                         result = extract_text(
-                            file_bytes
+                            file_bytes, extension=extension
                         )
                         word_count = len(result.content.split()) if result.content else 0
                     ocr_analysis = calculate_weighted_confidence(result)

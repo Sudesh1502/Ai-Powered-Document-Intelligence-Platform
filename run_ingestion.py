@@ -3,7 +3,7 @@ import uuid
 import datetime
 import os
 from src.ingestion.gmail_agent import GmailAgent
-from src.extraction.extraction_service import extract_text, calculate_confidence
+from src.extraction.extraction_service import extract_text
 from src.extraction.metadata_service import extract_metadata
 from src.indexing.duplicate_detection_service import DuplicateDetectionService
 from src.indexing.upload_document_service import upload_documents
@@ -32,10 +32,13 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
     # Extract Text via OCR
     print(f"[GMAIL-WORKER] Extracting text...")
     try:
-        ocr_result = extract_text(file_bytes)
+        extension = os.path.splitext(filename)[1].lower()
+        ocr_result = extract_text(file_bytes, extension=extension)
         text = ocr_result.content if ocr_result else ""
-        confidence = calculate_confidence(ocr_result) if ocr_result else 0.0
-        print(confidence)
+        from src.utils.ocr_scoring import calculate_weighted_confidence
+        ocr_analysis = calculate_weighted_confidence(ocr_result) if ocr_result else {}
+        confidence = round(ocr_analysis.get("weighted_score", 0.0), 2)
+        print(f"Confidence score: {confidence}")
         page_count = len(ocr_result.pages) if ocr_result and hasattr(ocr_result, "pages") else 1
     except Exception as e:
         print(f"[GMAIL-WORKER] Azure OCR failed: {e}")
@@ -69,6 +72,7 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
     print(f"[GMAIL-WORKER] Extracting metadata via Gemini...")
     metadata = extract_metadata(text)
     metadata["source"] = "Incoming Email"
+    metadata["flagged_tokens"] = ocr_analysis.get("flagged_tokens", []) if ocr_analysis else []
     
     # Layer 3: Data-Level Duplicate Detection
     if dedupe_service.is_data_level_duplicate(metadata):
