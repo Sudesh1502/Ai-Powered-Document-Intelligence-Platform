@@ -246,6 +246,68 @@ else:
             "Metadata Review"
         )
         
+        # Check if the custom metadata block is empty
+        metadata_is_empty = not bool(doc.get("metadata"))
+        if metadata_is_empty:
+            st.info("The custom metadata for this document is currently empty.")
+            if st.button("✨ Generate Custom Metadata with AI", type="primary", use_container_width=True):
+                with st.spinner("Analyzing document to extract missing custom metadata..."):
+                    try:
+                        # 1. Fetch file bytes
+                        sas_url = generate_sas_url(doc.get("sharepoint_url", ""))
+                        response = requests.get(sas_url)
+                        response.raise_for_status()
+                        file_bytes = response.content
+                        extension = os.path.splitext(doc.get("sharepoint_url", ""))[1].lower()
+                        
+                        # 2. Extract Text and Metadata
+                        from src.extraction.extraction_service import extract_text
+                        from src.extraction.metadata_service import extract_metadata
+                        
+                        text = extract_text(file_bytes)
+                        user_id = user.get("user_id", "default_global") if user else "default_global"
+                        new_metadata = extract_metadata(text, user_id=user_id)
+                        
+                        # 3. Carefully merge ONLY the newly extracted custom fields into the existing 'doc'
+                        # This preserves BOTH system fields AND standard extracted fields
+                        protected_fields = [
+                            "file_name", "status", "review_reason", "id", "source", "sharepoint_url", 
+                            "sha256_signature", "minhash_signature", "phash_signature",
+                            "document_type", "document_title", "document_number", "entity_name", "document_date",
+                            "confidence", "review_status", "error"
+                        ]
+                        
+                        if isinstance(new_metadata, dict):
+                            # Ensure we don't overwrite the standard fields. 
+                            # If new_metadata has a 'metadata' dict, we merge it specifically.
+                            if "metadata" not in doc or not isinstance(doc["metadata"], str):
+                                doc["metadata"] = "{}"
+                                
+                            existing_custom_meta = {}
+                            try:
+                                existing_custom_meta = json.loads(doc["metadata"])
+                            except:
+                                pass
+                                
+                            for k, v in new_metadata.items():
+                                if k == "metadata" and isinstance(v, dict):
+                                    existing_custom_meta.update(v)
+                                elif k not in protected_fields:
+                                    existing_custom_meta[k] = v
+                                    
+                            doc["metadata"] = json.dumps(existing_custom_meta)
+                                    
+                                    
+                        # 4. Save to Azure Table Storage and refresh
+                        from src.utils.review_storage import add_review_document
+                        add_review_document(doc)
+                        
+                        # Clear local session state cache for this document so the new fields render
+                        st.session_state.pop(f"metadata_fields_{i}", None)
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Failed to extract metadata: {e}")
+                        
         review_reason = doc.get("review_reason")
         if review_reason:
             st.error(f"**Reason for Review:** {review_reason}", icon=None)
@@ -322,21 +384,33 @@ else:
 
         if metadata_fields_key not in st.session_state:
             metadata_list = []
-            raw_metadata = doc.get("metadata", "")
+            # 1. Start with the root document
+            parsed_meta = doc.copy()
             
-            if raw_metadata:
-                try:
-                    parsed_meta = json.loads(raw_metadata)
-                    if isinstance(parsed_meta, dict):
-                        # In some cases, Gemini nests metadata in a 'metadata' key
-                        if "metadata" in parsed_meta and isinstance(parsed_meta["metadata"], dict):
-                            parsed_meta = parsed_meta["metadata"]
-                            
-                        for k, v in parsed_meta.items():
-                            if k not in ["document_type", "document_title", "document_number", "entity_name", "document_date", "error"]:
-                                metadata_list.append({"Key": str(k), "Value": str(v)})
-                except Exception:
-                    pass
+            # 2. If there's a nested 'metadata' key, it could be a string (from Azure) or a dict (from Gemini)
+            nested_meta = parsed_meta.get("metadata")
+            if nested_meta:
+                if isinstance(nested_meta, str):
+                    try:
+                        nested_meta_dict = json.loads(nested_meta)
+                        if isinstance(nested_meta_dict, dict):
+                            parsed_meta.update(nested_meta_dict)
+                    except Exception:
+                        pass
+                elif isinstance(nested_meta, dict):
+                    parsed_meta.update(nested_meta)
+            
+            # 3. Filter out standard system keys
+            standard_keys = [
+                "id", "document_type", "document_title", "document_number", "entity_name", 
+                "document_date", "error", "file_name", "review_reason", "status", "source", 
+                "sharepoint_url", "user_tracking", "sha256_signature", "minhash_signature", 
+                "phash_signature", "metadata", "confidence", "review_status"
+            ]
+            
+            for k, v in parsed_meta.items():
+                if k not in standard_keys:
+                    metadata_list.append({"Key": str(k), "Value": str(v)})
             
             if not metadata_list:
                 # Empty dataframe with string columns ensures 0 data rows and exactly 1 "+" row

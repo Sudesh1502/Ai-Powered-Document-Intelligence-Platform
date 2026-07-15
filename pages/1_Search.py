@@ -171,6 +171,10 @@ if st.button(
             st.session_state.search_query = query
             st.session_state.search_semantic = semantic
             st.session_state.search_index = target_index
+            
+            # Clear old investigation reports so they don't carry over to the new query
+            st.session_state.pop("investigation_report_markdown", None)
+            st.session_state.pop("investigation_report_pdf", None)
 
 if "search_results" in st.session_state:
 

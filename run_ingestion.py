@@ -212,6 +212,22 @@ def start_ingestion_loop():
     try:
         while True:
             try:
+                # Ensure connection is alive before polling
+                is_connected = False
+                if agent.mail:
+                    try:
+                        agent.mail.noop()
+                        is_connected = True
+                    except Exception:
+                        is_connected = False
+                
+                if not is_connected:
+                    print(f"[GMAIL-WORKER] Connection dropped. Reconnecting...")
+                    if not agent.connect():
+                        print(f"[GMAIL-WORKER] Reconnection failed. Will retry in 60 seconds...")
+                        time.sleep(60)
+                        continue
+                        
                 print(f"\n[GMAIL-WORKER] [{datetime.datetime.now().strftime('%H:%M:%S')}] Polling for new emails...")
                 emails = agent.fetch_unseen_emails()
                 
@@ -238,8 +254,10 @@ def start_ingestion_loop():
                     
             except Exception as loop_err:
                 print(f"[GMAIL-WORKER] Error during IMAP poll: {loop_err}. Will retry in 60 seconds...")
-                # Attempt to reconnect just in case connection dropped
-                agent.connect()
+                try:
+                    agent.disconnect()
+                except:
+                    pass
                 
             time.sleep(60) # Poll every 60 seconds
             

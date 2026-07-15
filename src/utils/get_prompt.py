@@ -96,7 +96,7 @@ document_date:
 - if unavailable return null
 
 metadata:
-- include all additional business-relevant information
+- extract ANY and ALL discernible key-value pairs from the document, regardless of business relevance, to maximize semantic search indexing.
 - use snake_case keys
 - examples:
   {{
@@ -253,7 +253,7 @@ Field Definitions & Rules:
 - relevant_clauses: An array of strings highlighting critical insuring clauses.
 - exclusions: An array of strings listing what is NOT covered.
 - notification_conditions: String describing the conditions for notifying the insurer of a claim (e.g., "Must notify within 30 days").
-- metadata: A JSON dictionary where you MUST extract ANY AND ALL additional business-relevant key-value pairs you find in the policy (e.g., broker code, deductibles for specific items, endorsements, contact names). Extract as much granular data as possible into this dictionary to enrich the system's semantic search capabilities.
+- metadata: A JSON dictionary where you MUST extract ANY AND ALL key-value pairs you can find in the policy (e.g., broker code, deductibles, endorsements, random codes, internal flags, contact names). Extract literally any granular data you find into this dictionary to maximize the system's semantic search capabilities.
 
 Rules:
 - If a string field is missing, return "N/A".

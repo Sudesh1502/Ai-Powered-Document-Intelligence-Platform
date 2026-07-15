@@ -53,7 +53,7 @@ class LocalAuthProvider:
         if not self.authenticator:
             return None
 
-        # 1. If already logged in, return user instantly without rendering widget
+        # 1. If already logged in, return user instantly
         if st.session_state.get('authentication_status'):
             return {
                 "user_id": st.session_state.get("username"),
@@ -64,23 +64,34 @@ class LocalAuthProvider:
         # 2. Render the login widget cleanly in the center of the screen
         col1, col2, col3 = st.columns([1, 1.5, 1])
         with col2:
-            self.authenticator.login(
-                location='main',
-                fields={'Username': 'Email Address'}
-            )
+            try:
+                result = self.authenticator.login(
+                    location='main',
+                    fields={'Username': 'Email Address'}
+                )
+                if isinstance(result, tuple) and len(result) == 3:
+                    name, authentication_status, username = result
+                else:
+                    authentication_status = st.session_state.get('authentication_status')
+                    username = st.session_state.get('username')
+                    name = st.session_state.get('name')
+            except Exception:
+                authentication_status = st.session_state.get('authentication_status')
+                username = st.session_state.get('username')
+                name = st.session_state.get('name')
         
         # 3. Check status immediately after the widget interaction
-        auth_status = st.session_state.get('authentication_status')
-        
-        if auth_status:
-            # User literally just clicked 'Login' and it succeeded.
-            # Force a rerun to clear the login widget off the screen.
-            st.rerun()
-        elif auth_status is False:
+        if authentication_status:
+            return {
+                "user_id": username,
+                "email": st.session_state.get("email", username),
+                "name": name
+            }
+        elif authentication_status is False:
             with col2:
                 st.error('Username/password is incorrect')
             return None
-        elif auth_status is None:
+        elif authentication_status is None:
             with col2:
                 st.warning('Please enter your username and password')
             return None

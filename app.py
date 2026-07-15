@@ -257,6 +257,38 @@ if uploaded_files:
                         f"Confidence: {confidence}%"
                     )
 
+                    # ---------------------------------------------------------
+                    # EARLY STOP: Near-Duplicate Detection (Saves Gemini Cost)
+                    # ---------------------------------------------------------
+                    is_near_dup = dedupe_service.is_near_duplicate(text, file_bytes, uploaded_file.name)
+                    if is_near_dup:
+                        reason = "Near-Duplicate (Text Similarity)"
+                        st.warning(f"**Duplicate Detected!** {reason}. Routed to Action Centre.")
+                        
+                        unique_blob_name = upload_to_blob(file_bytes, uploaded_file.name)
+                        metadata = {
+                            "file_name": uploaded_file.name,
+                            "document_title": uploaded_file.name,
+                            "review_reason": f"Duplicate Detected - {reason}",
+                            "status": "Needs Review",
+                            "source": "Manual Ingestion",
+                            "sharepoint_url": unique_blob_name
+                        }
+                        
+                        add_review_document(metadata)
+                        log_document_status(
+                            file_name=uploaded_file.name,
+                            url="Streamlit Upload",
+                            status="Needs Review",
+                            note=f"Duplicate routed to action centre: {reason}",
+                            start_time=start_time,
+                            end_time=datetime.now(),
+                            word_count=word_count,
+                        )
+                        status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
+                        action_centre_count += 1
+                        continue
+
                     with st.spinner(
                         "Extracting Metadata..."
                     ):
@@ -281,12 +313,11 @@ if uploaded_files:
                     if not is_policy_doc:
                         metadata["sharepoint_url"] = unique_blob_name
                         
-                        # Layer 2 & 3: Near-Duplicate (MinHash/pHash) and Data-Level Duplicate Detection
-                        is_near_dup = dedupe_service.is_near_duplicate(text, file_bytes, uploaded_file.name)
+                        # Layer 3: Data-Level Duplicate Detection (Requires Metadata)
                         is_data_dup = dedupe_service.is_data_level_duplicate(metadata)
                         
-                        if is_near_dup or is_data_dup:
-                            reason = "Near-Duplicate (Text Similarity)" if is_near_dup else "Data-Level Duplicate (Matching ID & Vendor)"
+                        if is_data_dup:
+                            reason = "Data-Level Duplicate (Matching ID & Vendor)"
                             st.warning(f"**Duplicate Detected!** {reason}. Routed to Action Centre.")
                             
                             metadata["file_name"] = uploaded_file.name
