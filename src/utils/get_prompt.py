@@ -7,12 +7,25 @@ from src.validation.document_validation_fields import (
     AADHAAR_CRITICAL_FIELDS,
     CLAIM_SETTLEMENT_CRITICAL_FIELDS,
     INCIDENT_IMAGE_CRITICAL_FIELDS,
-    INVOICE_CRITICAL_FIELDS
+    INVOICE_CRITICAL_FIELDS,
+    CLAIM_FORM_CRITICAL_FIELDS
 )
 
-def get_metadata_extraction_prompt(text: str) -> str:
+def get_metadata_extraction_prompt(text: str, user_id: str = "default_global") -> str:
+    from src.config.config_service import load_custom_attributes
+    
+    data = load_custom_attributes(user_id)
+    custom_attrs = [attr["name"] for attr in data if attr.get("active")]
+    
+    custom_attr_instruction = ""
+    if custom_attrs:
+        custom_attr_instruction = f"""
+- If you determine the document_type is one of [claim closure report, major claim, claim settlement, claim form], you MUST ALSO extract exactly these user-defined keys into the metadata block: {custom_attrs}. If missing, assign 'N/A'.
+"""
+
     return f"""
 You are an expert document understanding system.
+{custom_attr_instruction}
 
 Analyze the document and extract structured metadata.
 
@@ -34,6 +47,7 @@ Field Definitions:
 document_type:
 - MUST be exactly one of the following values:
   - acord form
+  - claim form
   - claim closure report
   - major claim
   - aadhar
@@ -82,7 +96,7 @@ document_date:
 - if unavailable return null
 
 metadata:
-- include all additional business-relevant information
+- extract ANY and ALL discernible key-value pairs from the document, regardless of business relevance, to maximize semantic search indexing.
 - use snake_case keys
 - examples:
   {{
@@ -101,7 +115,8 @@ Depending on the document, you MUST include the following exact keys inside the 
 - If document_type is "claim closure report", you MUST extract exactly these keys: {list(CLAIM_CLOSURE_CRITICAL_FIELDS)}
 - If document_type is "claim settlement", you MUST extract exactly these keys: {list(CLAIM_SETTLEMENT_CRITICAL_FIELDS)}
 - If document_type is "aadhar", you MUST extract exactly these keys: {list(AADHAAR_CRITICAL_FIELDS)}
-- If the document is a Major Claim Document, you MUST extract exactly these keys: {list(MAJOR_CLAIM_CRITICAL_FIELDS)}
+- If document_type is "major claim", you MUST extract exactly these keys: {list(MAJOR_CLAIM_CRITICAL_FIELDS)}
+- If document_type is "claim form", you MUST extract exactly these keys: {list(CLAIM_FORM_CRITICAL_FIELDS)}
 - If document_type is "incident image", you MUST generate and extract exactly these keys based on your visual analysis of the damage: {list(INCIDENT_IMAGE_CRITICAL_FIELDS)}
 - If document_type is "invoice", you MUST extract exactly these keys: {list(INVOICE_CRITICAL_FIELDS)}
 
@@ -183,4 +198,72 @@ INSTRUCTIONS:
 10. Keep the response concise, user-focused, and actionable.
  
 11. Maximum length: 500 words.
+"""
+
+def get_policy_extraction_prompt(text: str, user_id: str = "default_global") -> str:
+    from src.config.config_service import load_custom_attributes
+    
+    data = load_custom_attributes(user_id)
+    custom_attrs = [attr["name"] for attr in data if attr.get("active")]
+    
+    custom_attr_instruction = ""
+    if custom_attrs:
+        custom_attr_instruction = f"""
+- You MUST ensure the following specific user-defined keys are always present inside the `metadata` dictionary: {custom_attrs}. If missing, assign 'N/A'.
+"""
+
+    return f"""
+You are an expert insurance underwriter and policy analyst AI.
+{custom_attr_instruction}
+
+Analyze the insurance policy document. A single document may contain multiple distinct policies (e.g., a commercial fleet schedule or property booklet). 
+Extract structured metadata for EVERY policy found.
+
+Return ONLY a valid JSON Array of objects. Do not return a single object.
+
+Schema:
+[
+    {{
+        "policy_number": "",
+        "insured_name": "",
+        "class_of_business": "",
+        "policy_effective_date": null,
+        "policy_expiration_date": null,
+        "risk_locations": [],
+        "policy_limit": 0.0,
+        "sub_limits": [],
+        "deductible_excess": 0.0,
+        "relevant_clauses": [],
+        "exclusions": [],
+        "notification_conditions": "",
+        "metadata": {{}}
+    }}
+]
+
+Field Definitions & Rules:
+- policy_number: The primary policy identification number.
+- insured_name: The name of the insured entity or person.
+- class_of_business: The type of insurance (e.g., "Property", "Cyber", "General Liability").
+- policy_effective_date: The start date of the policy coverage. Must be ISO format: YYYY-MM-DD. If unavailable, return null.
+- policy_expiration_date: The end date of the policy coverage. Must be ISO format: YYYY-MM-DD. If unavailable, return null.
+- risk_locations: An array of strings representing covered locations. (e.g., ["123 Main St, NY", "London Office"]).
+- policy_limit: The maximum financial payout limit of the policy. Must be a float/double number. Strip all currency symbols. If unavailable, return 0.0.
+- sub_limits: An array of strings describing specific limits (e.g., ["Water Damage: 50000", "Cyber Extortion: 250000"]).
+- deductible_excess: The deductible or excess amount the insured must pay. Must be a float/double number. Strip currency symbols. If unavailable, return 0.0.
+- relevant_clauses: An array of strings highlighting critical insuring clauses.
+- exclusions: An array of strings listing what is NOT covered.
+- notification_conditions: String describing the conditions for notifying the insurer of a claim (e.g., "Must notify within 30 days").
+- metadata: A JSON dictionary where you MUST extract ANY AND ALL key-value pairs you can find in the policy (e.g., broker code, deductibles, endorsements, random codes, internal flags, contact names). Extract literally any granular data you find into this dictionary to maximize the system's semantic search capabilities.
+
+Rules:
+- If a string field is missing, return "N/A".
+- If a numeric field is missing, return 0.0.
+- If a date field is missing, return null.
+- If an array field is missing, return an empty array [].
+- Return ONLY valid JSON.
+- Do not wrap the response in markdown.
+- Do not include explanations.
+
+DOCUMENT:
+{text}
 """

@@ -24,11 +24,11 @@ def _generate_content_with_retry(prompt):
     )
 
 
-def extract_metadata(text):
+def extract_metadata(text, user_id="default_global"):
     """Extracts structured metadata (JSON) from raw text using Gemini."""
     print("\nExtracting metadata...")
 
-    prompt = get_metadata_extraction_prompt(text)
+    prompt = get_metadata_extraction_prompt(text, user_id)
 
     try:
 
@@ -92,6 +92,10 @@ def extract_metadata(text):
         output = output.strip()
 
         metadata = json.loads(output)
+        
+        # Safety net: If Gemini hallucinates and returns a list, unwrap it
+        if isinstance(metadata, list) and len(metadata) > 0:
+            metadata = metadata[0]
 
         print("\nMetadata extraction completed...")
 
@@ -99,4 +103,55 @@ def extract_metadata(text):
 
     except Exception as e:
         print(f"Gemini API Error: {e}")
+        return {}
+
+
+def extract_policy_metadata(text, user_id="default_global"):
+    """Extracts structured policy metadata (JSON) for the Master Index using Gemini."""
+    print("\nExtracting policy metadata...")
+
+    from src.utils.get_prompt import get_policy_extraction_prompt
+    prompt = get_policy_extraction_prompt(text, user_id)
+
+    try:
+        response = _generate_content_with_retry(prompt)
+        
+        print("\n===== POLICY GEMINI USAGE =====")
+        try:
+            usage = response.usage_metadata
+            print(usage)
+            print("Prompt Tokens:", usage.prompt_token_count)
+            print("Output Tokens:", usage.candidates_token_count)
+            print("Total Tokens:", usage.total_token_count)
+            calculate_gemini_cost(
+                prompt_tokens=usage.prompt_token_count,
+                output_tokens=usage.candidates_token_count,
+                input_cost_per_million=0.25,
+                output_cost_per_million=1.50
+            )
+        except Exception as e:
+            print("Usage metadata unavailable:", e)
+        print("========================\n")   
+
+        if not response.text:
+            return {"error": "Empty response from Gemini"}
+
+        output = response.text.strip()
+        if "```json" in output:
+            output = output.replace("```json", "")
+        if "```" in output:
+            output = output.replace("```", "")
+        output = output.strip()
+
+        metadata = json.loads(output)
+        
+        # Safety net: If Gemini returns a single dict instead of a list, wrap it in a list
+        if isinstance(metadata, dict):
+            metadata = [metadata]
+            
+        print("\nPolicy Metadata extraction completed...")
+        return metadata
+
+    except Exception as e:
+        print(f"Gemini Policy API Error: {e}")
         return {}

@@ -1,13 +1,31 @@
 import os
 import streamlit as st
+import subprocess
+import sys
+import atexit
+
+@st.cache_resource
+def start_background_worker():
+    print("[SYSTEM] Spawning Gmail Ingestion background worker...")
+    process = subprocess.Popen([sys.executable, "run_ingestion.py"])
+    
+    def cleanup():
+        print("[SYSTEM] Shutting down Gmail Ingestion worker...")
+        process.terminate()
+        
+    atexit.register(cleanup)
+    return process
+
+start_background_worker()
+
 import tempfile
 from datetime import datetime
 import shutil
 from src.validation.file_validator import is_valid_file
 from src.extraction.extraction_service import (
-    extract_text,
-    calculate_confidence
+    extract_text
 )
+from src.utils.ocr_scoring import calculate_weighted_confidence
 from src.extraction.metadata_service import (
     extract_metadata
 )
@@ -40,6 +58,19 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown("""
+    <style>
+    /* Prevent Streamlit from graying out elements during auto-refresh */
+    [data-testid="stFragment"] {
+        opacity: 1 !important;
+        transition: none !important;
+    }
+    .element-container {
+        opacity: 1 !important;
+        transition: none !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 # Hide sidebar instantly to prevent flash before login
 st.markdown(
     """
@@ -88,42 +119,46 @@ with header2:
 
 st.markdown("---")
 
-metrics = get_metrics()
+@st.fragment(run_every="5s")
+def render_real_time_metrics():
+    metrics = get_metrics()
 
-c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3, c4 = st.columns(4)
 
-with c1:
+    with c1:
 
-    st.metric(
-        "Documents Processed",
-        metrics["processed"]
-    )
+        st.metric(
+            "Documents Processed",
+            metrics["processed"]
+        )
 
-with c2:
+    with c2:
 
-    st.metric(
-        "Documents Indexed",
-        metrics["indexed"]
-    )
+        st.metric(
+            "Documents Indexed",
+            metrics["indexed"]
+        )
 
-with c3:
+    with c3:
 
-    st.metric(
-        "OCR Confidence",
-        "--"
-    )
+        st.metric(
+            "OCR Confidence",
+            "--"
+        )
 
-with c4:
+    with c4:
 
-    st.metric(
-        "Avg Processing Time",
-        f"{metrics['avg_time']} sec"
-    )
+        st.metric(
+            "Avg Processing Time",
+            f"{metrics['avg_time']} sec"
+        )
+
+render_real_time_metrics()
 
 st.markdown("---")
 
 st.markdown(
-    "## 📤 Upload Document"
+    "## ⬆️ Upload Document"
 )
 
 uploaded_files = st.file_uploader(
@@ -144,6 +179,7 @@ if uploaded_files:
         st.stop()
 
     st.success(f"Uploaded: {len(uploaded_files)} document(s)")
+    is_policy_doc = st.toggle("This is a Policy Master Document")
 
     if st.button(
         "Process Documents",
@@ -187,17 +223,13 @@ if uploaded_files:
                         "Running OCR..."
                     ):
 
+                        extension = os.path.splitext(uploaded_file.name)[1].lower()
                         result = extract_text(
-                            file_bytes
+                            file_bytes, extension=extension
                         )
                         word_count = len(result.content.split()) if result.content else 0
-                    confidence = round(
-                        calculate_confidence(
-                            result
-                        ) * 100,
-                        2
-                    )
-
+                    ocr_analysis = calculate_weighted_confidence(result)
+                    confidence = round(ocr_analysis.get("weighted_score", 0.0), 2)
                     text = result.content
 
                     page_count = len(result.pages) if result.pages else 0
@@ -214,42 +246,37 @@ if uploaded_files:
                     )
 
                     st.markdown(
-                        "## 🎯 OCR Confidence"
+                        "## ⭕ OCR Confidence"
                     )
 
+                    # Ensure it is passed as a valid float [0.0, 1.0] to avoid type errors in older Streamlit versions
                     st.progress(
-                        confidence / 100
+                        confidence / 100.0
                     )
 
                     st.info(
                         f"Confidence: {confidence}%"
                     )
 
-                    with st.spinner(
-                        "Extracting Metadata..."
-                    ):
-
-                        metadata = extract_metadata(
-                            text
-                        )
-
-                    # Upload to Azure Blob Storage EARLY so that even rejected/duplicate documents can be previewed in the Action Centre
-                    unique_blob_name = upload_to_blob(file_bytes, uploaded_file.name)
-                    metadata["sharepoint_url"] = unique_blob_name
-
-                    # Layer 2 & 3: Near-Duplicate (MinHash/pHash) and Data-Level Duplicate Detection
+                    # ---------------------------------------------------------
+                    # EARLY STOP: Near-Duplicate Detection (Saves Gemini Cost)
+                    # ---------------------------------------------------------
                     is_near_dup = dedupe_service.is_near_duplicate(text, file_bytes, uploaded_file.name)
-                    is_data_dup = dedupe_service.is_data_level_duplicate(metadata)
-                    
-                    if is_near_dup or is_data_dup:
-                        reason = "Near-Duplicate (Text Similarity)" if is_near_dup else "Data-Level Duplicate (Matching ID & Vendor)"
+                    if is_near_dup:
+                        reason = "Near-Duplicate (Text Similarity)"
                         st.warning(f"**Duplicate Detected!** {reason}. Routed to Action Centre.")
                         
-                        metadata["file_name"] = uploaded_file.name
-                        metadata["review_reason"] = f"Duplicate Detected - {reason}"
-                        metadata["status"] = "Needs Review"
-                        add_review_document(metadata)
+                        unique_blob_name = upload_to_blob(file_bytes, uploaded_file.name)
+                        metadata = {
+                            "file_name": uploaded_file.name,
+                            "document_title": uploaded_file.name,
+                            "review_reason": f"Duplicate Detected - {reason}",
+                            "status": "Needs Review",
+                            "source": "Manual Ingestion",
+                            "sharepoint_url": unique_blob_name
+                        }
                         
+                        add_review_document(metadata)
                         log_document_status(
                             file_name=uploaded_file.name,
                             url="Streamlit Upload",
@@ -259,20 +286,78 @@ if uploaded_files:
                             end_time=datetime.now(),
                             word_count=word_count,
                         )
-                        
                         status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
                         action_centre_count += 1
                         continue
 
-                    review_status = (
-                        get_review_status(
-                            confidence,
-                            metadata
+                    with st.spinner(
+                        "Extracting Metadata..."
+                    ):
+                        user_id = user.get("user_id", "default_global") if user else "default_global"
+                        if is_policy_doc:
+                            from src.extraction.metadata_service import extract_policy_metadata
+                            metadata = extract_policy_metadata(text, user_id)
+                            target_index = "policy-master-index"
+                        else:
+                            metadata = extract_metadata(text, user_id)
+                            target_index = "generic-documents-index"
+                            
+                        # Keep Abhishek's flagged_tokens addition
+                        metadata["flagged_tokens"] = ocr_analysis.get("flagged_tokens", [])
+                            
+                        # Tag source for Action Centre tracking
+                        if isinstance(metadata, list):
+                            for item in metadata:
+                                item["source"] = "Manual Ingestion"
+                        else:
+                            metadata["source"] = "Manual Ingestion"
+
+                    # Upload to Azure Blob Storage EARLY so that even rejected/duplicate documents can be previewed in the Action Centre
+                    unique_blob_name = upload_to_blob(file_bytes, uploaded_file.name)
+                    if not is_policy_doc:
+                        metadata["sharepoint_url"] = unique_blob_name
+                        
+                        # Layer 3: Data-Level Duplicate Detection (Requires Metadata)
+                        is_data_dup = dedupe_service.is_data_level_duplicate(metadata)
+                        
+                        if is_data_dup:
+                            reason = "Data-Level Duplicate (Matching ID & Vendor)"
+                            st.warning(f"**Duplicate Detected!** {reason}. Routed to Action Centre.")
+                            
+                            metadata["file_name"] = uploaded_file.name
+                            metadata["review_reason"] = f"Duplicate Detected - {reason}"
+                            metadata["status"] = "Needs Review"
+                            add_review_document(metadata)
+                            
+                            log_document_status(
+                                file_name=uploaded_file.name,
+                                url="Streamlit Upload",
+                                status="Needs Review",
+                                note=f"Duplicate routed to action centre: {reason}",
+                                start_time=start_time,
+                                end_time=datetime.now(),
+                                word_count=word_count,
+                            )
+                            
+                            status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
+                            action_centre_count += 1
+                            continue
+
+                        review_status = (
+                            get_review_status(
+                                confidence,
+                                metadata
+                            )
                         )
-                    )
+                    else:
+                        review_status = "Completed"
 
-
-                    validation_results = validate_document_orchestrator(metadata)
+                    if is_policy_doc:
+                        # Policies bypass structural validation
+                        validation_results = {"missing": [], "invalid": []}
+                    else:
+                        validation_results = validate_document_orchestrator(metadata)
+                    
                     missing_fields = validation_results["missing"]
                     invalid_fields = validation_results["invalid"]
             
@@ -309,80 +394,111 @@ if uploaded_files:
                         action_centre_count += 1
                         continue
 
-                    st.info(
-                        f"Review Status: "
-                        f"{review_status}"
-                    )
+                    # Cross Validation against Policy Master Index
+                    if not is_policy_doc:
+                        doc_type = metadata.get("document_type", "").lower()
+                        if doc_type in ["major claim", "claim form", "claim closure", "claim closure report", "claim settlement"]:
+                            from src.validation.cross_validation_service import cross_validate_claim
+                            user_id = user.get("user_id", "default_global") if user else "default_global"
+                            breach_errors = cross_validate_claim(metadata, user_id)
+                            
+                            if breach_errors:
+                                reason_str = " | ".join(breach_errors)
+                                st.error(f"**Policy Breach!** {reason_str}")
+                                st.warning("This document breached a Master Policy rule and has been routed to the Action Centre.")
+                                metadata["file_name"] = uploaded_file.name
+                                metadata["review_reason"] = f"Policy Breach - {reason_str}"
+                                metadata["status"] = "Needs Review"
+                                add_review_document(metadata)
+                                
+                                log_document_status(
+                                    file_name=uploaded_file.name,
+                                    url="Streamlit Upload",
+                                    status="Needs Review",
+                                    note=f"Policy Breach. {reason_str}",
+                                    start_time=start_time,
+                                    end_time=datetime.now(),
+                                    word_count=0,
+                                )
+                                status_container.update(label=f"⚠️ Action Centre (Policy Breach): {uploaded_file.name}", state="complete", expanded=False)
+                                action_centre_count += 1
+                                continue
 
-                    st.markdown(
-                        "## 🏷️ Extracted Metadata"
-                    )
-
-                    c1, c2, c3 = st.columns(3)
-
-                    with c1:
-
-                        st.metric(
-                            "Document Type",
-                            metadata.get(
-                                "document_type",
-                                "N/A"
-                            )
+                    if not is_policy_doc:
+                        st.info(
+                            f"Review Status: "
+                            f"{review_status}"
                         )
 
-                        st.metric(
-                            "Document Number",
-                            metadata.get(
-                                "document_number",
-                                "N/A"
-                            )
+                        st.markdown(
+                            "## 🏷️ Extracted Metadata"
                         )
 
-                    with c2:
+                        c1, c2, c3 = st.columns(3)
 
-                        st.metric(
-                            "Entity",
-                            metadata.get(
-                                "entity_name",
-                                "N/A"
-                            )
-                        )
+                        with c1:
 
-
-                    with c3:
-
-                        st.metric(
-                            "Date",
-                            str(
+                            st.metric(
+                                "Document Type",
                                 metadata.get(
-                                    "document_date",
+                                    "document_type",
                                     "N/A"
                                 )
                             )
-                        )
 
-                        st.metric(
-                            "Pages",
-                            page_count
-                        )
-
-                    if "error" in metadata:
-
-                        st.error(
-                            metadata[
-                                "error"
-                            ]
-                        )
-
-                    else:
-
-                        with st.expander(
-                            "Additional Metadata"
-                        ):
-
-                            st.json(
-                                metadata
+                            st.metric(
+                                "Document Number",
+                                metadata.get(
+                                    "document_number",
+                                    "N/A"
+                                )
                             )
+
+                        with c2:
+
+                            st.metric(
+                                "Entity",
+                                metadata.get(
+                                    "entity_name",
+                                    "N/A"
+                                )
+                            )
+
+
+                        with c3:
+
+                            st.metric(
+                                "Date",
+                                str(
+                                    metadata.get(
+                                        "document_date",
+                                        "N/A"
+                                    )
+                                )
+                            )
+
+                            st.metric(
+                                "Pages",
+                                page_count
+                            )
+
+                        if "error" in metadata:
+
+                            st.error(
+                                metadata[
+                                    "error"
+                                ]
+                            )
+
+                        else:
+
+                            with st.expander(
+                                "Additional Metadata"
+                            ):
+
+                                st.json(
+                                    metadata
+                                )
 
                     user_info = {
                         "user_id": user.get("user_id", ""),
@@ -392,50 +508,75 @@ if uploaded_files:
                     }
                     
                     # Option B: Inject user tracking directly into the metadata blob
-                    metadata["user_tracking"] = user_info
                     
                     # Store fingerprints directly inside the metadata JSON blob
-                    metadata["sha256_signature"] = dedupe_service.generate_sha256_hash(file_bytes)
-                    metadata["minhash_signature"] = dedupe_service.generate_minhash(text)
-                    metadata["phash_signature"] = dedupe_service.generate_phash(file_bytes, uploaded_file.name)
+                    if not is_policy_doc:
+                        metadata["user_tracking"] = user_info
+                        metadata["sha256_signature"] = dedupe_service.generate_sha256_hash(file_bytes)
+                        metadata["minhash_signature"] = dedupe_service.generate_minhash(text)
+                        metadata["phash_signature"] = dedupe_service.generate_phash(file_bytes, uploaded_file.name)
                     
                     # (Blob upload moved to the top of the pipeline)
-                    document = build_document(
-                        uploaded_file=uploaded_file,
-                        metadata=metadata,
-                        text=text,
-                        page_count=page_count,
-                        confidence=confidence,
-                        review_status=review_status
-                    )
-
-                    with st.expander(
-                        "Azure Search Document Preview"
-                    ):
-
-                        preview = document.copy()
-
-                        preview.pop(
-                            "review_status",
-                            None
-                        )
-
-                        st.json(
-                            preview
-                        )
+                    # Build the document payload based on the index schema
+                    if is_policy_doc:
+                        from src.utils.document_builder import build_policy_document
+                        
+                        policies = metadata if isinstance(metadata, list) else [metadata]
+                        documents = []
+                        
+                        st.markdown(f"### 📋 Extracted Policies ({len(policies)} Found)")
+                        
+                        table_data = []
+                        for pol in policies:
+                            table_data.append({
+                                "Policy Number": pol.get("policy_number", "N/A"),
+                                "Insured Name": pol.get("insured_name", "N/A"),
+                                "Class": pol.get("class_of_business", "N/A"),
+                                "Limit": pol.get("policy_limit", 0)
+                            })
+                        st.dataframe(table_data, use_container_width=True)
+                        
+                        for policy_meta in policies:
+                            policy_meta["sharepoint_url"] = unique_blob_name
+                            documents.append(build_policy_document(uploaded_file, policy_meta))
+                            
+                    else:
+                        documents = [build_document(
+                            uploaded_file=uploaded_file,
+                            metadata=metadata,
+                            text=text,
+                            page_count=page_count,
+                            confidence=confidence,
+                            review_status=review_status
+                        )]
+                        
+                        with st.expander("Azure Search Document Preview"):
+                            preview = documents[0].copy()
+                            preview.pop("review_status", None)
+                            st.json(preview)
 
                     if review_status == "Completed":
 
-                        with st.spinner(
-                            "Uploading to Azure Search..."
-                        ):
-
-                            upload_documents(
-                                [document]
-                            )
+                        with st.spinner("Uploading to Azure Search..."):
+                            # Clean up metadata before upload to Azure Search
+                            docs_to_upload = []
+                            for doc in documents:
+                                doc_copy = doc.copy()
+                                if "metadata" in doc_copy:
+                                    try:
+                                        import json
+                                        meta_dict = json.loads(doc_copy["metadata"])
+                                        meta_dict.pop("flagged_tokens", None)
+                                        doc_copy["metadata"] = json.dumps(meta_dict)
+                                    except Exception:
+                                        pass
+                                docs_to_upload.append(doc_copy)
+                                
+                            upload_documents(docs_to_upload, index_name=target_index)
                         
                         # Log the hashes to Azure Table Storage to prevent future duplicates
-                        dedupe_service.log_document(file_bytes, document.get("id", ""), text, uploaded_file.name)
+                        doc_id = documents[0].get("id", "") if len(documents) > 0 else ""
+                        dedupe_service.log_document(file_bytes, doc_id, text, uploaded_file.name)
 
                         # Removed folder creation and file moving to keep files in data/
                         pass
@@ -449,11 +590,18 @@ if uploaded_files:
                         status_container.update(label=f"✅ Completed: {uploaded_file.name}", state="complete", expanded=False)
                         success_count += 1
 
-                    else:
+                    elif review_status == "Failed":
+                        st.error(f"❌ Document Rejected: OCR Confidence is too low ({confidence}%).")
+                        status = "Failed"
+                        note = "Rejected due to extremely low confidence"
+                        status_container.update(label=f"❌ Rejected: {uploaded_file.name}", state="error", expanded=False)
+                        
+                    else: # "Review Required"
 
-                        add_review_document(
-                            document
-                        )
+                        metadata["file_name"] = uploaded_file.name
+                        metadata["status"] = "Needs Review"
+                        metadata["review_reason"] = f"Low OCR Confidence ({confidence}%)"
+                        add_review_document(metadata)
 
                         status = review_status
                         note = "Waiting for manual review"

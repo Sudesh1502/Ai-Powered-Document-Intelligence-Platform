@@ -102,17 +102,52 @@ class DuplicateDetectionService:
             return False
             
         try:
-            filters = []
-            if min_hash:
-                filters.append(f"MinHashSignature eq '{min_hash}'")
-            if p_hash:
-                filters.append(f"PHashSignature eq '{p_hash}'")
+            # Fetch all hashes from Table Storage to perform mathematical similarity matching
+            # For massive production datasets, this would be migrated to a dedicated LSH Index
+            entities = list(self.table_client.query_entities(query_filter="PartitionKey eq 'Files'"))
+            
+            # Setup incoming hashes
+            incoming_minhash = None
+            if text:
+                incoming_minhash = MinHash(num_perm=128)
+                for word in text.split():
+                    incoming_minhash.update(word.encode('utf8'))
+                    
+            incoming_phash = None
+            if file_content and p_hash:
+                import imagehash
+                incoming_phash = imagehash.hex_to_hash(p_hash)
                 
-            query = " or ".join(filters)
-            entities = list(self.table_client.query_entities(query_filter=query))
-            return len(entities) > 0
+            for entity in entities:
+                # 1. Check pHash (Visual Similarity via Hamming Distance)
+                if incoming_phash and entity.get("PHashSignature"):
+                    try:
+                        import imagehash
+                        existing_phash = imagehash.hex_to_hash(entity["PHashSignature"])
+                        # Hamming distance < 5 means visually very similar
+                        if incoming_phash - existing_phash < 5:
+                            print("[DUPE-DETECT] pHash match found! Images are visually identical.")
+                            return True
+                    except Exception:
+                        pass
+                        
+                # 2. Check MinHash (Text Similarity via Jaccard Index)
+                if incoming_minhash and entity.get("MinHashSignature"):
+                    try:
+                        existing_hashvalues = list(map(int, entity["MinHashSignature"].split(",")))
+                        existing_minhash = MinHash(num_perm=128)
+                        existing_minhash.hashvalues = existing_hashvalues
+                        
+                        similarity = incoming_minhash.jaccard(existing_minhash)
+                        if similarity >= 0.85: # 85% overlap in text content
+                            print(f"[DUPE-DETECT] MinHash match found! Similarity: {similarity*100:.2f}%")
+                            return True
+                    except Exception:
+                        pass
+                        
+            return False
         except Exception as e:
-            print(f"Failed to query near duplicates: {e}")
+            print(f"Failed to calculate near duplicates: {e}")
             return False
 
     def is_data_level_duplicate(self, metadata: dict) -> bool:

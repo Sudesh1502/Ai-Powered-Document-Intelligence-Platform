@@ -1,7 +1,43 @@
 Timestamp,File Name,URL,Status,Note,Word Count,Start Time,End Time,Processing Time (s)
+2026-07-13 17:26:45,ACCORD-24-Original.pdf,,Failed,"Progress Value has invalid value [0.0, 1.0]: 95.96",454,2026-07-13 17:26:38,2026-07-13 17:26:45,6.97
+2026-07-13 17:41:39,ACCORD-24-Original.pdf,03884a84-dfe6-49e2-977d-1ee8b918151e.pdf,Completed,Indexed Automatically,454,2026-07-13 17:41:25,2026-07-13 17:41:39,14.35
+2026-07-14 17:16:45,PolicyMasterRecord 1.docx,8e0318b5-26c5-4c4f-a41b-469551bdeda3.docx,Completed,Indexed Automatically,599,2026-07-14 17:16:17,2026-07-14 17:16:45,27.3
+2026-07-14 17:24:20,CLAIM CLOSURE REPORT.docx (4).docx,Gmail Ingestion,Needs Review,Policy Breach. Identity Mismatch: Claim says 'Sanjay Rao' but Policy says 'Deepak Ramesh Nair',81,2026-07-14 17:24:03,2026-07-14 17:24:20,16.59
+2026-07-14 17:24:33,ACCORD-24-producer-tremoved.pdf,Gmail Ingestion,Needs Review,Data-Level Duplicate (Matching ID & Vendor),439,2026-07-14 17:24:20,2026-07-14 17:24:33,13.44
+2026-07-14 17:28:45,Claim_MCD_Mock_Rajan_Mehta.docx,Streamlit Upload,Needs Review,"Policy Breach. Temporal Breach: Loss Date (2026-06-12) occurred after Policy Expiration Date (2026-03-31) | Custom Validation Breach: Claim 'agreed_bank_clause' (hdfc bank, loan a/c: hdfc00489201) does not match Policy Master Index ()",0,2026-07-14 17:28:32,2026-07-14 17:28:44,12.03
+2026-07-15 12:20:22,CLAIM CLOSURE REPORT.docx (2).pdf,Streamlit Upload,Needs Review,Policy Breach. Identity Mismatch: Claim says 'Amit Verma' but Policy says 'Rajan Suresh Mehta' | Temporal Breach: Loss Date (2026-06-29) occurred after Policy Expiration Date (2026-03-31),0,2026-07-15 12:20:08,2026-07-15 12:20:22,14.36
+2026-07-15 12:33:33,Manupulated_APPROVE_RajanMehta.pdf,Gmail Ingestion,Needs Review,Data-Level Duplicate (Matching ID & Vendor),428,2026-07-15 12:33:20,2026-07-15 12:33:33,12.83
+2026-07-15 12:36:59,Test_minhash(minute change)_1_APPROVE_RajanMehta (1).pdf,Gmail Ingestion,Needs Review,Data-Level Duplicate (Matching ID & Vendor),443,2026-07-15 12:36:36,2026-07-15 12:36:59,23.1
+2026-07-15 12:54:49,Sample Contractor Invoice 1.pdf,Gmail Ingestion,Needs Review,Data-Level Duplicate (Matching ID & Vendor),175,2026-07-15 12:54:14,2026-07-15 12:54:49,34.45
+2026-07-15 13:22:55,Sample Contractor Invoice 1 (1).pdf,Gmail Ingestion,Needs Review,Data-Level Duplicate (Matching ID & Vendor),175,2026-07-15 13:22:39,2026-07-15 13:22:55,16.3
+2026-07-15 13:53:22,ClaimForm_1_APPROVE_RajanMehta (1).docx,Streamlit Upload,Needs Review,Duplicate routed to action centre: Near-Duplicate (Text Similarity),467,2026-07-15 13:53:13,2026-07-15 13:53:22,9.3
 2026-07-08 16:07:19,ACCORD-24-Original.pdf,4d497ddd-c0e1-4120-8971-0e5c2e7e9312.pdf,Completed,Indexed Automatically,454,2026-07-08 16:07:05,2026-07-08 16:07:19,13.9
 
 2026-07-08 16:15:12,ACCORD-24-Removed.pdf,Streamlit Upload,Needs Review,Duplicate routed to action centre: Data-Level Duplicate (Matching ID & Vendor),423,2026-07-08 16:14:58,2026-07-08 16:15:12,14.09
 2026-07-08 16:17:22,ACCORD-24-Removed.pdf,0e610392-b12f-4dce-9b02-3f9b1b1a33b3.pdf,Rejected,Rejected by human reviewer,0,2026-07-08 16:17:22,2026-07-08 16:17:22,0.0
 2026-07-08 16:25:53,Claim MCD OG.pdf,Gmail Ingestion,Completed,Indexed Automatically,255,2026-07-08 16:25:42,2026-07-08 16:25:53,11.23
 2026-07-08 16:26:04,test1.docx,Gmail Ingestion,Completed,Indexed Automatically,100,2026-07-08 16:25:53,2026-07-08 16:26:04,10.75
+2026-07-09 14:49:25,MR.X_SBI_General_Flexi_Home_Insurance_Proposal_Form.pdf,,Failed,"() The request is invalid. Details: The property 'document_type' does not exist on type 'search.documentFields' or is not present in the API version '2026-04-01'. Make sure to only use property names that are defined by the type.
+Code: 
+Message: The request is invalid. Details: The property 'document_type' does not exist on type 'search.documentFields' or is not present in the API version '2026-04-01'. Make sure to only use property names that are defined by the type.",1024,2026-07-09 14:49:03,2026-07-09 14:49:25,21.88
+2026-07-09 14:58:40,MR.X_SBI_General_Flexi_Home_Insurance_Proposal_Form.pdf,,Failed,"() The request is invalid. Details: An unexpected 'StartArray' node was found when reading from the JSON reader. A 'PrimitiveValue' node was expected.
+Code: 
+Message: The request is invalid. Details: An unexpected 'StartArray' node was found when reading from the JSON reader. A 'PrimitiveValue' node was expected.",1024,2026-07-09 14:58:21,2026-07-09 14:58:40,18.93
+2026-07-09 15:11:26,MR.X_SBI_General_Flexi_Home_Insurance_Proposal_Form.pdf,c49d49dd-d976-4472-b5dd-eb8df67676d9.pdf,Completed,Indexed Automatically,1024,2026-07-09 15:11:06,2026-07-09 15:11:26,19.91
+2026-07-09 16:09:24,PolicyMasterRecord (1).docx,e900e312-0de0-45c0-af21-362ab73f624d.docx,Completed,Indexed Automatically,599,2026-07-09 16:09:12,2026-07-09 16:09:24,12.01
+2026-07-09 16:27:25,Claim_MCD_Mock_Rajan_Mehta.docx,Streamlit Upload,Needs Review,Policy Breach. Missing Policy Number on Claim,0,2026-07-09 16:27:16,2026-07-09 16:27:25,9.13
+2026-07-09 16:36:58,Claim_MCD_Mock_Rajan_Mehta.pdf,Streamlit Upload,Needs Review,Policy Breach. Identity Mismatch: Claim says 'sbi general insurance co ltd' but Policy says 'rajan suresh mehta' | Temporal Breach: Loss Date (2026-06-12) occurred after Policy Expiration Date (2026-03-31),0,2026-07-09 16:36:44,2026-07-09 16:36:58,14.01
+2026-07-10 12:47:11,Filled-2-AcordForm36Agent-BrokerofRecordChangeBOR.pdf (2).pdf,045124d1-000d-4a19-9dad-74a65f70add0.pdf,Completed,Indexed Automatically,255,2026-07-10 12:46:54,2026-07-10 12:47:11,17.12
+2026-07-10 13:05:59,Sample Blur Doc.png,,Failed,"Progress Value has invalid value [0.0, 1.0]: 76.05",1272,2026-07-10 13:05:49,2026-07-10 13:05:59,10.2
+2026-07-10 13:06:15,Sample Blur Doc.png,,Failed,"Progress Value has invalid value [0.0, 1.0]: 76.05",1272,2026-07-10 13:06:06,2026-07-10 13:06:15,8.68
+2026-07-10 13:07:47,Filled ACORD Property Loss Notice S-4.pdf,,Failed,"Progress Value has invalid value [0.0, 1.0]: 72.07",667,2026-07-10 13:07:40,2026-07-10 13:07:47,7.23
+2026-07-10 13:11:16,Acord-24-Certificate-Of-Property-Insurance.pdf,,Failed,"Progress Value has invalid value [0.0, 1.0]: 99.26",298,2026-07-10 13:11:10,2026-07-10 13:11:16,5.89
+2026-07-10 13:46:43,Filled-2-AcordForm36Agent-BrokerofRecordChangeBOR.pdf (2).pdf,82b9c854-e2a5-49bf-9cd0-a8826156273d.pdf,Completed,Indexed Automatically,255,2026-07-10 13:46:23,2026-07-10 13:46:43,19.9
+2026-07-10 15:03:22,Filled-3-Acord-24-Certificate-Of-Property-Insurance.pdf (4).pdf,b0c79a06-7f3b-4c09-924d-3417e6b17a7f.pdf,Completed,Indexed Automatically,448,2026-07-10 15:03:08,2026-07-10 15:03:22,14.33
+2026-07-10 15:03:53,Sample Blur Doc.png,fd7a67cc-a5f3-42db-bccb-95ca856d932a.png,Review Required,Waiting for manual review,1272,2026-07-10 15:03:37,2026-07-10 15:03:53,15.9
+2026-07-10 15:18:01,Sample Blur Doc.png,a09e65f7-2b75-48b6-9e2e-c643d08d62ed.png,Review Required,Waiting for manual review,1272,2026-07-10 15:17:45,2026-07-10 15:18:01,16.22
+2026-07-10 15:45:44,Sample Blur Doc.png,c88e58e4-5804-4c9b-a31d-c3051dea9121.png,Review Required,Waiting for manual review,1272,2026-07-10 15:45:26,2026-07-10 15:45:44,17.99
+2026-07-10 15:46:14,Sample Blur Doc.png,c88e58e4-5804-4c9b-a31d-c3051dea9121.png,Approved Manually,Reviewed and indexed by human reviewer,0,2026-07-10 15:46:14,2026-07-10 15:46:14,0.0
+2026-07-10 15:46:43,Sample Blur Doc.png,Streamlit Upload,Needs Review,Duplicate routed to action centre: Data-Level Duplicate (Matching ID & Vendor),1272,2026-07-10 15:46:27,2026-07-10 15:46:43,15.77
+2026-07-10 15:50:41,Sample Blur Doc.png,47df2d9e-7f99-44e5-8190-111cf575b8d9.png,Rejected,Rejected by human reviewer,0,2026-07-10 15:50:41,2026-07-10 15:50:41,0.0
+2026-07-15 14:29:38,Acord-24-Certificate-Of-Property-Insurance.pdf,Streamlit Upload,Needs Review,"Validation failed. Missing: certificate_holder, authorized_representative, certificate_date, policy_expiration_date, company_name, insured_name, policy_effective_date, producer, insurance_type, policy_number",0,2026-07-15 14:29:27,2026-07-15 14:29:38,10.83

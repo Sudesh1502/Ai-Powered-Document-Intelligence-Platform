@@ -5,8 +5,8 @@ Main script that orchestrates the entire document processing pipeline: ingestion
 import uuid
 from pathlib import Path
 from src.ingestion.ingestion_service import get_unprocessed_documents
-from src.extraction.extraction_service import calculate_confidence
 from src.extraction.extraction_service import extract_text
+from src.utils.ocr_scoring import calculate_weighted_confidence
 from src.extraction.metadata_service import extract_metadata
 from src.indexing.indexing_service import create_index
 from src.indexing.upload_document_service import upload_documents
@@ -38,7 +38,8 @@ for doc in documents[:2]:
         
         result = extract_text(doc)
         word_count = len(result.content.split()) if result.content else 0
-        confidence = calculate_confidence(result)
+        ocr_analysis = calculate_weighted_confidence(result)
+        confidence = round(ocr_analysis.get("weighted_score", 0.0), 2)
         metadata = extract_metadata(result.content)
         if "error" in metadata:
             raise Exception(f"Metadata extraction failed: {metadata['error']}")
@@ -79,6 +80,33 @@ for doc in documents[:2]:
             
             # IMPORTANT: Use 'continue' or 'return' here to skip the Azure Search upload!
             continue
+        
+        # Cross Validation against Policy Master Index
+        doc_type = metadata.get("document_type", "").lower()
+        if doc_type in ["major claim", "claim form", "claim closure", "claim closure report", "claim settlement"]:
+            from src.validation.cross_validation_service import cross_validate_claim
+            breach_errors = cross_validate_claim(metadata)
+            
+            if breach_errors:
+                reason_str = " | ".join(breach_errors)
+                print(f"Policy Breach for {file_name}. {reason_str}")
+                
+                metadata["file_name"] = file_name
+                metadata["review_reason"] = f"Policy Breach - {reason_str}"
+                metadata["status"] = "Needs Review"
+                
+                add_review_document(metadata)
+                
+                log_document_status(
+                    file_name=file_name,
+                    url=url,
+                    status="Needs Review",
+                    note=f"Policy Breach. {reason_str}",
+                    start_time=start_time,
+                    end_time=datetime.now(),
+                    word_count=word_count
+                )
+                continue
         
         
         raw_date = str(metadata.get("document_date", ""))
@@ -135,5 +163,3 @@ for doc in documents[:2]:
         print(f"Failed to process {file_name}: {error_msg}")
 
 
-# index = create_index()
-# print(index)

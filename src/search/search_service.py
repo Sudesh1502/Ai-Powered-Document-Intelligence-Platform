@@ -52,7 +52,8 @@ def search_documents(
     query: str, 
     use_semantic_ranker: bool = False, 
     filters: str = None, 
-    top: int = 10
+    top: int = 10,
+    index_name: str = "generic-documents-index"
 ):
     """
     Executes a search query against the Azure AI Search index.
@@ -67,7 +68,7 @@ def search_documents(
     # Initialize the search client
     search_client = SearchClient(
         endpoint=AZURE_SEARCH_ENDPOINT,
-        index_name="generic-documents-index",
+        index_name=index_name,
         credential=AzureKeyCredential(AZURE_SEARCH_ADMIN_KEY)
     )
 
@@ -75,12 +76,19 @@ def search_documents(
     search_kwargs = {
         "search_text": query,
         "filter": filters,
-        "top": top,
-        "select": [
+        "top": top
+    }
+    
+    if index_name == "generic-documents-index":
+        search_kwargs["select"] = [
             "id", "file_name", "document_title", "document_type", 
             "entity_name", "document_date", "confidence", "sharepoint_url"
         ]
-    }
+    elif index_name == "policy-master-index":
+        search_kwargs["select"] = [
+            "id", "file_name", "policy_number", "insured_name", 
+            "policy_effective_date", "sharepoint_url"
+        ]
 
     # Add semantic parameters if requested
     if use_semantic_ranker:
