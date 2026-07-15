@@ -23,9 +23,9 @@ from datetime import datetime
 import shutil
 from src.validation.file_validator import is_valid_file
 from src.extraction.extraction_service import (
-    extract_text,
-    calculate_confidence
+    extract_text
 )
+from src.utils.ocr_scoring import calculate_weighted_confidence
 from src.extraction.metadata_service import (
     extract_metadata
 )
@@ -158,7 +158,7 @@ render_real_time_metrics()
 st.markdown("---")
 
 st.markdown(
-    "## 📤 Upload Document"
+    "## ⬆️ Upload Document"
 )
 
 uploaded_files = st.file_uploader(
@@ -227,8 +227,8 @@ if uploaded_files:
                             file_bytes
                         )
                         word_count = len(result.content.split()) if result.content else 0
-                    confidence = calculate_confidence(result)
-
+                    ocr_analysis = calculate_weighted_confidence(result)
+                    confidence = round(ocr_analysis.get("weighted_score", 0.0), 2)
                     text = result.content
 
                     page_count = len(result.pages) if result.pages else 0
@@ -245,7 +245,7 @@ if uploaded_files:
                     )
 
                     st.markdown(
-                        "## 🎯 OCR Confidence"
+                        "## ⭕ OCR Confidence"
                     )
 
                     # Ensure it is passed as a valid float [0.0, 1.0] to avoid type errors in older Streamlit versions
@@ -300,6 +300,9 @@ if uploaded_files:
                         else:
                             metadata = extract_metadata(text, user_id)
                             target_index = "generic-documents-index"
+                            
+                        # Keep Abhishek's flagged_tokens addition
+                        metadata["flagged_tokens"] = ocr_analysis.get("flagged_tokens", [])
                             
                         # Tag source for Action Centre tracking
                         if isinstance(metadata, list):
@@ -554,7 +557,21 @@ if uploaded_files:
                     if review_status == "Completed":
 
                         with st.spinner("Uploading to Azure Search..."):
-                            upload_documents(documents, index_name=target_index)
+                            # Clean up metadata before upload to Azure Search
+                            docs_to_upload = []
+                            for doc in documents:
+                                doc_copy = doc.copy()
+                                if "metadata" in doc_copy:
+                                    try:
+                                        import json
+                                        meta_dict = json.loads(doc_copy["metadata"])
+                                        meta_dict.pop("flagged_tokens", None)
+                                        doc_copy["metadata"] = json.dumps(meta_dict)
+                                    except Exception:
+                                        pass
+                                docs_to_upload.append(doc_copy)
+                                
+                            upload_documents(docs_to_upload, index_name=target_index)
                         
                         # Log the hashes to Azure Table Storage to prevent future duplicates
                         doc_id = documents[0].get("id", "") if len(documents) > 0 else ""
