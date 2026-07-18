@@ -1,5 +1,6 @@
 import uuid
 import json
+from datetime import datetime, timezone, timedelta
 from azure.data.tables import TableServiceClient
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from src.config.config import AZURE_STORAGE_CONNECTION_STRING
@@ -31,11 +32,23 @@ def load_review_documents():
         
     documents = []
     try:
-        # Query all entities in the Queue partition
-        entities = client.query_entities(query_filter=f"PartitionKey eq '{PARTITION_KEY}'")
+        # Query all entities in the Queue partition and sort by Azure's Timestamp
+        entities = list(client.query_entities(query_filter=f"PartitionKey eq '{PARTITION_KEY}'"))
+        entities.sort(key=lambda x: x.get("Timestamp", datetime.min), reverse=True)
+        
         for entity in entities:
             # Reconstruct the document dictionary
             doc = dict(entity)
+            
+            # Extract Azure's UTC Timestamp, convert to IST, and store for frontend display
+            if "Timestamp" in doc:
+                try:
+                    utc_time = doc["Timestamp"]
+                    ist_time = utc_time.astimezone(timezone.utc) + timedelta(hours=5, minutes=30)
+                    doc["queue_date"] = ist_time.strftime("%Y-%m-%d %I:%M %p IST")
+                except Exception:
+                    doc["queue_date"] = "Unknown"
+            
             doc["id"] = doc.pop("RowKey")
             # Remove Azure Table specific metadata
             doc.pop("PartitionKey", None)

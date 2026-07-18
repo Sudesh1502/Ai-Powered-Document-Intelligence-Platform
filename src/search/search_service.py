@@ -97,6 +97,9 @@ def search_documents(
             "semantic_configuration_name": "default-semantic-config",
             "query_caption": "extractive"
         })
+    else:
+        # Enforce exact matching for all keywords (instead of partial/any matches)
+        search_kwargs["search_mode"] = "all"
 
     try:
         # Execute the search request

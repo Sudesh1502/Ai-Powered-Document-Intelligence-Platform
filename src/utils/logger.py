@@ -4,6 +4,7 @@ This file provides logging functionality to track document processing status.
 import csv
 import os
 from datetime import datetime
+from src.utils.time_utils import get_ist_now
 from pathlib import Path
 import pandas as pd
 
@@ -18,7 +19,7 @@ def log_document_status(file_name: str, url: str, status: str, note: str, start_
         if not file_exists:
             writer.writerow(['Timestamp', 'File Name', 'URL', 'Status', 'Note','Word Count', 'Start Time', 'End Time', 'Processing Time (s)'])
             
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = get_ist_now().strftime("%Y-%m-%d %H:%M:%S")
         
         start_str = start_time.strftime("%Y-%m-%d %H:%M:%S") if start_time else ""
         end_str = end_time.strftime("%Y-%m-%d %H:%M:%S") if end_time else ""

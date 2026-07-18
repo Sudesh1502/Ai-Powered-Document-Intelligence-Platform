@@ -1,6 +1,7 @@
 import time
 import uuid
 import datetime
+from src.utils.time_utils import get_ist_now
 import os
 from src.ingestion.gmail_agent import GmailAgent
 from src.extraction.extraction_service import extract_text
@@ -20,7 +21,7 @@ class MockFile:
 def process_email_attachment(email_body: str, attachment: dict, dedupe_service: DuplicateDetectionService):
     filename = attachment["filename"]
     file_bytes = attachment["data"]
-    start_time = datetime.datetime.now()
+    start_time = get_ist_now()
     
     print(f"\n[GMAIL-WORKER] Processing attachment: {filename}")
     
@@ -84,7 +85,7 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
         add_review_document(metadata)
         log_document_status(
             file_name=filename, url="Gmail Ingestion", status="Needs Review",
-            note="Data-Level Duplicate (Matching ID & Vendor)", start_time=start_time, end_time=datetime.datetime.now(), word_count=len(text.split()) if text else 0
+            note="Data-Level Duplicate (Matching ID & Vendor)", start_time=start_time, end_time=get_ist_now(), word_count=len(text.split()) if text else 0
         )
         return
 
@@ -96,7 +97,7 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
         print(f"[GMAIL-WORKER] Rejecting document ({confidence}%). Confidence too low.")
         log_document_status(
             file_name=filename, url="Gmail Ingestion", status="Failed",
-            note=f"Rejected due to extremely low confidence ({confidence}%)", start_time=start_time, end_time=datetime.datetime.now(), word_count=len(text.split()) if text else 0
+            note=f"Rejected due to extremely low confidence ({confidence}%)", start_time=start_time, end_time=get_ist_now(), word_count=len(text.split()) if text else 0
         )
         return
     elif review_status != "Completed":
@@ -187,15 +188,20 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
                 add_review_document(metadata)
                 log_document_status(
                     file_name=filename, url="Gmail Ingestion", status="Needs Review",
-                    note=f"Policy Breach. {reason_str}", start_time=start_time, end_time=datetime.datetime.now(), word_count=len(text.split()) if text else 0
+                    note=f"Policy Breach. {reason_str}", start_time=start_time, end_time=get_ist_now(), word_count=len(text.split()) if text else 0
                 )
                 return # Skip Azure Search upload
                 
         print(f"[GMAIL-WORKER] Document is valid and passed all checks! Uploading to Azure AI Search...")
         upload_documents([document])
         log_document_status(
-            file_name=filename, url="Gmail Ingestion", status="Completed",
-            note="Indexed Automatically", start_time=start_time, end_time=datetime.datetime.now(), word_count=len(text.split()) if text else 0
+            file_name=filename,
+            url=unique_blob_name,
+            status="Completed",
+            note="Fully Indexed",
+            start_time=start_time,
+            end_time=get_ist_now(),
+            word_count=len(text.split()) if text else 0
         )
         
     # Log Document Hashes

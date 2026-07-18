@@ -97,8 +97,8 @@ if "selected_doc_index" not in st.session_state:
 
 @st.fragment(run_every="5s")
 def render_action_centre_queue():
-    # Reverse so the newest documents appear at the top
-    docs = list(reversed(load_review_documents()))
+    # Documents are already sorted newest-first by the backend
+    docs = load_review_documents()
 
     c1, c2, c3 = st.columns(3)
 
@@ -166,7 +166,8 @@ def render_action_centre_queue():
                 cols[1].write(entity if entity and str(entity).strip() else "⚠️ *Missing*")
                 
                 date = list_doc.get("document_date")
-                cols[2].write(str(date) if date and str(date).strip() else "⚠️ *Missing*")
+                display_date = str(date).split("T")[0] if date and str(date).strip() else "⚠️ *Missing*"
+                cols[2].write(display_date)
             
             if cols[3].button("Review", key=f"review_btn_{idx}", use_container_width=True):
                 st.session_state.selected_doc_index = idx
@@ -176,7 +177,7 @@ def render_action_centre_queue():
 if st.session_state.selected_doc_index is None:
     render_action_centre_queue()
 else:
-    docs = list(reversed(load_review_documents()))
+    docs = load_review_documents()
     i = st.session_state.selected_doc_index
     if i >= len(docs):
         st.session_state.selected_doc_index = None
