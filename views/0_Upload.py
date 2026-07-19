@@ -139,6 +139,20 @@ if submitted and uploaded_files:
                     if dedupe_service.is_exact_duplicate(file_bytes):
                         st.warning("Exact duplicate document detected. Skipping.")
                         status_container.update(label=f"⏭️ Skipped Duplicate: {uploaded_file.name}", state="complete", expanded=False)
+                        
+                        # Upload to Blob Storage for audit trail purposes
+                        blob_url = upload_to_blob(file_bytes, uploaded_file.name)
+                        sas_url = generate_sas_url(blob_url)
+                        
+                        log_document_status(
+                            file_name=uploaded_file.name,
+                            url=sas_url,
+                            status="Rejected",
+                            note="Exact duplicate document detected. Processing aborted.",
+                            start_time=get_ist_now(),
+                            end_time=get_ist_now(),
+                            word_count=0
+                        )
                         continue
     
                     os.makedirs("data", exist_ok=True)
@@ -166,6 +180,9 @@ if submitted and uploaded_files:
                     ocr_analysis = calculate_weighted_confidence(result)
                     confidence = round(ocr_analysis.get("weighted_score", 0.0), 2)
                     text = result.content
+                    
+                    # Register hashes early so that duplicate detection works even if the document fails validation or is routed to Action Centre
+                    dedupe_service.log_document(file_bytes, "", text, uploaded_file.name)
     
                     page_count = len(result.pages) if result.pages else 0
     
@@ -218,7 +235,7 @@ if submitted and uploaded_files:
                             status="Needs Review",
                             note=f"Duplicate routed to action centre: {reason}",
                             start_time=start_time,
-                            end_time=datetime.now(),
+                            end_time=get_ist_now(),
                             word_count=word_count,
                         )
                         status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
@@ -269,7 +286,7 @@ if submitted and uploaded_files:
                                 status="Needs Review",
                                 note=f"Duplicate routed to action centre: {reason}",
                                 start_time=start_time,
-                                end_time=datetime.now(),
+                                end_time=get_ist_now(),
                                 word_count=word_count,
                             )
                             
@@ -319,7 +336,7 @@ if submitted and uploaded_files:
                             status="Needs Review",
                             note=f"Validation failed. {reason_str}",
                             start_time=start_time,
-                            end_time=datetime.now(),
+                            end_time=get_ist_now(),
                             word_count=0,
                         )
                 
@@ -351,7 +368,7 @@ if submitted and uploaded_files:
                                     status="Needs Review",
                                     note=f"Policy Breach. {reason_str}",
                                     start_time=start_time,
-                                    end_time=datetime.now(),
+                                    end_time=get_ist_now(),
                                     word_count=0,
                                 )
                                 status_container.update(label=f"⚠️ Action Centre (Policy Breach): {uploaded_file.name}", state="complete", expanded=False)
@@ -508,13 +525,6 @@ if submitted and uploaded_files:
                                 
                             upload_documents(docs_to_upload, index_name=target_index)
                         
-                        # Log the hashes to Azure Table Storage to prevent future duplicates
-                        doc_id = documents[0].get("id", "") if len(documents) > 0 else ""
-                        dedupe_service.log_document(file_bytes, doc_id, text, uploaded_file.name)
-    
-                        # Removed folder creation and file moving to keep files in data/
-                        pass
-    
                         status = "Completed"
                         note = "Indexed Automatically"
     
@@ -557,9 +567,15 @@ if submitted and uploaded_files:
                         2
                     )
     
+                    # GLOBALLY log the hashes to Azure Table Storage for ALL ingested documents
+                    # to prevent future exact/near duplicates, even if routed to Action Centre.
+                    doc_id = documents[0].get("id", "") if "documents" in locals() and len(documents) > 0 else ""
+                    dedupe_service.log_document(file_bytes, doc_id, text, uploaded_file.name)
+                    
+                    sas_url = generate_sas_url(unique_blob_name) if "unique_blob_name" in locals() and unique_blob_name else ""
                     log_document_status(
                         file_name=uploaded_file.name,
-                        url=unique_blob_name,
+                        url=sas_url,
                         status=status,
                         note=note,
                         start_time=start_time,

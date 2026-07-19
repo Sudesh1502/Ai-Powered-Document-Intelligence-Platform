@@ -39,13 +39,17 @@ st.markdown("""
 
 from src.auth.auth_service import login_user, logout_user
 
-# 1. Wrap the login flow in an empty container so we can instantly obliterate it later
+# 1. Wrap the login flow in an empty container
 login_placeholder = st.empty()
 
 with login_placeholder.container():
     user = login_user()
 
 if not user:
+    # Ensure any stale fast-rerun flags are destroyed since the user is on the login screen
+    if 'cookie_saved_rerun' in st.session_state:
+        del st.session_state['cookie_saved_rerun']
+
     # Explicitly clear the navigation state from the frontend before stopping
     pg = st.navigation([st.Page(lambda: None, title="Login")], position="hidden")
     pg.run()
@@ -53,8 +57,15 @@ if not user:
 
 # --- If we reach here, the user is successfully logged in ---
 
-# 2. Instantly wipe the login form from the browser before doing any heavy lifting
-login_placeholder.empty()
+# 2. Fast Rerun Trick: If we just authenticated this very millisecond, trigger a lightning-fast rerun.
+# This guarantees the browser receives the invisible cookie-setting script from the authenticator.
+if not st.session_state.get('cookie_saved_rerun'):
+    st.session_state['cookie_saved_rerun'] = True
+    st.rerun()
+else:
+    # We are on the SECOND run. The cookie is safely saved in the browser.
+    # We must explicitly wipe the stale login form from the previous run BEFORE loading the heavy pages!
+    login_placeholder.empty()
 
 # 3. Show a sleek loading spinner while the heavy home page is evaluated and drawn
 with st.spinner("Preparing your workspace..."):

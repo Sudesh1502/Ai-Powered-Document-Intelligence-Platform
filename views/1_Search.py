@@ -11,44 +11,6 @@ from src.utils.blob_service import generate_sas_url
 import requests
 import io
 
-st.set_page_config(
-    page_title="Search",
-    page_icon="🔍",
-    layout="wide"
-)
-# Hide sidebar instantly to prevent flash before login
-st.markdown(
-    """
-    <style>
-        [data-testid="stSidebar"] { display: none; }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-from src.auth.auth_service import login_user, logout_user
-
-# --- Authentication Wall ---
-user = login_user()
-if not user:
-    st.stop()
-
-# If user is logged in, restore the sidebar
-st.markdown(
-    """
-    <style>
-        [data-testid="stSidebar"] { display: block !important; }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-# ---------------------------
-
-with st.sidebar:
-    st.markdown(f"**Signed in as:** {user['name']}")
-    logout_user()
-    st.markdown("---")
-
 header1, header2 = st.columns(
     [1, 8]
 )

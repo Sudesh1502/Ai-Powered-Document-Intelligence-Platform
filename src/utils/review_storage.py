@@ -34,7 +34,7 @@ def load_review_documents():
     try:
         # Query all entities in the Queue partition and sort by Azure's Timestamp
         entities = list(client.query_entities(query_filter=f"PartitionKey eq '{PARTITION_KEY}'"))
-        entities.sort(key=lambda x: x.get("Timestamp", datetime.min), reverse=True)
+        entities.sort(key=lambda x: x.get("Timestamp", datetime.min), reverse=False)
         
         for entity in entities:
             # Reconstruct the document dictionary

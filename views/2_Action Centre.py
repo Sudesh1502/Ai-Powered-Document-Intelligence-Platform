@@ -25,12 +25,6 @@ from src.utils.review_storage import (
     remove_review_document
 )
 
-st.set_page_config(
-    page_title="Action Centre",
-    page_icon="📄",
-    layout="wide"
-)
-
 st.markdown("""
     <style>
     /* Prevent Streamlit from graying out elements during auto-refresh */
@@ -44,38 +38,6 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-# Hide sidebar instantly to prevent flash before login
-st.markdown(
-    """
-    <style>
-        [data-testid="stSidebar"] { display: none; }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-from src.auth.auth_service import login_user, logout_user
-
-# --- Authentication Wall ---
-user = login_user()
-if not user:
-    st.stop()
-
-# If user is logged in, restore the sidebar
-st.markdown(
-    """
-    <style>
-        [data-testid="stSidebar"] { display: block !important; }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-# ---------------------------
-
-with st.sidebar:
-    st.markdown(f"**Signed in as:** {user['name']}")
-    logout_user()
-    st.markdown("---")
 
 header1, header2 = st.columns(
     [1, 8]
@@ -97,7 +59,7 @@ if "selected_doc_index" not in st.session_state:
 
 @st.fragment(run_every="5s")
 def render_action_centre_queue():
-    # Documents are already sorted newest-first by the backend
+    # Documents are already sorted oldest-first (FIFO) by the backend
     docs = load_review_documents()
 
     c1, c2, c3 = st.columns(3)
@@ -147,7 +109,7 @@ def render_action_centre_queue():
         hcols = st.columns([4, 3, 3, 2])
         hcols[0].markdown("**File Name**")
         hcols[1].markdown("**Entity Name**")
-        hcols[2].markdown("**Document Date**")
+        hcols[2].markdown("**Queue Time**")
         hcols[3].markdown("**Action**")
         st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid rgba(200,200,200,0.3);'/>", unsafe_allow_html=True)
         
@@ -165,9 +127,9 @@ def render_action_centre_queue():
                 entity = list_doc.get("entity_name")
                 cols[1].write(entity if entity and str(entity).strip() else "⚠️ *Missing*")
                 
-                date = list_doc.get("document_date")
-                display_date = str(date).split("T")[0] if date and str(date).strip() else "⚠️ *Missing*"
-                cols[2].write(display_date)
+                # Show the exact time it was added to the queue to prove FIFO sorting
+                queue_time = list_doc.get("queue_date", "Unknown")
+                cols[2].write(queue_time)
             
             if cols[3].button("Review", key=f"review_btn_{idx}", use_container_width=True):
                 st.session_state.selected_doc_index = idx
