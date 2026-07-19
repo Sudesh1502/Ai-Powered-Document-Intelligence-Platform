@@ -85,7 +85,8 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
         add_review_document(metadata)
         log_document_status(
             file_name=filename, url="Gmail Ingestion", status="Needs Review",
-            note="Data-Level Duplicate (Matching ID & Vendor)", start_time=start_time, end_time=get_ist_now(), word_count=len(text.split()) if text else 0
+            note="Data-Level Duplicate (Matching ID & Vendor)", start_time=start_time, end_time=get_ist_now(), word_count=len(text.split()) if text else 0,
+            confidence=confidence
         )
         return
 
@@ -97,7 +98,8 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
         print(f"[GMAIL-WORKER] Rejecting document ({confidence}%). Confidence too low.")
         log_document_status(
             file_name=filename, url="Gmail Ingestion", status="Failed",
-            note=f"Rejected due to extremely low confidence ({confidence}%)", start_time=start_time, end_time=get_ist_now(), word_count=len(text.split()) if text else 0
+            note=f"Rejected due to extremely low confidence ({confidence}%)", start_time=start_time, end_time=get_ist_now(), word_count=len(text.split()) if text else 0,
+            confidence=confidence
         )
         return
     elif review_status != "Completed":
@@ -108,7 +110,8 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
         add_review_document(metadata)
         log_document_status(
             file_name=filename, url="Gmail Ingestion", status="Needs Review",
-            note=metadata["review_reason"], start_time=start_time, end_time=datetime.datetime.now(), word_count=len(text.split()) if text else 0
+            note=metadata["review_reason"], start_time=start_time, end_time=datetime.datetime.now(), word_count=len(text.split()) if text else 0,
+            confidence=confidence
         )
         return
 
@@ -165,7 +168,8 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
         add_review_document(metadata)
         log_document_status(
             file_name=filename, url="Gmail Ingestion", status="Needs Review",
-            note=metadata["review_reason"], start_time=start_time, end_time=datetime.datetime.now(), word_count=len(text.split()) if text else 0
+            note=metadata["review_reason"], start_time=start_time, end_time=datetime.datetime.now(), word_count=len(text.split()) if text else 0,
+            confidence=confidence
         )
     else:
         # Cross Validation against Policy Master Index
@@ -188,7 +192,8 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
                 add_review_document(metadata)
                 log_document_status(
                     file_name=filename, url="Gmail Ingestion", status="Needs Review",
-                    note=f"Policy Breach. {reason_str}", start_time=start_time, end_time=get_ist_now(), word_count=len(text.split()) if text else 0
+                    note=f"Policy Breach. {reason_str}", start_time=start_time, end_time=get_ist_now(), word_count=len(text.split()) if text else 0,
+                    confidence=confidence
                 )
                 return # Skip Azure Search upload
                 
@@ -201,7 +206,8 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
             note="Fully Indexed",
             start_time=start_time,
             end_time=get_ist_now(),
-            word_count=len(text.split()) if text else 0
+            word_count=len(text.split()) if text else 0,
+            confidence=confidence
         )
         
     # Log Document Hashes

@@ -40,7 +40,8 @@ for rule in rules:
 
 # Custom Attributes Management
 from src.config.config_service import load_custom_attributes, save_custom_attributes
-user_id = user.get("user_id", "default_global")
+user = login_user()
+user_id = user.get("user_id", "default_global") if user else "default_global"
 
 if "custom_attributes" not in st.session_state:
     st.session_state.custom_attributes = load_custom_attributes(user_id)

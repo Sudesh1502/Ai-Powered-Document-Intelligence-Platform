@@ -17,7 +17,8 @@ from src.indexing.upload_document_service import (
 )
 
 from src.utils.logger import (
-    log_document_status
+    log_document_status,
+    get_logs
 )
 
 from src.utils.review_storage import (
@@ -39,19 +40,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-header1, header2 = st.columns(
-    [1, 8]
-)
-
-with header1:
-    logo_path = "pages/LOGO.png"
-    if os.path.exists(logo_path):
-        st.image(logo_path, width=150)
-
-with header2:
-    st.title("Action Centre")
-    st.caption("Review and validate documents that require manual intervention.")
-
+st.title("Action Centre")
+st.caption("Review and validate documents that require manual intervention.")
 st.markdown("---")
 
 if "selected_doc_index" not in st.session_state:
@@ -61,6 +51,14 @@ if "selected_doc_index" not in st.session_state:
 def render_action_centre_queue():
     # Documents are already sorted oldest-first (FIFO) by the backend
     docs = load_review_documents()
+    
+    # Read actual counts from the persistent CSV logs
+    logs = get_logs()
+    approved_count = 0
+    rejected_count = 0
+    if not logs.empty and "Status" in logs.columns:
+        approved_count = len(logs[logs["Status"] == "Approved Manually"])
+        rejected_count = len(logs[logs["Status"] == "Rejected"])
 
     c1, c2, c3 = st.columns(3)
 
@@ -73,19 +71,13 @@ def render_action_centre_queue():
     with c2:
         st.metric(
             "Approved Manually",
-            st.session_state.get(
-                "approved_count",
-                0
-            )
+            approved_count
         )
 
     with c3:
         st.metric(
             "Rejected",
-            st.session_state.get(
-                "rejected_count",
-                0
-            )
+            rejected_count
         )
 
     st.markdown("---")
@@ -106,15 +98,15 @@ def render_action_centre_queue():
         """, unsafe_allow_html=True)
 
         st.markdown("### Pending Documents")
-        hcols = st.columns([4, 3, 3, 2])
-        hcols[0].markdown("**File Name**")
-        hcols[1].markdown("**Entity Name**")
-        hcols[2].markdown("**Queue Time**")
-        hcols[3].markdown("**Action**")
+        hcols = st.columns([4, 3, 3, 2], gap="xxsmall")
+        hcols[0].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px; border-radius: 6px 0 0 6px;'>File Name</div>", unsafe_allow_html=True)
+        hcols[1].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px;'>Entity Name</div>", unsafe_allow_html=True)
+        hcols[2].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px;'>Queue Time</div>", unsafe_allow_html=True)
+        hcols[3].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: center; font-weight: 600; font-size: 14px; border-radius: 0 6px 6px 0;'>Action</div>", unsafe_allow_html=True)
         st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid rgba(200,200,200,0.3);'/>", unsafe_allow_html=True)
         
         for idx, list_doc in enumerate(docs):
-            cols = st.columns([4, 3, 3, 2], gap="small")
+            cols = st.columns([4, 3, 3, 2], gap="xxsmall")
             
             # File Name is always available
             cols[0].write(list_doc.get("file_name", "Unknown"))
@@ -131,6 +123,7 @@ def render_action_centre_queue():
                 queue_time = list_doc.get("queue_date", "Unknown")
                 cols[2].write(queue_time)
             
+            cols[3].markdown("<div class='table-btn-anchor'></div>", unsafe_allow_html=True)
             if cols[3].button("Review", key=f"review_btn_{idx}", use_container_width=True):
                 st.session_state.selected_doc_index = idx
                 st.rerun()
@@ -229,6 +222,8 @@ else:
                         
                         extension = os.path.splitext(doc.get("file_name", ""))[1].lower()
                         text = extract_text(file_bytes, extension=extension)
+                        from src.auth.auth_service import login_user
+                        user = login_user()
                         user_id = user.get("user_id", "default_global") if user else "default_global"
                         new_metadata = extract_metadata(text, user_id=user_id)
                         

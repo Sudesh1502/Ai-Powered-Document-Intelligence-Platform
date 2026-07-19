@@ -38,20 +38,27 @@ from src.utils.review_storage import (
 )
 from src.validation.validation_engine import validate_document_orchestrator
 from src.utils.review_storage import add_review_document
-header1, header2 = st.columns(
-    [1, 8]
-)
+# --- Render Custom Top Header with Heading and Logo ---
+import base64
+logo_path = "views/LOGO.png"
+if os.path.exists(logo_path):
+    with open(logo_path, "rb") as img_file:
+        b64_logo = base64.b64encode(img_file.read()).decode()
+    logo_html = f"<img src='data:image/png;base64,{b64_logo}' style='height: 60px; margin-right: 20px; vertical-align: middle;' />"
+else:
+    logo_html = ""
 
-with header1:
-    logo_path = "views/LOGO.png"
-    if os.path.exists(logo_path):
-        st.image(logo_path, width=150)
+st.markdown(f"""
+    <div style='display: flex; align-items: center; margin-bottom: 15px; margin-top: 10px;'>
+        {logo_html}
+        <div>
+            <h2 style='margin:0; font-family: Outfit, sans-serif; color: #0F172A; font-size: 1.7rem; line-height: 1.2;'>AI Powered Document Intelligence Platform</h2>
+            <p style='margin: 4px 0 0 0; color: #64748B; font-size: 13.5px;'>Transforming unstructured documents into searchable business intelligence with enterprise-grade precision.</p>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
-with header2:
-    st.title("AI Powered Document Intelligence Platform")
-    st.caption("Transforming unstructured documents into searchable business intelligence.")
-
-st.markdown("---")
+st.markdown("<hr style='margin: 0 0 1.5rem 0; border: none; border-bottom: 1px solid #E2E8F0;'/>", unsafe_allow_html=True)
 
 @st.fragment(run_every="5s")
 def render_real_time_metrics():
@@ -60,24 +67,21 @@ def render_real_time_metrics():
     c1, c2, c3, c4 = st.columns(4)
 
     with c1:
-
         st.metric(
             "Documents Processed",
             metrics["processed"]
         )
 
     with c2:
-
         st.metric(
             "Documents Indexed",
             metrics["indexed"]
         )
 
     with c3:
-
         st.metric(
             "OCR Confidence",
-            "--"
+            f"{metrics['avg_confidence']}%"
         )
 
     with c4:
@@ -89,11 +93,9 @@ def render_real_time_metrics():
 
 render_real_time_metrics()
 
-st.markdown("---")
+st.markdown("<div style='margin-bottom: 2rem;'></div>", unsafe_allow_html=True)
 
-st.markdown(
-    "## ⬆️ Upload Document"
-)
+st.markdown("<h3 style='font-family: Outfit, sans-serif; color: #0F172A; font-size: 1.3rem; margin-bottom: 1rem;'>⬆️ Upload Document</h3>", unsafe_allow_html=True)
 
 with st.form("upload_form", clear_on_submit=True):
     uploaded_files = st.file_uploader(
@@ -109,7 +111,7 @@ with st.form("upload_form", clear_on_submit=True):
     )
 
     is_policy_doc = st.toggle("This is a Policy Master Document")
-    submitted = st.form_submit_button("Process Documents", use_container_width=True)
+    submitted = st.form_submit_button("Process Documents →", type="primary", use_container_width=True)
 
 if submitted and uploaded_files:
     if len(uploaded_files) > 5:
@@ -128,6 +130,7 @@ if submitted and uploaded_files:
             with st.status(f"📄 Processing: {uploaded_file.name}", expanded=True) as status_container:
     
                 start_time = get_ist_now()
+                confidence = 0.0
     
                 try:
     
@@ -151,7 +154,8 @@ if submitted and uploaded_files:
                             note="Exact duplicate document detected. Processing aborted.",
                             start_time=get_ist_now(),
                             end_time=get_ist_now(),
-                            word_count=0
+                            word_count=0,
+                            confidence=0.0
                         )
                         continue
     
@@ -237,6 +241,7 @@ if submitted and uploaded_files:
                             start_time=start_time,
                             end_time=get_ist_now(),
                             word_count=word_count,
+                            confidence=confidence
                         )
                         status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
                         action_centre_count += 1
@@ -288,6 +293,7 @@ if submitted and uploaded_files:
                                 start_time=start_time,
                                 end_time=get_ist_now(),
                                 word_count=word_count,
+                                confidence=confidence
                             )
                             
                             status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
@@ -338,6 +344,7 @@ if submitted and uploaded_files:
                             start_time=start_time,
                             end_time=get_ist_now(),
                             word_count=0,
+                            confidence=confidence
                         )
                 
                         # 5. Continue to the next file instead of stopping the batch
@@ -370,6 +377,7 @@ if submitted and uploaded_files:
                                     start_time=start_time,
                                     end_time=get_ist_now(),
                                     word_count=0,
+                                    confidence=confidence
                                 )
                                 status_container.update(label=f"⚠️ Action Centre (Policy Breach): {uploaded_file.name}", state="complete", expanded=False)
                                 action_centre_count += 1
@@ -580,7 +588,8 @@ if submitted and uploaded_files:
                         note=note,
                         start_time=start_time,
                         end_time=end_time,
-                        word_count=word_count
+                        word_count=word_count,
+                        confidence=confidence
                     )
     
                     st.info(
@@ -600,7 +609,8 @@ if submitted and uploaded_files:
                         note=str(e),
                         start_time=start_time,
                         end_time=end_time,
-                        word_count=word_count
+                        word_count=word_count,
+                        confidence=confidence
                     )
     
                     st.error(
@@ -618,48 +628,63 @@ if submitted and uploaded_files:
 
 
 
-st.markdown(
-    "## 📊 Recent Processing Activity"
-)
-
+# Render Custom Recent Processing Activity Card Layout (No indentation to prevent markdown code blocks)
 logs = get_logs()
 
 if logs.empty:
-
-    st.info(
-        "No logs available."
-    )
-
+    st.info("No logs available.")
 else:
-
     keep_cols = []
-
-    for c in [
-        "Timestamp",
-        "File Name",
-        "Status",
-        "Processing Time (s)"
-    ]:
-
+    for c in ["Timestamp", "File Name", "Status", "Processing Time (s)"]:
         if c in logs.columns:
+            keep_cols.append(c)
 
-            keep_cols.append(
-                c
-            )
-
-    display = logs[
-        keep_cols
-    ]
-
-    # Sort by Timestamp descending so newest is at the top
+    display = logs[keep_cols]
     if "Timestamp" in display.columns:
         display = display.sort_values(by="Timestamp", ascending=False)
 
-    display = display.head(20)
+    display = display.head(100) # Increased to 100 records to support scrolling through history
 
-    st.dataframe(
-        display,
-        use_container_width=True,
-        hide_index=True,
-        height=300
-    )
+    # Generate custom HTML table for pixel-perfect match with scrollable overflow container
+    html_table = """<div style='background-color: white; border: 1px solid #E2E8F0; border-radius: 12px; box-shadow: 0px 4px 12px rgba(0,0,0,0.02); padding: 1.5rem; margin-bottom: 1.5rem;'>
+<div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
+<span style='font-size: 20px;'>🕒</span>
+<h3 style='margin: 0; font-family: Outfit, sans-serif; color: #002060; font-size: 1.3rem;'>Recent Processing Activity</h3>
+</div>
+<div style='max-height: 420px; overflow-y: auto; border: 1px solid #F1F5F9; border-radius: 6px;'>
+<table style='width: 100%; border-collapse: collapse; font-family: Inter, sans-serif; font-size: 14px;'>
+<thead>
+<tr style='background-color: #F8FAFC; border-bottom: 1px solid #E2E8F0; text-align: left; position: sticky; top: 0; z-index: 10;'>
+<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC;'>Timestamp</th>
+<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC;'>File Name</th>
+<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC;'>Status</th>
+<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC;'>Processing Time (s)</th>
+</tr>
+</thead>
+<tbody>"""
+
+    for idx, row in display.iterrows():
+        status = row.get("Status", "Unknown")
+        if status == "Rejected":
+            badge = "<span style='background-color: #FEE2E2; color: #991B1B; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif;'>Rejected</span>"
+        elif status == "Needs Review":
+            badge = "<span style='background-color: #0F172A; color: #FFFFFF; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif;'>Needs Review</span>"
+        elif status == "Completed":
+            badge = "<span style='background-color: #D1FAE5; color: #065F46; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif;'>Completed</span>"
+        else:
+            badge = f"<span style='background-color: #F1F5F9; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif;'>{status}</span>"
+
+        time_val = row.get("Processing Time (s)", "0")
+        
+        html_table += f"""<tr style='border-bottom: 1px solid #F1F5F9;'>
+<td style='padding: 14px 12px; color: #475569;'>{row.get("Timestamp", "")}</td>
+<td style='padding: 14px 12px; color: #0F172A; font-weight: 500;'>{row.get("File Name", "")}</td>
+<td style='padding: 14px 12px;'>{badge}</td>
+<td style='padding: 14px 12px; color: #475569;'>{time_val}</td>
+</tr>"""
+
+    html_table += """</tbody>
+</table>
+</div>
+</div>"""
+    st.markdown(html_table, unsafe_allow_html=True)

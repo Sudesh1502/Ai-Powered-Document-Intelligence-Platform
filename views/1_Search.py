@@ -11,19 +11,8 @@ from src.utils.blob_service import generate_sas_url
 import requests
 import io
 
-header1, header2 = st.columns(
-    [1, 8]
-)
-
-with header1:
-    logo_path = "pages/LOGO.png"
-    if os.path.exists(logo_path):
-        st.image(logo_path, width=150)
-
-with header2:
-    st.title("Document Search")
-    st.caption("Search indexed documents using keyword and semantic search.")
-
+st.title("Document Search")
+st.caption("Search indexed documents using keyword and semantic search.")
 st.markdown("---")
 
 if st.session_state.get("preview_doc"):
@@ -178,16 +167,19 @@ if "search_results" in st.session_state:
         is_policy = st.session_state.get("search_index") == "policy-master-index"
         
         # 2. Draw the Master List Header
-        hcols = st.columns([4, 3, 2, 2])
-        hcols[0].markdown("**File Name**")
-        hcols[1].markdown("**Insured Name**" if is_policy else "**Entity Name**")
-        hcols[2].markdown("**Effective Date**" if is_policy else "**Date**")
-        hcols[3].markdown("**Action**")
+        col1_text = "Insured Name" if is_policy else "Entity Name"
+        col2_text = "Effective Date" if is_policy else "Date"
+        
+        hcols = st.columns([4, 3, 2, 2], gap="xxsmall")
+        hcols[0].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px; border-radius: 6px 0 0 6px;'>File Name</div>", unsafe_allow_html=True)
+        hcols[1].markdown(f"<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px;'>{col1_text}</div>", unsafe_allow_html=True)
+        hcols[2].markdown(f"<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px;'>{col2_text}</div>", unsafe_allow_html=True)
+        hcols[3].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: center; font-weight: 600; font-size: 14px; border-radius: 0 6px 6px 0;'>Action</div>", unsafe_allow_html=True)
         st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid rgba(200,200,200,0.3);'/>", unsafe_allow_html=True)
         
         # 3. Loop through results and draw the rows
         for i, r in enumerate(results, start=1):
-            cols = st.columns([4, 3, 2, 2], gap="small")
+            cols = st.columns([4, 3, 2, 2], gap="xxsmall")
             
             cols[0].write(r.get('file_name', 'N/A'))
             
@@ -199,6 +191,7 @@ if "search_results" in st.session_state:
                 cols[1].write(r.get('entity_name', 'N/A'))
                 cols[2].write(str(r.get('document_date', 'N/A'))[:10])
             
+            cols[3].markdown("<div class='table-btn-anchor'></div>", unsafe_allow_html=True)
             if cols[3].button("View Document", key=f"view_doc_{i}", use_container_width=True):
                 st.session_state.preview_doc = r
                 st.rerun()

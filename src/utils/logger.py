@@ -10,14 +10,24 @@ import pandas as pd
 
 LOG_FILE = Path(__file__).resolve().parent.parent.parent / "processing_logs.csv"
 
-def log_document_status(file_name: str, url: str, status: str, note: str, start_time: datetime = None, end_time: datetime = None, word_count:int=0):
+def log_document_status(file_name: str, url: str, status: str, note: str, start_time: datetime = None, end_time: datetime = None, word_count:int=0, confidence:float=None):
     """Logs the processing status of a document to a CSV file."""
     file_exists = os.path.isfile(LOG_FILE)
     
+    # Dynamically upgrade existing log files to include OCR Confidence header if missing
+    if file_exists:
+        try:
+            df = pd.read_csv(LOG_FILE)
+            if 'OCR Confidence' not in df.columns:
+                df['OCR Confidence'] = ""
+                df.to_csv(LOG_FILE, index=False)
+        except Exception:
+            pass
+
     with open(LOG_FILE, mode='a', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(['Timestamp', 'File Name', 'URL', 'Status', 'Note','Word Count', 'Start Time', 'End Time', 'Processing Time (s)'])
+            writer.writerow(['Timestamp', 'File Name', 'URL', 'Status', 'Note','Word Count', 'Start Time', 'End Time', 'Processing Time (s)', 'OCR Confidence'])
             
         timestamp = get_ist_now().strftime("%Y-%m-%d %H:%M:%S")
         
@@ -28,7 +38,8 @@ def log_document_status(file_name: str, url: str, status: str, note: str, start_
         if start_time and end_time:
             processing_time = str(round((end_time - start_time).total_seconds(), 2))
             
-        writer.writerow([timestamp, file_name, url, status, note,word_count, start_str, end_str, processing_time])
+        conf_str = str(confidence) if confidence is not None else ""
+        writer.writerow([timestamp, file_name, url, status, note, word_count, start_str, end_str, processing_time, conf_str])
 
 
 def get_logs():
@@ -70,9 +81,16 @@ def get_metrics():
         2
     )
 
+    # Compute average OCR confidence persistently
+    avg_confidence = 0.0
+    if "OCR Confidence" in logs.columns:
+        valid_conf = pd.to_numeric(logs["OCR Confidence"], errors="coerce").dropna()
+        if not valid_conf.empty:
+            avg_confidence = round(valid_conf.mean(), 2)
+
     return {
         "processed": processed,
         "indexed": indexed,
         "avg_time": avg_time,
-        "avg_confidence": 0
+        "avg_confidence": avg_confidence
     }

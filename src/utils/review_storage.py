@@ -32,22 +32,24 @@ def load_review_documents():
         
     documents = []
     try:
-        # Query all entities in the Queue partition and sort by Azure's Timestamp
+        # Query all entities in the Queue partition and sort by Azure's metadata timestamp (lowercase 'timestamp' inside entity.metadata)
         entities = list(client.query_entities(query_filter=f"PartitionKey eq '{PARTITION_KEY}'"))
-        entities.sort(key=lambda x: x.get("Timestamp", datetime.min), reverse=False)
+        entities.sort(key=lambda x: x.metadata.get("timestamp", datetime.min.replace(tzinfo=timezone.utc)) if hasattr(x, 'metadata') else datetime.min.replace(tzinfo=timezone.utc), reverse=False)
         
         for entity in entities:
             # Reconstruct the document dictionary
             doc = dict(entity)
             
-            # Extract Azure's UTC Timestamp, convert to IST, and store for frontend display
-            if "Timestamp" in doc:
+            # Extract Azure's UTC Timestamp from metadata, convert to IST, and store for frontend display
+            if hasattr(entity, 'metadata') and 'timestamp' in entity.metadata:
                 try:
-                    utc_time = doc["Timestamp"]
+                    utc_time = entity.metadata['timestamp']
                     ist_time = utc_time.astimezone(timezone.utc) + timedelta(hours=5, minutes=30)
                     doc["queue_date"] = ist_time.strftime("%Y-%m-%d %I:%M %p IST")
                 except Exception:
                     doc["queue_date"] = "Unknown"
+            else:
+                doc["queue_date"] = "Unknown"
             
             doc["id"] = doc.pop("RowKey")
             # Remove Azure Table specific metadata
