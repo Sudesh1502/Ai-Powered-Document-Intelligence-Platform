@@ -44,7 +44,7 @@ logo_path = "views/LOGO.png"
 if os.path.exists(logo_path):
     with open(logo_path, "rb") as img_file:
         b64_logo = base64.b64encode(img_file.read()).decode()
-    logo_html = f"<img src='data:image/png;base64,{b64_logo}' style='height: 60px; margin-right: 20px; vertical-align: middle;' />"
+    logo_html = f"<img src='data:image/png;base64,{b64_logo}' style='height: 80px; margin-right: 20px; vertical-align: middle;' />"
 else:
     logo_html = ""
 
@@ -52,8 +52,8 @@ st.markdown(f"""
     <div style='display: flex; align-items: center; margin-bottom: 15px; margin-top: 10px;'>
         {logo_html}
         <div>
-            <h2 style='margin:0; font-family: Outfit, sans-serif; color: #0F172A; font-size: 1.7rem; line-height: 1.2;'>AI Powered Document Intelligence Platform</h2>
-            <p style='margin: 4px 0 0 0; color: #64748B; font-size: 13.5px;'>Transforming unstructured documents into searchable business intelligence with enterprise-grade precision.</p>
+            <h2 style='margin:0; font-family: Outfit, sans-serif; color: #0F172A; font-size: 2.1rem; line-height: 1.2;'>AI Powered Document Intelligence Platform</h2>
+            <p style='margin: 4px 0 0 0; color: #64748B; font-size: 15px;'>Transforming unstructured documents into searchable business intelligence with enterprise-grade precision.</p>
         </div>
     </div>
 """, unsafe_allow_html=True)

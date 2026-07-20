@@ -228,15 +228,16 @@ st.markdown("""
        KPI METRIC CARDS — Clean white, soft elevation
        ══════════════════════════════════════════════════ */
     [data-testid="stMetric"] {
-        background-color: #ffffff !important;
-        border: 1px solid #e8ecf1 !important;
+        background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%) !important;
+        border: 1px solid #dbeafe !important;
         border-radius: 10px !important;
         padding: 1.25rem 1.4rem !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
-        transition: box-shadow 0.2s ease !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 2px rgba(0, 0, 0, 0.02) !important;
+        transition: all 0.2s ease !important;
     }
     [data-testid="stMetric"]:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+        transform: translateY(-2px) !important;
     }
     [data-testid="stMetricLabel"] {
         font-family: 'Montserrat', sans-serif !important;
@@ -294,9 +295,9 @@ st.markdown("""
        SECONDARY BUTTONS
        ══════════════════════════════════════════════════ */
     button[kind="secondary"] {
-        background-color: #ffffff !important;
+        background: linear-gradient(135deg, #f0f7ff 0%, #dbeafe 100%) !important;
         color: #1a2c47 !important;
-        border: 1px solid #d1d9e6 !important;
+        border: 1px solid #bfdbfe !important;
         font-family: 'Inter', sans-serif !important;
         font-weight: 500 !important;
         font-size: 0.85rem !important;
@@ -305,10 +306,10 @@ st.markdown("""
         transition: all 0.2s ease !important;
     }
     button[kind="secondary"]:hover {
-        background-color: #f7f8fa !important;
-        border-color: #b0bac9 !important;
+        background: linear-gradient(135deg, #e0f2fe 0%, #bfdbfe 100%) !important;
+        border-color: #93c5fd !important;
         color: #1a2c47 !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.04) !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06) !important;
     }
 
     /* ── File Uploader Buttons — neutral ── */
