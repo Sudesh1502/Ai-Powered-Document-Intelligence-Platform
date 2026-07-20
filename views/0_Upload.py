@@ -95,7 +95,7 @@ render_real_time_metrics()
 
 st.markdown("<div style='margin-bottom: 2rem;'></div>", unsafe_allow_html=True)
 
-st.markdown("<h3 style='font-family: Outfit, sans-serif; color: #0F172A; font-size: 1.3rem; margin-bottom: 1rem;'>⬆️ Upload Document</h3>", unsafe_allow_html=True)
+st.markdown("<h3 style='font-family: Montserrat, sans-serif; color: #1a2c47; font-size: 1.25rem; font-weight: 600; margin-bottom: 1.2rem; margin-top: 0.5rem;'>Upload Document</h3>", unsafe_allow_html=True)
 
 with st.form("upload_form", clear_on_submit=True):
     uploaded_files = st.file_uploader(
@@ -115,7 +115,7 @@ with st.form("upload_form", clear_on_submit=True):
 
 if submitted and uploaded_files:
     if len(uploaded_files) > 5:
-        st.error("⚠️ Maximum 5 documents allowed per batch. Please remove some files.")
+        st.error("Maximum 5 documents allowed per batch. Please remove some files.")
         st.stop()
 
     st.success(f"Processing {len(uploaded_files)} document(s)")
@@ -127,7 +127,7 @@ if submitted and uploaded_files:
         failed_count = 0
     
         for uploaded_file in uploaded_files:
-            with st.status(f"📄 Processing: {uploaded_file.name}", expanded=True) as status_container:
+            with st.status(f"Processing: {uploaded_file.name}", expanded=True) as status_container:
     
                 start_time = get_ist_now()
                 confidence = 0.0
@@ -141,7 +141,7 @@ if submitted and uploaded_files:
     
                     if dedupe_service.is_exact_duplicate(file_bytes):
                         st.warning("Exact duplicate document detected. Skipping.")
-                        status_container.update(label=f"⏭️ Skipped Duplicate: {uploaded_file.name}", state="complete", expanded=False)
+                        status_container.update(label=f"Skipped Duplicate: {uploaded_file.name}", state="complete", expanded=False)
                         
                         # Upload to Blob Storage for audit trail purposes
                         blob_url = upload_to_blob(file_bytes, uploaded_file.name)
@@ -156,7 +156,7 @@ if submitted and uploaded_files:
                             end_time=get_ist_now(),
                             word_count=0,
                             confidence=0.0,
-                            source="Streamlit UI"
+                            source="Manually Uploaded"
                         )
                         continue
     
@@ -169,7 +169,7 @@ if submitted and uploaded_files:
                             "Invalid file."
                         )
     
-                        status_container.update(label=f"❌ Invalid: {uploaded_file.name}", state="error", expanded=False)
+                        status_container.update(label=f"Invalid: {uploaded_file.name}", state="error", expanded=False)
                         failed_count += 1
                         continue
     
@@ -189,7 +189,7 @@ if submitted and uploaded_files:
                     page_count = len(result.pages) if result.pages else 0
     
                     st.markdown(
-                        "## 📄 Extracted Text"
+                        "## Extracted Text"
                     )
     
                     st.text_area(
@@ -200,7 +200,7 @@ if submitted and uploaded_files:
                     )
     
                     st.markdown(
-                        "## ⭕ OCR Confidence"
+                        "## OCR Confidence"
                     )
     
                     # Ensure it is passed as a valid float [0.0, 1.0] to avoid type errors in older Streamlit versions
@@ -240,9 +240,9 @@ if submitted and uploaded_files:
                             end_time=get_ist_now(),
                             word_count=word_count,
                             confidence=confidence,
-                            source="Streamlit UI"
+                            source="Manually Uploaded"
                         )
-                        status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
+                        status_container.update(label=f"Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
                         action_centre_count += 1
                         continue
     
@@ -297,10 +297,10 @@ if submitted and uploaded_files:
                                 end_time=get_ist_now(),
                                 word_count=word_count,
                                 confidence=confidence,
-                                source="Streamlit UI"
+                                source="Manually Uploaded"
                             )
                             
-                            status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
+                            status_container.update(label=f"Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
                             action_centre_count += 1
                             continue
     
@@ -349,11 +349,11 @@ if submitted and uploaded_files:
                             end_time=get_ist_now(),
                             word_count=0,
                             confidence=confidence,
-                            source="Streamlit UI"
+                            source="Manually Uploaded"
                         )
                 
                         # 5. Continue to the next file instead of stopping the batch
-                        status_container.update(label=f"⚠️ Action Centre: {uploaded_file.name}", state="complete", expanded=False)
+                        status_container.update(label=f"Action Centre: {uploaded_file.name}", state="complete", expanded=False)
                         action_centre_count += 1
                         continue
     
@@ -383,9 +383,9 @@ if submitted and uploaded_files:
                                     end_time=get_ist_now(),
                                     word_count=0,
                                     confidence=confidence,
-                                    source="Streamlit UI"
+                                    source="Manually Uploaded"
                                 )
-                                status_container.update(label=f"⚠️ Action Centre (Policy Breach): {uploaded_file.name}", state="complete", expanded=False)
+                                status_container.update(label=f"Action Centre (Policy Breach): {uploaded_file.name}", state="complete", expanded=False)
                                 action_centre_count += 1
                                 continue
     
@@ -396,7 +396,7 @@ if submitted and uploaded_files:
                         )
     
                         st.markdown(
-                            "## 🏷️ Extracted Metadata"
+                            "## Extracted Metadata"
                         )
     
                         c1, c2, c3 = st.columns(3)
@@ -489,7 +489,7 @@ if submitted and uploaded_files:
                         policies = metadata if isinstance(metadata, list) else [metadata]
                         documents = []
                         
-                        st.markdown(f"### 📋 Extracted Policies ({len(policies)} Found)")
+                        st.markdown(f"### Extracted Policies ({len(policies)} Found)")
                         
                         table_data = []
                         for pol in policies:
@@ -543,16 +543,16 @@ if submitted and uploaded_files:
                         note = "Indexed Automatically"
     
                         st.success(
-                            "✅ Document Indexed Successfully."
+                            "Document Indexed Successfully."
                         )
-                        status_container.update(label=f"✅ Completed: {uploaded_file.name}", state="complete", expanded=False)
+                        status_container.update(label=f"Completed: {uploaded_file.name}", state="complete", expanded=False)
                         success_count += 1
     
                     elif review_status == "Failed":
-                        st.error(f"❌ Document Rejected: OCR Confidence is too low ({confidence}%).")
+                        st.error(f"Document Rejected: OCR Confidence is too low ({confidence}%).")
                         status = "Failed"
                         note = "Rejected due to extremely low confidence"
-                        status_container.update(label=f"❌ Rejected: {uploaded_file.name}", state="error", expanded=False)
+                        status_container.update(label=f"Rejected: {uploaded_file.name}", state="error", expanded=False)
                         
                     else: # "Needs Review"
     
@@ -569,7 +569,7 @@ if submitted and uploaded_files:
                             f"'{review_status}'. "
                             f"Go to the Action Centre for review."
                         )
-                        status_container.update(label=f"⚠️ Action Centre: {uploaded_file.name}", state="complete", expanded=False)
+                        status_container.update(label=f"Action Centre: {uploaded_file.name}", state="complete", expanded=False)
                     end_time = get_ist_now()
     
                     execution_time = round(
@@ -596,7 +596,7 @@ if submitted and uploaded_files:
                         end_time=end_time,
                         word_count=word_count,
                         confidence=confidence,
-                        source="Streamlit UI"
+                        source="Manually Uploaded"
                     )
     
                     st.info(
@@ -605,7 +605,7 @@ if submitted and uploaded_files:
                     )
     
                 except Exception as e:
-                    status_container.update(label=f"❌ Failed: {uploaded_file.name}", state="error", expanded=False)
+                    status_container.update(label=f"Failed: {uploaded_file.name}", state="error", expanded=False)
                     failed_count += 1
                     end_time = get_ist_now()
     
@@ -618,7 +618,7 @@ if submitted and uploaded_files:
                         end_time=end_time,
                         word_count=word_count,
                         confidence=confidence,
-                        source="Streamlit UI"
+                        source="Manually Uploaded"
                     )
     
                     st.error(
@@ -627,11 +627,11 @@ if submitted and uploaded_files:
     
     
         # --- End of Batch Summary ---
-        st.markdown("### 📊 Batch Upload Summary")
+        st.markdown("<h3 style='font-family: Montserrat, sans-serif; color: #1a2c47; font-size: 1.15rem; font-weight: 600; margin-bottom: 1rem; margin-top: 1rem;'>Batch Upload Summary</h3>", unsafe_allow_html=True)
         sc1, sc2, sc3 = st.columns(3)
-        sc1.metric("✅ Indexed Successfully", success_count)
-        sc2.metric("⚠️ Action Centre", action_centre_count)
-        sc3.metric("❌ Failed", failed_count)
+        sc1.metric("Indexed Successfully", success_count)
+        sc2.metric("Action Centre", action_centre_count)
+        sc3.metric("Failed", failed_count)
     
 
 
@@ -642,11 +642,11 @@ logs = get_logs()
 if logs.empty:
     st.info("No logs available.")
 else:
-    # 1. Rename the 'Note' column from the CSV to 'Reason' so your code can use it
-    logs = logs.rename(columns={"Note": "Reason"})
+    # 1. Rename the 'Note' column from the CSV to 'Comment' so your code can use it
+    logs = logs.rename(columns={"Note": "Comment"})
     
     keep_cols = []
-    for c in ["Timestamp", "File Name", "Status", "Reason", "Processing Time (s)"]:
+    for c in ["Timestamp", "File Name", "Source", "Status", "Comment", "Processing Time (s)"]:
         if c in logs.columns:
             keep_cols.append(c)
 
@@ -657,43 +657,51 @@ else:
     display = display.head(100) # Increased to 100 records to support scrolling through history
 
     # Generate custom HTML table for pixel-perfect match with scrollable overflow container
-    html_table = """<div style='background-color: white; border: 1px solid #E2E8F0; border-radius: 12px; box-shadow: 0px 4px 12px rgba(0,0,0,0.02); padding: 1.5rem; margin-bottom: 1.5rem;'>
+    html_table = """<div style='background-color: white; border: 1px solid #e8ecf1; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); padding: 1.5rem; margin-bottom: 1.5rem;'>
 <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
-<span style='font-size: 20px;'>🕒</span>
-<h3 style='margin: 0; font-family: Outfit, sans-serif; color: #002060; font-size: 1.3rem;'>Recent Processing Activity</h3>
+<h3 style='margin: 0; font-family: Montserrat, sans-serif; color: #1a2c47; font-size: 1.15rem; font-weight: 600;'>Recent Processing Activity</h3>
 </div>
-<div style='max-height: 420px; overflow-y: auto; border: 1px solid #F1F5F9; border-radius: 6px;'>
+<div style='max-height: 420px; overflow-y: auto; border: 1px solid #e8ecf1; border-radius: 8px;'>
 <table style='width: 100%; border-collapse: collapse; font-family: Inter, sans-serif; font-size: 14px;'>
 <thead>
-<tr style='background-color: #F8FAFC; border-bottom: 1px solid #E2E8F0; text-align: left; position: sticky; top: 0; z-index: 10;'>
-<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC; width: 160px; white-space: nowrap;'>Timestamp</th>
-<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC; min-width: 200px;'>File Name</th>
-<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC; width: 130px; text-align: center; white-space: nowrap;'>Status</th>
-<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC; min-width: 250px;'>Reason</th>
-<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC; width: 150px; text-align: right; white-space: nowrap;'>Processing Time (s)</th>
+<tr style='background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; text-align: left; position: sticky; top: 0; z-index: 10;'>
+<th style='padding: 12px; color: #475569; font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-family: Inter, sans-serif; width: 160px; white-space: nowrap;'>Timestamp</th>
+<th style='padding: 12px; color: #475569; font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-family: Inter, sans-serif; min-width: 200px;'>File Name</th>
+<th style='padding: 12px; color: #475569; font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-family: Inter, sans-serif; width: 100px; text-align: center; white-space: nowrap;'>Source</th>
+<th style='padding: 12px; color: #475569; font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-family: Inter, sans-serif; width: 130px; text-align: center; white-space: nowrap;'>Status</th>
+<th style='padding: 12px; color: #475569; font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-family: Inter, sans-serif; min-width: 250px;'>Comment</th>
+<th style='padding: 12px; color: #475569; font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-family: Inter, sans-serif; width: 150px; text-align: right; white-space: nowrap;'>Processing Time (s)</th>
 </tr>
 </thead>
 <tbody>"""
 
     for idx, row in display.iterrows():
         status = row.get("Status", "Unknown")
-        if status == "Rejected":
-            badge = "<span style='background-color: #FEE2E2; color: #991B1B; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>Rejected</span>"
+        # Color-coded badges: semantic colors, clean design
+        if status == "Completed":
+            badge = "<span style='background-color: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>Completed</span>"
+        elif status == "Approved Manually":
+            badge = "<span style='background-color: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>Approved</span>"
         elif status == "Needs Review":
-            badge = "<span style='background-color: #0F172A; color: #FFFFFF; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>Needs Review</span>"
-        elif status == "Completed":
-            badge = "<span style='background-color: #D1FAE5; color: #065F46; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>Completed</span>"
+            badge = "<span style='background-color: #fffbeb; color: #d97706; border: 1px solid #fde68a; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>Needs Review</span>"
+        elif status == "Rejected":
+            badge = "<span style='background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>Rejected</span>"
+        elif status == "Failed":
+            badge = "<span style='background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>Failed</span>"
         else:
-            badge = f"<span style='background-color: #F1F5F9; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>{status}</span>"
+            badge = f"<span style='background-color: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>{status}</span>"
 
         time_val = row.get("Processing Time (s)", "0")
         
-        # Get the renamed 'Reason' value and display it in the 4th column
-        reason_val = row.get("Reason", "")
+        # Get the renamed 'Comment' value and display it in the 4th column
+        reason_val = row.get("Comment", "")
+        
+        source_val = row.get("Source", "Unknown")
         
         html_table += f"""<tr style='border-bottom: 1px solid #F1F5F9; vertical-align: middle;'>
 <td style='padding: 14px 12px; color: #475569; white-space: nowrap;'>{row.get("Timestamp", "")}</td>
 <td style='padding: 14px 12px; color: #0F172A; font-weight: 500;'>{row.get("File Name", "")}</td>
+<td style='padding: 14px 12px; text-align: center; color: #475569;'>{source_val}</td>
 <td style='padding: 14px 12px; text-align: center;'>{badge}</td>
 <td style='padding: 14px 12px; color: #475569;'>{reason_val}</td>
 <td style='padding: 14px 12px; color: #475569; text-align: right;'>{time_val}</td>
