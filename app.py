@@ -312,6 +312,27 @@ st.markdown("""
         box-shadow: 0 2px 6px rgba(0,0,0,0.06) !important;
     }
 
+    /* ── Approve & Reject Buttons (Action Centre) ── */
+    div.element-container:has(#btn-approve-marker) + div.element-container button {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+        border-color: #a7f3d0 !important;
+        color: #065f46 !important;
+    }
+    div.element-container:has(#btn-approve-marker) + div.element-container button:hover {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
+        border-color: #6ee7b7 !important;
+    }
+
+    div.element-container:has(#btn-reject-marker) + div.element-container button {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%) !important;
+        border-color: #fecaca !important;
+        color: #991b1b !important;
+    }
+    div.element-container:has(#btn-reject-marker) + div.element-container button:hover {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+        border-color: #f87171 !important;
+    }
+
     /* ── File Uploader Buttons — neutral ── */
     [data-testid="stFileUploader"] button {
         background-color: #f7f8fa !important;

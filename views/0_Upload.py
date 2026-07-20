@@ -44,7 +44,7 @@ logo_path = "views/LOGO.png"
 if os.path.exists(logo_path):
     with open(logo_path, "rb") as img_file:
         b64_logo = base64.b64encode(img_file.read()).decode()
-    logo_html = f"<img src='data:image/png;base64,{b64_logo}' style='height: 80px; margin-right: 20px; vertical-align: middle;' />"
+    logo_html = f"<img src='data:image/png;base64,{b64_logo}' style='height: 86px; margin-right: 20px; vertical-align: middle;' />"
 else:
     logo_html = ""
 
