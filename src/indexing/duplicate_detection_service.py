@@ -2,6 +2,7 @@ import hashlib
 from datasketch import MinHash
 from azure.data.tables import TableServiceClient
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
+from src.config.config import HUMMING_DISTANCE, JACCARED_SIMILARITY
 import os
 
 class DuplicateDetectionService:
@@ -125,7 +126,7 @@ class DuplicateDetectionService:
                         import imagehash
                         existing_phash = imagehash.hex_to_hash(entity["PHashSignature"])
                         # Hamming distance < 5 means visually very similar
-                        if incoming_phash - existing_phash < 5:
+                        if incoming_phash - existing_phash < HUMMING_DISTANCE:
                             print("[DUPE-DETECT] pHash match found! Images are visually identical.")
                             return True
                     except Exception:
@@ -139,7 +140,7 @@ class DuplicateDetectionService:
                         existing_minhash.hashvalues = existing_hashvalues
                         
                         similarity = incoming_minhash.jaccard(existing_minhash)
-                        if similarity >= 0.85: # 85% overlap in text content
+                        if similarity >= JACCARED_SIMILARITY: # 85% overlap in text content
                             print(f"[DUPE-DETECT] MinHash match found! Similarity: {similarity*100:.2f}%")
                             return True
                     except Exception:

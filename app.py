@@ -18,49 +18,19 @@ def start_background_worker():
 
 start_background_worker()
 
-import tempfile
-from datetime import datetime
-import shutil
-from src.validation.file_validator import is_valid_file
-from src.extraction.extraction_service import (
-    extract_text
-)
-from src.utils.ocr_scoring import calculate_weighted_confidence
-from src.extraction.metadata_service import (
-    extract_metadata
-)
-from src.indexing.upload_document_service import (
-    upload_documents
-)
-from src.utils.logger import (
-    log_document_status,
-    get_logs,
-    get_metrics
-)
-from src.utils.review_service import (
-    get_review_status
-)
-from src.utils.document_builder import (
-    build_document
-)
-from src.utils.blob_service import (
-    upload_to_blob,
-    generate_sas_url
-)
-from src.utils.review_storage import (
-    add_review_document
-)
-from src.validation.validation_engine import validate_document_orchestrator
-from src.utils.review_storage import add_review_document
 st.set_page_config(
     page_title="Document Intelligence Platform",
     page_icon="📄",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
+# ============================================================
+# GLOBAL UX POLISH CSS
+# ============================================================
 st.markdown("""
     <style>
-    /* Prevent Streamlit from graying out elements during auto-refresh */
+    /* 1. Suppress Streamlit fragment gray-flash on auto-refresh */
     [data-testid="stFragment"] {
         opacity: 1 !important;
         transition: none !important;
@@ -69,738 +39,479 @@ st.markdown("""
         opacity: 1 !important;
         transition: none !important;
     }
+
+    /* 2. Page fade-in on every navigation */
+    @keyframes pageIn {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0);   }
+    }
+    .block-container {
+        animation: pageIn 0.28s ease-out both;
+    }
+
+    /* 3. Button press micro-animation */
+    button:active {
+        transform: scale(0.97) !important;
+        transition: transform 0.08s ease !important;
+    }
+
+    /* 4. Smooth hover transitions */
+    button {
+        transition: background-color 0.18s ease, box-shadow 0.18s ease, transform 0.08s ease !important;
+    }
+
+    /* 5. Sidebar fade-in */
+    [data-testid="stSidebar"] > div {
+        animation: pageIn 0.32s ease-out both;
+    }
+
+    /* 6. Spinner centering */
+    [data-testid="stSpinner"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 60px;
+    }
+
+    /* 7. Loading state class for buttons (JS-injected) */
+    .ux-loading {
+        pointer-events: none !important;
+        opacity: 0.6 !important;
+        cursor: not-allowed !important;
+    }
+
+    /* 8. Full-screen blur loading overlay */
+    @keyframes ux-spin {
+        to { transform: rotate(360deg); }
+    }
+    #ux-loading-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        background: rgba(15, 23, 42, 0.38);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 18px;
+    }
+    #ux-loading-overlay .ux-ring {
+        width: 52px;
+        height: 52px;
+        border: 4px solid rgba(255,255,255,0.25);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: ux-spin 0.75s linear infinite;
+    }
+    #ux-loading-overlay .ux-label {
+        color: #ffffff;
+        font-family: 'Outfit', sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        opacity: 0.92;
+    }
     </style>
 """, unsafe_allow_html=True)
-# Hide sidebar instantly to prevent flash before login
-st.markdown(
-    """
-    <style>
-        [data-testid="stSidebar"] { display: none; }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
 from src.auth.auth_service import login_user, logout_user
 
-# --- Authentication Wall ---
-user = login_user()
+# 1. Wrap the login flow in an empty container
+login_placeholder = st.empty()
+
+with login_placeholder.container():
+    user = login_user()
+
 if not user:
+    # Ensure any stale fast-rerun flags are destroyed since the user is on the login screen
+    if 'cookie_saved_rerun' in st.session_state:
+        del st.session_state['cookie_saved_rerun']
+
+    # Explicitly clear the navigation state from the frontend before stopping
+    pg = st.navigation([st.Page(lambda: None, title="Login")], position="hidden")
+    pg.run()
     st.stop()
 
-# If user is logged in, restore the sidebar
-st.markdown(
-    """
-    <style>
-        [data-testid="stSidebar"] { display: block !important; }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-# ---------------------------
+# --- If we reach here, the user is successfully logged in ---
 
+# 2. Fast Rerun Trick: If we just authenticated this very millisecond, trigger a lightning-fast rerun.
+# This guarantees the browser receives the invisible cookie-setting script from the authenticator.
+if not st.session_state.get('cookie_saved_rerun'):
+    st.session_state['cookie_saved_rerun'] = True
+    st.rerun()
+else:
+    # We are on the SECOND run. The cookie is safely saved in the browser.
+    # We must explicitly wipe the stale login form from the previous run BEFORE loading the heavy pages!
+    login_placeholder.empty()
+
+# --- Global CSS and Style Injection for Figma Design Reference ---
+st.markdown("""
+    <style>
+    /* Import modern typography */
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+    
+    /* Apply globally */
+    .stApp {
+        font-family: 'Inter', sans-serif;
+        background-color: #F8FAFC;
+    }
+    
+    /* Style cards and forms */
+    div[data-testid="stForm"], .stCard {
+        background-color: #ffffff !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 12px !important;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.03) !important;
+        padding: 2rem !important;
+    }
+    
+    /* Style metrics/KPI cards with vertical left border */
+    [data-testid="stMetric"] {
+        background-color: #ffffff !important;
+        border: 1px solid #E2E8F0 !important;
+        border-left: 4px solid #002060 !important;
+        border-radius: 8px !important;
+        padding: 1.2rem !important;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.02) !important;
+    }
+    [data-testid="stMetricLabel"] {
+        font-family: 'Outfit', sans-serif !important;
+        font-weight: 600 !important;
+        color: #64748B !important;
+        text-transform: uppercase !important;
+        font-size: 0.75rem !important;
+        letter-spacing: 0.05em !important;
+    }
+    [data-testid="stMetricValue"] {
+        font-family: 'Outfit', sans-serif !important;
+        font-weight: 700 !important;
+        color: #0F172A !important;
+        font-size: 1.8rem !important;
+    }
+    
+    /* Style Primary Action Buttons */
+    button[kind="primary"],
+    button[kind="primaryFormSubmit"],
+    button[data-testid="stFormSubmitButton"] {
+        background-color: #002060 !important;
+        color: #ffffff !important;
+        border-radius: 8px !important;
+        border: none !important;
+        font-family: 'Outfit', sans-serif !important;
+        font-weight: 600 !important;
+        padding: 0.6rem 2rem !important;
+        transition: all 0.2s ease !important;
+    }
+    button[kind="primary"]:hover,
+    button[kind="primaryFormSubmit"]:hover,
+    button[data-testid="stFormSubmitButton"]:hover {
+        background-color: #001040 !important;
+        transform: translateY(-1px);
+        box-shadow: 0px 4px 12px rgba(0, 32, 96, 0.2) !important;
+    }
+    
+    /* Style Secondary buttons */
+    button[kind="secondary"] {
+        background-color: #002060 !important;
+        color: #ffffff !important;
+        border: 1px solid #002060 !important;
+        font-family: 'Outfit', sans-serif !important;
+        font-weight: 500 !important;
+        padding: 0.5rem 1rem !important;
+        border-radius: 6px !important;
+        transition: all 0.2s ease !important;
+    }
+    button[kind="secondary"]:hover {
+        background-color: #001040 !important;
+        border-color: #001040 !important;
+        color: #ffffff !important;
+        box-shadow: 0px 4px 12px rgba(0, 32, 96, 0.15) !important;
+    }
+    
+    /* Keep file uploader buttons light/default */
+    [data-testid="stFileUploader"] button {
+        background-color: #F1F5F9 !important;
+        color: #0F172A !important;
+        border: 1px solid #E2E8F0 !important;
+        box-shadow: none !important;
+    }
+    [data-testid="stFileUploader"] button:hover {
+        background-color: #E2E8F0 !important;
+        border-color: #CBD5E1 !important;
+        color: #0F172A !important;
+    }
+    
+    /* Override table action buttons */
+    div:has(div.table-btn-anchor) + div button {
+        background-color: transparent !important;
+        color: #475569 !important;
+        border: 1px solid transparent !important;
+    }
+    div:has(div.table-btn-anchor) + div button:hover {
+        color: #002060 !important;
+        background-color: #F1F5F9 !important;
+        border-color: #002060 !important;
+        box-shadow: none !important;
+    }
+    
+    /* Style VIEW ALL ACTIVITY button */
+    .view-all-container button {
+        background-color: transparent !important;
+        color: #2563EB !important;
+        border: none !important;
+        font-family: 'Outfit', sans-serif !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.05em !important;
+        text-transform: uppercase !important;
+        font-size: 0.8rem !important;
+        box-shadow: none !important;
+        margin: 0 auto !important;
+        display: block !important;
+        width: auto !important;
+        padding: 0.5rem 1.5rem !important;
+        border-radius: 6px !important;
+        transition: all 0.2s ease !important;
+    }
+    .view-all-container button:hover {
+        color: #1D4ED8 !important;
+        background-color: #F1F5F9 !important;
+        text-decoration: underline !important;
+    }
+    
+    /* Custom spacing and margins */
+    .block-container {
+        padding-top: 0rem !important;
+        padding-bottom: 2rem !important;
+        max-width: 95% !important;
+    }
+    
+    /* Style tables */
+    .stTable, [data-testid="stTable"] {
+        border-radius: 8px !important;
+        overflow: hidden !important;
+        border: 1px solid #E2E8F0 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# 3. Show a sleek loading spinner while the heavy home page is evaluated and drawn
+with st.spinner("Preparing your workspace..."):
+    upload_page = st.Page("views/0_Upload.py", title="Upload", icon="⬆️", default=True)
+    search_page = st.Page("views/1_Search.py", title="Search", icon="🔍")
+    action_page = st.Page("views/2_Action Centre.py", title="Action Centre", icon="⚠️")
+    settings_page = st.Page("views/3_Settings.py", title="Settings", icon="⚙️")
+
+    # Re-enable the standard sidebar navigation
+    pg = st.navigation([upload_page, search_page, action_page, settings_page])
+
+# Sidebar contents for authentication and logout
 with st.sidebar:
     st.markdown(f"**Signed in as:** {user['name']}")
-    logout_user()
+    if st.button("Logout", key="sidebar_logout_btn", use_container_width=True):
+        with st.spinner("Signing out..."):
+            logout_user()
+        st.rerun()
     st.markdown("---")
 
-header1, header2 = st.columns(
-    [1, 8]
-)
-
-with header1:
-    logo_path = "pages/LOGO.png"
-    if os.path.exists(logo_path):
-        st.image(logo_path, width=150)
-
-with header2:
-    st.title("AI Powered Document Intelligence Platform")
-    st.caption("Transforming unstructured documents into searchable business intelligence.")
-
-st.markdown("---")
-
-@st.fragment(run_every="5s")
-def render_real_time_metrics():
-    metrics = get_metrics()
-
-    c1, c2, c3, c4 = st.columns(4)
-
-    with c1:
-
-        st.metric(
-            "Documents Processed",
-            metrics["processed"]
-        )
-
-    with c2:
-
-        st.metric(
-            "Documents Indexed",
-            metrics["indexed"]
-        )
-
-    with c3:
-
-        st.metric(
-            "OCR Confidence",
-            "--"
-        )
-
-    with c4:
-
-        st.metric(
-            "Avg Processing Time",
-            f"{metrics['avg_time']} sec"
-        )
-
-render_real_time_metrics()
-
-st.markdown("---")
-
-st.markdown(
-    "## ⬆️ Upload Document"
-)
-
-uploaded_files = st.file_uploader(
-    "Choose PDF/Image/DOCX",
-    type=[
-        "pdf",
-        "png",
-        "jpg",
-        "jpeg",
-        "docx"
-    ],
-    accept_multiple_files=True
-)
-
-if uploaded_files:
-    if len(uploaded_files) > 5:
-        st.error("⚠️ Maximum 5 documents allowed per batch. Please remove some files.")
-        st.stop()
-
-    st.success(f"Uploaded: {len(uploaded_files)} document(s)")
-    is_policy_doc = st.toggle("This is a Policy Master Document")
-
-    if st.button(
-        "Process Documents",
-        width="stretch"
-    ):
-        success_count = 0
-        action_centre_count = 0
-        failed_count = 0
-
-        for uploaded_file in uploaded_files:
-            with st.status(f"📄 Processing: {uploaded_file.name}", expanded=True) as status_container:
-
-                start_time = datetime.now()
-
-                try:
-
-                    file_bytes = uploaded_file.getvalue()
-
-                    from src.indexing.duplicate_detection_service import DuplicateDetectionService
-                    dedupe_service = DuplicateDetectionService()
-
-                    if dedupe_service.is_exact_duplicate(file_bytes):
-                        st.warning("Exact duplicate document detected. Skipping.")
-                        status_container.update(label=f"⏭️ Skipped Duplicate: {uploaded_file.name}", state="complete", expanded=False)
-                        continue
-
-                    os.makedirs("data", exist_ok=True)
-                    if not is_valid_file(
-                        uploaded_file.name
-                    ):
-
-                        st.error(
-                            "Invalid file."
-                        )
-
-                        status_container.update(label=f"❌ Invalid: {uploaded_file.name}", state="error", expanded=False)
-                        failed_count += 1
-                        continue
-
-                    with st.spinner(
-                        "Running OCR..."
-                    ):
-
-                        extension = os.path.splitext(uploaded_file.name)[1].lower()
-                        result = extract_text(
-                            file_bytes, extension=extension
-                        )
-                        word_count = len(result.content.split()) if result.content else 0
-                    ocr_analysis = calculate_weighted_confidence(result)
-                    confidence = round(ocr_analysis.get("weighted_score", 0.0), 2)
-                    text = result.content
-
-                    page_count = len(result.pages) if result.pages else 0
-
-                    st.markdown(
-                        "## 📄 Extracted Text"
-                    )
-
-                    st.text_area(
-                        "OCR Output",
-                        value=text,
-                        height=300,
-                        key=f"ocr_output_{uploaded_file.name}"
-                    )
-
-                    st.markdown(
-                        "## ⭕ OCR Confidence"
-                    )
-
-                    # Ensure it is passed as a valid float [0.0, 1.0] to avoid type errors in older Streamlit versions
-                    st.progress(
-                        confidence / 100.0
-                    )
-
-                    st.info(
-                        f"Confidence: {confidence}%"
-                    )
-
-                    # ---------------------------------------------------------
-                    # EARLY STOP: Near-Duplicate Detection (Saves Gemini Cost)
-                    # ---------------------------------------------------------
-                    is_near_dup = dedupe_service.is_near_duplicate(text, file_bytes, uploaded_file.name)
-                    if is_near_dup:
-                        reason = "Near-Duplicate (Text Similarity)"
-                        st.warning(f"**Duplicate Detected!** {reason}. Routed to Action Centre.")
-                        
-                        unique_blob_name = upload_to_blob(file_bytes, uploaded_file.name)
-                        metadata = {
-                            "file_name": uploaded_file.name,
-                            "document_title": uploaded_file.name,
-                            "review_reason": f"Duplicate Detected - {reason}",
-                            "status": "Needs Review",
-                            "source": "Manual Ingestion",
-                            "sharepoint_url": unique_blob_name
-                        }
-                        
-                        add_review_document(metadata)
-                        log_document_status(
-                            file_name=uploaded_file.name,
-                            url="Streamlit Upload",
-                            status="Needs Review",
-                            note=f"Duplicate routed to action centre: {reason}",
-                            start_time=start_time,
-                            end_time=datetime.now(),
-                            word_count=word_count,
-                        )
-                        status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
-                        action_centre_count += 1
-                        continue
-
-                    with st.spinner(
-                        "Extracting Metadata..."
-                    ):
-                        user_id = user.get("user_id", "default_global") if user else "default_global"
-                        if is_policy_doc:
-                            from src.extraction.metadata_service import extract_policy_metadata
-                            metadata = extract_policy_metadata(text, user_id)
-                            target_index = "policy-master-index"
-                        else:
-                            metadata = extract_metadata(text, user_id)
-                            target_index = "generic-documents-index"
-                            
-                        # Tag source for Action Centre tracking and keep Abhishek's flagged_tokens addition
-                        if isinstance(metadata, list):
-                            for item in metadata:
-                                item["source"] = "Manual Ingestion"
-                                item["flagged_tokens"] = ocr_analysis.get("flagged_tokens", [])
-                        else:
-                            metadata["source"] = "Manual Ingestion"
-                            metadata["flagged_tokens"] = ocr_analysis.get("flagged_tokens", [])
-
-                    # Upload to Azure Blob Storage EARLY so that even rejected/duplicate documents can be previewed in the Action Centre
-                    unique_blob_name = upload_to_blob(file_bytes, uploaded_file.name)
-                    if not is_policy_doc:
-                        metadata["sharepoint_url"] = unique_blob_name
-                        
-                        # Layer 3: Data-Level Duplicate Detection (Requires Metadata)
-                        is_data_dup = dedupe_service.is_data_level_duplicate(metadata)
-                        
-                        if is_data_dup:
-                            reason = "Data-Level Duplicate (Matching ID & Vendor)"
-                            st.warning(f"**Duplicate Detected!** {reason}. Routed to Action Centre.")
-                            
-                            metadata["file_name"] = uploaded_file.name
-                            metadata["review_reason"] = f"Duplicate Detected - {reason}"
-                            metadata["status"] = "Needs Review"
-                            add_review_document(metadata)
-                            
-                            log_document_status(
-                                file_name=uploaded_file.name,
-                                url="Streamlit Upload",
-                                status="Needs Review",
-                                note=f"Duplicate routed to action centre: {reason}",
-                                start_time=start_time,
-                                end_time=datetime.now(),
-                                word_count=word_count,
-                            )
-                            
-                            status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
-                            action_centre_count += 1
-                            continue
-
-                        review_status = (
-                            get_review_status(
-                                confidence,
-                                metadata
-                            )
-                        )
-                    else:
-                        review_status = "Completed"
-
-                    if is_policy_doc:
-                        # Policies bypass structural validation
-                        validation_results = {"missing": [], "invalid": []}
-                    else:
-                        validation_results = validate_document_orchestrator(metadata)
-                    
-                    missing_fields = validation_results["missing"]
-                    invalid_fields = validation_results["invalid"]
-            
-                    if len(missing_fields) > 0 or len(invalid_fields) > 0:
-                        reasons = []
-                        if missing_fields:
-                            reasons.append(f"Missing: {', '.join(missing_fields)}")
-                        if invalid_fields:
-                            reasons.append(f"Invalid Format: {', '.join(invalid_fields)}")
-                        reason_str = " | ".join(reasons)
-                
-                        # 3. Give the user INSTANT visual feedback on the screen!
-                        st.error(f"**Validation Failed!** {reason_str}")
-                        st.warning("This document has been routed to the Action Centre for manual review.")
-                        # 4. Save it to the queue
-                        metadata["file_name"] = uploaded_file.name
-                        metadata["review_reason"] = f"Validation Failed - {reason_str}"
-                        metadata["status"] = "Needs Review"
-                        add_review_document(metadata)
-                
-                        # Log the failure so it appears in metrics
-                        log_document_status(
-                            file_name=uploaded_file.name,
-                            url="Streamlit Upload",
-                            status="Needs Review",
-                            note=f"Validation failed. {reason_str}",
-                            start_time=start_time,
-                            end_time=datetime.now(),
-                            word_count=0,
-                        )
-                
-                        # 5. Continue to the next file instead of stopping the batch
-                        status_container.update(label=f"⚠️ Action Centre: {uploaded_file.name}", state="complete", expanded=False)
-                        action_centre_count += 1
-                        continue
-
-                    # Cross Validation against Policy Master Index
-                    if not is_policy_doc:
-                        doc_type = metadata.get("document_type", "").lower()
-                        if doc_type in ["major claim", "claim form", "claim closure", "claim closure report", "claim settlement"]:
-                            from src.validation.cross_validation_service import cross_validate_claim
-                            user_id = user.get("user_id", "default_global") if user else "default_global"
-                            breach_errors = cross_validate_claim(metadata, user_id)
-                            
-                            if breach_errors:
-                                reason_str = " | ".join(breach_errors)
-                                st.error(f"**Policy Breach!** {reason_str}")
-                                st.warning("This document breached a Master Policy rule and has been routed to the Action Centre.")
-                                metadata["file_name"] = uploaded_file.name
-                                metadata["review_reason"] = f"Policy Breach - {reason_str}"
-                                metadata["status"] = "Needs Review"
-                                add_review_document(metadata)
-                                
-                                log_document_status(
-                                    file_name=uploaded_file.name,
-                                    url="Streamlit Upload",
-                                    status="Needs Review",
-                                    note=f"Policy Breach. {reason_str}",
-                                    start_time=start_time,
-                                    end_time=datetime.now(),
-                                    word_count=0,
-                                )
-                                status_container.update(label=f"⚠️ Action Centre (Policy Breach): {uploaded_file.name}", state="complete", expanded=False)
-                                action_centre_count += 1
-                                continue
-
-                    if not is_policy_doc:
-                        st.info(
-                            f"Review Status: "
-                            f"{review_status}"
-                        )
-
-                        st.markdown(
-                            "## 🏷️ Extracted Metadata"
-                        )
-
-                        c1, c2, c3 = st.columns(3)
-
-                        with c1:
-
-                            st.metric(
-                                "Document Type",
-                                metadata.get(
-                                    "document_type",
-                                    "N/A"
-                                )
-                            )
-
-                            st.metric(
-                                "Document Number",
-                                metadata.get(
-                                    "document_number",
-                                    "N/A"
-                                )
-                            )
-
-                        with c2:
-
-                            st.metric(
-                                "Entity",
-                                metadata.get(
-                                    "entity_name",
-                                    "N/A"
-                                )
-                            )
-
-
-                        with c3:
-
-                            st.metric(
-                                "Date",
-                                str(
-                                    metadata.get(
-                                        "document_date",
-                                        "N/A"
-                                    )
-                                )
-                            )
-
-                            st.metric(
-                                "Pages",
-                                page_count
-                            )
-
-                        if "error" in metadata:
-
-                            st.error(
-                                metadata[
-                                    "error"
-                                ]
-                            )
-
-                        else:
-
-                            with st.expander(
-                                "Additional Metadata"
-                            ):
-
-                                st.json(
-                                    metadata
-                                )
-
-                    user_info = {
-                        "user_id": user.get("user_id", ""),
-                        "email": user.get("email", ""),
-                        "name": user.get("name", ""),
-                        "uploaded_at": datetime.utcnow().isoformat() + "Z"
-                    }
-                    
-                    # Option B: Inject user tracking directly into the metadata blob
-                    
-                    # Store fingerprints directly inside the metadata JSON blob
-                    if not is_policy_doc:
-                        metadata["user_tracking"] = user_info
-                        metadata["sha256_signature"] = dedupe_service.generate_sha256_hash(file_bytes)
-                        metadata["minhash_signature"] = dedupe_service.generate_minhash(text)
-                        metadata["phash_signature"] = dedupe_service.generate_phash(file_bytes, uploaded_file.name)
-                    
-                    # (Blob upload moved to the top of the pipeline)
-                    # Build the document payload based on the index schema
-                    if is_policy_doc:
-                        from src.utils.document_builder import build_policy_document
-                        
-                        policies = metadata if isinstance(metadata, list) else [metadata]
-                        documents = []
-                        
-                        st.markdown(f"### 📋 Extracted Policies ({len(policies)} Found)")
-                        
-                        table_data = []
-                        for pol in policies:
-                            table_data.append({
-                                "Policy Number": pol.get("policy_number", "N/A"),
-                                "Insured Name": pol.get("insured_name", "N/A"),
-                                "Class": pol.get("class_of_business", "N/A"),
-                                "Limit": pol.get("policy_limit", 0)
-                            })
-                        st.dataframe(table_data, use_container_width=True)
-                        
-                        for policy_meta in policies:
-                            policy_meta["sharepoint_url"] = unique_blob_name
-                            documents.append(build_policy_document(uploaded_file, policy_meta))
-                            
-                    else:
-                        documents = [build_document(
-                            uploaded_file=uploaded_file,
-                            metadata=metadata,
-                            text=text,
-                            page_count=page_count,
-                            confidence=confidence,
-                            review_status=review_status
-                        )]
-                        
-                        with st.expander("Azure Search Document Preview"):
-                            preview = documents[0].copy()
-                            preview.pop("review_status", None)
-                            st.json(preview)
-
-                    if review_status == "Completed":
-
-                        with st.spinner("Uploading to Azure Search..."):
-                            # Clean up metadata before upload to Azure Search
-                            docs_to_upload = []
-                            for doc in documents:
-                                doc_copy = doc.copy()
-                                if "metadata" in doc_copy:
-                                    try:
-                                        import json
-                                        meta_dict = json.loads(doc_copy["metadata"])
-                                        meta_dict.pop("flagged_tokens", None)
-                                        doc_copy["metadata"] = json.dumps(meta_dict)
-                                    except Exception:
-                                        pass
-                                docs_to_upload.append(doc_copy)
-                                
-                            upload_documents(docs_to_upload, index_name=target_index)
-                        
-                        # Log the hashes to Azure Table Storage to prevent future duplicates
-                        doc_id = documents[0].get("id", "") if len(documents) > 0 else ""
-                        dedupe_service.log_document(file_bytes, doc_id, text, uploaded_file.name)
-
-                        # Removed folder creation and file moving to keep files in data/
-                        pass
-
-                        status = "Completed"
-                        note = "Indexed Automatically"
-
-                        st.success(
-                            "✅ Document Indexed Successfully."
-                        )
-                        status_container.update(label=f"✅ Completed: {uploaded_file.name}", state="complete", expanded=False)
-                        success_count += 1
-
-                    elif review_status == "Failed":
-                        st.error(f"❌ Document Rejected: OCR Confidence is too low ({confidence}%).")
-                        status = "Failed"
-                        note = "Rejected due to extremely low confidence"
-                        status_container.update(label=f"❌ Rejected: {uploaded_file.name}", state="error", expanded=False)
-                        
-                    else: # "Review Required"
-
-                        metadata["file_name"] = uploaded_file.name
-                        metadata["status"] = "Needs Review"
-                        metadata["review_reason"] = f"Low OCR Confidence ({confidence}%)"
-                        add_review_document(metadata)
-
-                        status = review_status
-                        note = "Waiting for manual review"
-
-                        st.warning(
-                            f"Document marked as "
-                            f"'{review_status}'. "
-                            f"Go to the Action Centre for review."
-                        )
-                        status_container.update(label=f"⚠️ Action Centre: {uploaded_file.name}", state="complete", expanded=False)
-
-                    end_time = datetime.now()
-
-                    execution_time = round(
-                        (
-                            end_time
-                            -
-                            start_time
-                        ).total_seconds(),
-                        2
-                    )
-
-                    log_document_status(
-                        file_name=uploaded_file.name,
-                        url=unique_blob_name,
-                        status=status,
-                        note=note,
-                        start_time=start_time,
-                        end_time=end_time,
-                        word_count=word_count
-                    )
-
-                    st.info(
-                        f"Execution Time: "
-                        f"{execution_time} sec"
-                    )
-
-                except Exception as e:
-                    status_container.update(label=f"❌ Failed: {uploaded_file.name}", state="error", expanded=False)
-                    failed_count += 1
-                    end_time = datetime.now()
-
-                    log_document_status(
-                        file_name=uploaded_file.name,
-                        url="",
-                        status="Failed",
-                        note=str(e),
-                        start_time=start_time,
-                        end_time=end_time,
-                        word_count=word_count
-                    )
-
-                    st.error(
-                        str(e)
-                    )
-
-
-        # --- End of Batch Summary ---
-        st.markdown("### 📊 Batch Upload Summary")
-        sc1, sc2, sc3 = st.columns(3)
-        sc1.metric("✅ Indexed Successfully", success_count)
-        sc2.metric("⚠️ Action Centre", action_centre_count)
-        sc3.metric("❌ Failed", failed_count)
-
-
-st.markdown("---")
-
-st.markdown(
-    "## 📊 Recent Processing Activity"
-)
-
-logs = get_logs()
-
-if logs.empty:
-
-    st.info(
-        "No logs available."
-    )
-
-else:
-
-    keep_cols = []
-
-    for c in [
-        "Timestamp",
-        "File Name",
-        "Status",
-        "Processing Time (s)"
-    ]:
-
-        if c in logs.columns:
-
-            keep_cols.append(
-                c
-            )
-
-    display = logs[
-        keep_cols
-    ]
-
-    # Sort by Timestamp descending so newest is at the top
-    if "Timestamp" in display.columns:
-        display = display.sort_values(by="Timestamp", ascending=False)
-
-    display = display.head(20)
-
-    selected_file = st.selectbox(
-        "Open Document",
-        ["Select a file"] +
-        display["File Name"].tolist()
-    )
-
-    st.dataframe(
-        display,
-        width="stretch",
-        hide_index=True,
-        height=300
-    )
-    if selected_file != "Select a file":
-
-        source_file = os.path.join(
-            "data",
-            selected_file
-        )
-
-        processed_file = os.path.join(
-            "app_data",
-            "processed_docs",
-            selected_file
-        )
-
-        if os.path.exists(
-            processed_file
-        ):
-
-            file_path = processed_file
-
-        elif os.path.exists(
-            source_file
-        ):
-
-            file_path = source_file
-
-        else:
-
-            file_path = None
-
-        if file_path:
-
-            st.markdown("---")
-            st.subheader(
-                f"Document Preview : {selected_file}"
-            )
-
-            extension = os.path.splitext(
-                file_path
-            )[1].lower()
-
-            if extension in [
-                ".png",
-                ".jpg",
-                ".jpeg"
-            ]:
-
-                st.image(
-                    file_path,
-                    width="stretch"
-                )
-
-            elif extension == ".pdf":
-
-                with open(
-                    file_path,
-                    "rb"
-                ) as pdf:
-
-                    st.download_button(
-                        "Open PDF",
-                        pdf,
-                        file_name=selected_file,
-                        width="stretch"
-                    )
-
-            elif extension == ".docx":
-
-                with open(
-                    file_path,
-                    "rb"
-                ) as doc:
-
-                    st.download_button(
-                        "Open DOCX",
-                        doc,
-                        file_name=selected_file,
-                        width="stretch"
-                    )
-
-        else:
-
-            st.warning(
-                "Document file not found."
-            )
-
+# ============================================================
+# GLOBAL BLUR LOADING OVERLAY — registered BEFORE pg.run()
+# Primary dismiss: polls for [data-testid="stSpinner"] lifecycle
+# Fallback dismiss: MutationObserver with 800ms debounce
+# State stored on window.parent._uxState to survive iframe refreshes
+# ============================================================
+import streamlit.components.v1 as _overlay_comp
+_overlay_comp.html("""
+<script>
+(function() {
+    var doc = window.parent.document;
+    var win = window.parent;
+
+    // -----------------------------------------------------------------
+    // PERSISTENT STATE on window.parent
+    // The overlay iframe is recreated on EVERY Streamlit rerender.
+    // Variables declared inside this IIFE would reset each time.
+    // Storing state on win ensures a single source of truth and
+    // prevents accumulating multiple observers / timers.
+    // -----------------------------------------------------------------
+    if (!win._uxState) {
+        win._uxState = {
+            spinPoll:  null,   // setInterval — watches stSpinner appear/disappear
+            mutObs:    null,   // MutationObserver fallback
+            debounce:  null,   // debounce timer for MutObs
+            safety:    null,   // hard safety cap setTimeout
+            bodyObs:   null,   // body observer for re-wiring new buttons (created once)
+            active:    false   // true while overlay is showing
+        };
+    }
+    var S = win._uxState;
+
+    // -----------------------------------------------------------------
+    // Overlay element — injected once into parent document body
+    // -----------------------------------------------------------------
+    function ensureOverlay() {
+        if (doc.getElementById('ux-loading-overlay')) return;
+        var el = doc.createElement('div');
+        el.id = 'ux-loading-overlay';
+        el.innerHTML = '<div class="ux-ring"></div><div class="ux-label">Loading...</div>';
+        el.style.cssText = [
+            'display:none','position:fixed','inset:0','z-index:2147483647',
+            'background:rgba(15,23,42,0.38)','backdrop-filter:blur(5px)',
+            '-webkit-backdrop-filter:blur(5px)','align-items:center',
+            'justify-content:center','flex-direction:column','gap:18px'
+        ].join(';');
+        var ring = el.querySelector('.ux-ring');
+        if (ring) ring.style.cssText = [
+            'width:52px','height:52px','border-radius:50%',
+            'border:4px solid rgba(255,255,255,0.25)',
+            'border-top-color:#fff',
+            'animation:ux-spin 0.75s linear infinite'
+        ].join(';');
+        var lbl = el.querySelector('.ux-label');
+        if (lbl) lbl.style.cssText = [
+            'color:#fff','font-family:Outfit,sans-serif',
+            'font-size:15px','font-weight:600','letter-spacing:0.04em'
+        ].join(';');
+        if (!doc.getElementById('ux-kf')) {
+            var s = doc.createElement('style');
+            s.id = 'ux-kf';
+            s.textContent = '@keyframes ux-spin{to{transform:rotate(360deg)}}';
+            doc.head.appendChild(s);
+        }
+        doc.body.appendChild(el);
+    }
+
+    // -----------------------------------------------------------------
+    // Dismiss: clears ALL watchers then hides the overlay
+    // Guard with S.active so it only fires once per show
+    // -----------------------------------------------------------------
+    function hideOverlay() {
+        if (!S.active) return;
+        S.active = false;
+
+        clearInterval(S.spinPoll);  S.spinPoll  = null;
+        clearTimeout(S.debounce);   S.debounce  = null;
+        clearTimeout(S.safety);     S.safety    = null;
+        if (S.mutObs) { S.mutObs.disconnect(); S.mutObs = null; }
+
+        var el = doc.getElementById('ux-loading-overlay');
+        if (el) el.style.display = 'none';
+    }
+
+    // -----------------------------------------------------------------
+    // Dismiss logic — two parallel mechanisms, first one wins
+    // -----------------------------------------------------------------
+    function startDismissLogic() {
+        // Clear any leftover watchers from a previous incomplete cycle
+        clearInterval(S.spinPoll);  S.spinPoll  = null;
+        clearTimeout(S.debounce);   S.debounce  = null;
+        clearTimeout(S.safety);     S.safety    = null;
+        if (S.mutObs) { S.mutObs.disconnect(); S.mutObs = null; }
+        S.active = true;
+
+        // ── PRIMARY: stSpinner lifecycle polling ──────────────────────
+        // Streamlit renders [data-testid="stSpinner"] for every
+        // st.spinner() context. We watch it appear then disappear.
+        var spinnersEverSeen = false;
+        S.spinPoll = setInterval(function() {
+            if (!S.active) { clearInterval(S.spinPoll); return; }
+            var count = doc.querySelectorAll('[data-testid="stSpinner"]').length;
+            if (!spinnersEverSeen && count > 0) {
+                spinnersEverSeen = true;                  // rerun started
+            } else if (spinnersEverSeen && count === 0) { // rerun finished
+                clearInterval(S.spinPoll); S.spinPoll = null;
+                setTimeout(hideOverlay, 250);              // brief grace for final paint
+            }
+        }, 100);
+
+        // ── FALLBACK: MutationObserver with 800ms debounce ───────────
+        // Handles fast reruns that have NO explicit st.spinner()
+        // (e.g. Back to List, sidebar navigation).
+        // 800ms sits comfortably between Streamlit's rerender burst
+        // (< 200ms) and the next fragment auto-refresh (≥ 5000ms).
+        // The observer disconnects itself as soon as the debounce fires
+        // so the fragment tick CANNOT reset it after dismiss.
+        var target = doc.querySelector('.block-container') || doc.body;
+        S.mutObs = new MutationObserver(function() {
+            if (!S.active) { S.mutObs.disconnect(); S.mutObs = null; return; }
+            clearTimeout(S.debounce);
+            S.debounce = setTimeout(function() {
+                if (S.mutObs) { S.mutObs.disconnect(); S.mutObs = null; }
+                hideOverlay();
+            }, 800);
+        });
+        S.mutObs.observe(target, { childList: true, subtree: true });
+
+        // ── SAFETY CAP: unconditional dismiss after 8 seconds ─────────
+        S.safety = setTimeout(hideOverlay, 8000);
+    }
+
+    // -----------------------------------------------------------------
+    // Show overlay + start dismiss logic
+    // -----------------------------------------------------------------
+    function showOverlay(label) {
+        ensureOverlay();
+        var el = doc.getElementById('ux-loading-overlay');
+        var lbl = el.querySelector('.ux-label');
+        if (lbl) lbl.textContent = label || 'Loading...';
+        el.style.display = 'flex';
+        startDismissLogic();
+    }
+
+    // -----------------------------------------------------------------
+    // Wire action buttons — skips already-wired buttons (no duplicates)
+    // -----------------------------------------------------------------
+    var BTNS = [
+        { text: 'Review',              label: 'Loading document...' },
+        { text: 'View Document',       label: 'Loading document...' },
+        { text: '\u2190 Back to List', label: 'Going back...'       },
+        { text: 'Approve',             label: 'Approving...'        },
+        { text: 'Reject',              label: 'Rejecting...'        },
+        { text: 'Logout',              label: 'Signing out...'      },
+        { text: 'Search Documents',    label: 'Searching...'        },
+        { text: 'Process Documents',   label: 'Processing...'       },
+    ];
+
+    function wireButtons() {
+        doc.querySelectorAll('button').forEach(function(btn) {
+            if (btn.dataset.overlayWired) return;
+            var txt = btn.innerText.trim();
+            var match = null;
+            for (var i = 0; i < BTNS.length; i++) {
+                if (txt === BTNS[i].text || txt.indexOf(BTNS[i].text) === 0) {
+                    match = BTNS[i]; break;
+                }
+            }
+            if (match) {
+                btn.dataset.overlayWired = 'true';
+                (function(m) {
+                    btn.addEventListener('click', function() { showOverlay(m.label); });
+                })(match);
+            }
+        });
+        doc.querySelectorAll('[data-testid="stSidebarNav"] a, [data-testid="stSidebarNavLink"]').forEach(function(link) {
+            if (link.dataset.overlayWired) return;
+            link.dataset.overlayWired = 'true';
+            link.addEventListener('click', function() { showOverlay('Navigating...'); });
+        });
+    }
+
+    // -----------------------------------------------------------------
+    // Bootstrap — runs on every iframe refresh
+    // bodyObserver is stored on S and created only ONCE to prevent
+    // accumulation of identical observers across Streamlit rerenders
+    // -----------------------------------------------------------------
+    ensureOverlay();
+    wireButtons();
+
+    if (!S.bodyObs) {
+        S.bodyObs = new MutationObserver(function() { wireButtons(); });
+        S.bodyObs.observe(doc.body, { childList: true, subtree: true });
+    }
+})();
+</script>
+""", height=0)
+
+# Run page execution
+pg.run()

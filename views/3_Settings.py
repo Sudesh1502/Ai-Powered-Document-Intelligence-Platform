@@ -1,44 +1,6 @@
 import streamlit as st
 from src.auth.auth_service import login_user, logout_user
 
-st.set_page_config(
-    page_title="Settings",
-    page_icon="📄",
-    layout="wide"
-)
-
-# Hide sidebar instantly to prevent flash before login
-st.markdown(
-    """
-    <style>
-        [data-testid="stSidebar"] { display: none; }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# --- Authentication Wall ---
-user = login_user()
-if not user:
-    st.stop()
-
-# If user is logged in, restore the sidebar
-st.markdown(
-    """
-    <style>
-        [data-testid="stSidebar"] { display: block !important; }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-# ---------------------------
-
-# Sidebar Logout
-st.sidebar.markdown("---")
-st.sidebar.write(f"**Signed in as:** {user.get('name', 'User')}")
-if st.sidebar.button("Logout", key="logout_btn"):
-    logout_user()
-
 st.title("Settings")
 st.markdown("---")
 
@@ -78,7 +40,8 @@ for rule in rules:
 
 # Custom Attributes Management
 from src.config.config_service import load_custom_attributes, save_custom_attributes
-user_id = user.get("user_id", "default_global")
+user = login_user()
+user_id = user.get("user_id", "default_global") if user else "default_global"
 
 if "custom_attributes" not in st.session_state:
     st.session_state.custom_attributes = load_custom_attributes(user_id)

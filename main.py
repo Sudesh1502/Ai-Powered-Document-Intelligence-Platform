@@ -75,7 +75,8 @@ for doc in documents[:2]:
                 note=f"Validation failed. {reason_str}",
                 start_time=start_time,
                 end_time=datetime.now(),
-                word_count=word_count
+                word_count=word_count,
+                source="API / Manual"
             )
             
             # IMPORTANT: Use 'continue' or 'return' here to skip the Azure Search upload!
@@ -104,7 +105,8 @@ for doc in documents[:2]:
                     note=f"Policy Breach. {reason_str}",
                     start_time=start_time,
                     end_time=datetime.now(),
-                    word_count=word_count
+                    word_count=word_count,
+                    source="API / Manual"
                 )
                 continue
         
@@ -145,6 +147,7 @@ for doc in documents[:2]:
             start_time=start_time,
             end_time=end_time,
             word_count=word_count,
+            source="API / Manual"
         )
         print(f"Successfully processed and indexed {file_name}")
 
@@ -158,7 +161,8 @@ for doc in documents[:2]:
             status="Failed",
             note=error_msg,
             start_time=start_time,
-            end_time=end_time
+            end_time=end_time,
+            source="API / Manual"
         )
         print(f"Failed to process {file_name}: {error_msg}")
 

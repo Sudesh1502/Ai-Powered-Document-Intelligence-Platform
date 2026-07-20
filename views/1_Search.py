@@ -11,107 +11,89 @@ from src.utils.blob_service import generate_sas_url
 import requests
 import io
 
-st.set_page_config(
-    page_title="Search",
-    page_icon="🔍",
-    layout="wide"
-)
-# Hide sidebar instantly to prevent flash before login
-st.markdown(
-    """
-    <style>
-        [data-testid="stSidebar"] { display: none; }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-from src.auth.auth_service import login_user, logout_user
-
-# --- Authentication Wall ---
-user = login_user()
-if not user:
-    st.stop()
-
-# If user is logged in, restore the sidebar
-st.markdown(
-    """
-    <style>
-        [data-testid="stSidebar"] { display: block !important; }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-# ---------------------------
-
-with st.sidebar:
-    st.markdown(f"**Signed in as:** {user['name']}")
-    logout_user()
-    st.markdown("---")
-
-header1, header2 = st.columns(
-    [1, 8]
-)
-
-with header1:
-    logo_path = "pages/LOGO.png"
-    if os.path.exists(logo_path):
-        st.image(logo_path, width=150)
-
-with header2:
-    st.title("Document Search")
-    st.caption("Search indexed documents using keyword and semantic search.")
-
+st.title("Document Search")
+st.caption("Search indexed documents using keyword and semantic search.")
 st.markdown("---")
 
 if st.session_state.get("preview_doc"):
     doc = st.session_state.preview_doc
-    if st.button("← Back to List", key="back_to_search"):
-        st.session_state.preview_doc = None
-        st.rerun()
-        
-    st.markdown(f"### Reviewing: {doc.get('file_name', 'Document')}")
+
+    # Pre-load blob bytes before rendering any UI so there is no layout jump
+    with st.spinner("Loading document from cloud..."):
+        blob_name = doc.get("sharepoint_url", "")
+        file_bytes = None
+        extension = None
+        preview_error = None
+        if blob_name:
+            sas_url = generate_sas_url(blob_name)
+            if sas_url:
+                extension = os.path.splitext(blob_name)[1].lower()
+                try:
+                    response = requests.get(sas_url)
+                    response.raise_for_status()
+                    file_bytes = response.content
+                except Exception as e:
+                    preview_error = str(e)
+
+    # Render header row: heading left, back button right
+    col_heading, col_back = st.columns([8.5, 1.5])
+    with col_heading:
+        st.markdown(f"<h3 style='margin:0; padding-top:2px; font-family: Outfit, sans-serif;'>Reviewing: {doc.get('file_name', 'Document')}</h3>", unsafe_allow_html=True)
+    with col_back:
+        if st.button("← Back to List", key="back_to_search", use_container_width=True):
+            st.session_state.preview_doc = None
+            st.rerun()
     st.markdown("---")
     
-    st.subheader(doc.get("file_name", ""))
-    st.caption("Document Preview")
+    # JS: immediately blank the page when Back is clicked to prevent layout-jump flash
+    import streamlit.components.v1 as _sc_back_s
+    _sc_back_s.html("""
+        <script>
+        setTimeout(() => {
+            const btns = window.parent.document.querySelectorAll('button');
+            btns.forEach(btn => {
+                if (btn.innerText.trim() === '← Back to List' && !btn.dataset.backWired) {
+                    btn.dataset.backWired = 'true';
+                    btn.addEventListener('click', () => {
+                        const container = window.parent.document.querySelector('.block-container');
+                        if (container) {
+                            container.style.transition = 'opacity 0.1s ease';
+                            container.style.opacity = '0';
+                        }
+                    });
+                }
+            });
+        }, 200);
+        </script>
+    """, height=0)
 
-    blob_name = doc.get("sharepoint_url", "")
-    if blob_name:
-        sas_url = generate_sas_url(blob_name)
-        if sas_url:
-            extension = os.path.splitext(blob_name)[1].lower()
-            try:
-                # Fetch securely into RAM
-                response = requests.get(sas_url)
-                response.raise_for_status()
-                file_bytes = response.content
-                
-                with st.container(border=True):
-                    if extension in [".png", ".jpg", ".jpeg"]:
-                        st.image(file_bytes, use_container_width=True)
-                    elif extension == ".pdf":
-                        try:
-                            pdf_viewer(file_bytes, width=700, height=800)
-                        except Exception as e:
-                            st.error(f"Failed to preview PDF: {e}")
-                    elif extension == ".docx":
-                        try:
-                            docx_file = io.BytesIO(file_bytes)
-                            result = mammoth.convert_to_html(docx_file)
-                            html = result.value
-                            st.markdown(
-                                f'<div style="height: 800px; overflow-y: auto; padding: 1rem; background: white; color: black; font-family: sans-serif;">{html}</div>', 
-                                unsafe_allow_html=True
-                            )
-                        except Exception as e:
-                            st.error(f"Failed to preview DOCX: {e}")
-            except Exception as e:
-                st.error(f"Failed to load document from cloud: {e}")
-        else:
-            st.warning("Failed to generate secure preview link.")
-    else:
+    st.caption("Document Preview")
+    if file_bytes:
+        with st.container(border=True):
+            if extension in [".png", ".jpg", ".jpeg"]:
+                st.image(file_bytes, use_container_width=True)
+            elif extension == ".pdf":
+                try:
+                    pdf_viewer(file_bytes, width=700, height=800)
+                except Exception as e:
+                    st.error(f"Failed to preview PDF: {e}")
+            elif extension == ".docx":
+                try:
+                    docx_file = io.BytesIO(file_bytes)
+                    result = mammoth.convert_to_html(docx_file)
+                    html = result.value
+                    st.markdown(
+                        f'<div style="height: 800px; overflow-y: auto; padding: 1rem; background: white; color: black; font-family: sans-serif;">{html}</div>',
+                        unsafe_allow_html=True
+                    )
+                except Exception as e:
+                    st.error(f"Failed to preview DOCX: {e}")
+    elif preview_error:
+        st.error(f"Failed to load document from cloud: {preview_error}")
+    elif not blob_name:
         st.warning("Original document URL not found.")
+    else:
+        st.warning("Failed to generate secure preview link.")
     st.stop()
 
 c1, c2, c3, c4 = st.columns(
@@ -216,16 +198,19 @@ if "search_results" in st.session_state:
         is_policy = st.session_state.get("search_index") == "policy-master-index"
         
         # 2. Draw the Master List Header
-        hcols = st.columns([4, 3, 2, 2])
-        hcols[0].markdown("**File Name**")
-        hcols[1].markdown("**Insured Name**" if is_policy else "**Entity Name**")
-        hcols[2].markdown("**Effective Date**" if is_policy else "**Date**")
-        hcols[3].markdown("**Action**")
+        col1_text = "Insured Name" if is_policy else "Entity Name"
+        col2_text = "Effective Date" if is_policy else "Date"
+        
+        hcols = st.columns([4, 3, 2, 2], gap="xxsmall")
+        hcols[0].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px; border-radius: 6px 0 0 6px;'>File Name</div>", unsafe_allow_html=True)
+        hcols[1].markdown(f"<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px;'>{col1_text}</div>", unsafe_allow_html=True)
+        hcols[2].markdown(f"<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px;'>{col2_text}</div>", unsafe_allow_html=True)
+        hcols[3].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: center; font-weight: 600; font-size: 14px; border-radius: 0 6px 6px 0;'>Action</div>", unsafe_allow_html=True)
         st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid rgba(200,200,200,0.3);'/>", unsafe_allow_html=True)
         
         # 3. Loop through results and draw the rows
         for i, r in enumerate(results, start=1):
-            cols = st.columns([4, 3, 2, 2], gap="small")
+            cols = st.columns([4, 3, 2, 2], gap="xxsmall")
             
             cols[0].write(r.get('file_name', 'N/A'))
             
@@ -237,9 +222,30 @@ if "search_results" in st.session_state:
                 cols[1].write(r.get('entity_name', 'N/A'))
                 cols[2].write(str(r.get('document_date', 'N/A'))[:10])
             
+            cols[3].markdown("<div class='table-btn-anchor'></div>", unsafe_allow_html=True)
             if cols[3].button("View Document", key=f"view_doc_{i}", use_container_width=True):
                 st.session_state.preview_doc = r
                 st.rerun()
+        
+        # JS: show loading state on View Document buttons immediately on click
+        import streamlit.components.v1 as _sc
+        _sc.html("""
+            <script>
+            setTimeout(() => {
+                const btns = window.parent.document.querySelectorAll('button');
+                btns.forEach(btn => {
+                    if (btn.innerText.trim() === 'View Document' && !btn.dataset.uxWired) {
+                        btn.dataset.uxWired = 'true';
+                        btn.addEventListener('click', () => {
+                            btn.innerText = 'Loading...';
+                            btn.style.opacity = '0.65';
+                            btn.style.pointerEvents = 'none';
+                        });
+                    }
+                });
+            }, 300);
+            </script>
+        """, height=0)
         # 5. Fetch the AI Summary using session state caching to save costs
         with summary_placeholder.container():
             # Check if we already generated a summary for this EXACT query

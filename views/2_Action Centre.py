@@ -17,7 +17,8 @@ from src.indexing.upload_document_service import (
 )
 
 from src.utils.logger import (
-    log_document_status
+    log_document_status,
+    get_logs
 )
 
 from src.utils.review_storage import (
@@ -25,71 +26,10 @@ from src.utils.review_storage import (
     remove_review_document
 )
 
-st.set_page_config(
-    page_title="Action Centre",
-    page_icon="📄",
-    layout="wide"
-)
 
-st.markdown("""
-    <style>
-    /* Prevent Streamlit from graying out elements during auto-refresh */
-    [data-testid="stFragment"] {
-        opacity: 1 !important;
-        transition: none !important;
-    }
-    .element-container {
-        opacity: 1 !important;
-        transition: none !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-# Hide sidebar instantly to prevent flash before login
-st.markdown(
-    """
-    <style>
-        [data-testid="stSidebar"] { display: none; }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
-from src.auth.auth_service import login_user, logout_user
-
-# --- Authentication Wall ---
-user = login_user()
-if not user:
-    st.stop()
-
-# If user is logged in, restore the sidebar
-st.markdown(
-    """
-    <style>
-        [data-testid="stSidebar"] { display: block !important; }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-# ---------------------------
-
-with st.sidebar:
-    st.markdown(f"**Signed in as:** {user['name']}")
-    logout_user()
-    st.markdown("---")
-
-header1, header2 = st.columns(
-    [1, 8]
-)
-
-with header1:
-    logo_path = "pages/LOGO.png"
-    if os.path.exists(logo_path):
-        st.image(logo_path, width=150)
-
-with header2:
-    st.title("Action Centre")
-    st.caption("Review and validate documents that require manual intervention.")
-
+st.title("Action Centre")
+st.caption("Review and validate documents that require manual intervention.")
 st.markdown("---")
 
 if "selected_doc_index" not in st.session_state:
@@ -97,8 +37,18 @@ if "selected_doc_index" not in st.session_state:
 
 @st.fragment(run_every="5s")
 def render_action_centre_queue():
-    # Reverse so the newest documents appear at the top
-    docs = list(reversed(load_review_documents()))
+    if st.session_state.selected_doc_index is not None:
+        return
+    # Documents are already sorted oldest-first (FIFO) by the backend
+    docs = load_review_documents()
+    
+    # Read actual counts from the persistent CSV logs
+    logs = get_logs()
+    approved_count = 0
+    rejected_count = 0
+    if not logs.empty and "Status" in logs.columns:
+        approved_count = len(logs[logs["Status"] == "Approved Manually"])
+        rejected_count = len(logs[logs["Status"] == "Rejected"])
 
     c1, c2, c3 = st.columns(3)
 
@@ -111,19 +61,13 @@ def render_action_centre_queue():
     with c2:
         st.metric(
             "Approved Manually",
-            st.session_state.get(
-                "approved_count",
-                0
-            )
+            approved_count
         )
 
     with c3:
         st.metric(
             "Rejected",
-            st.session_state.get(
-                "rejected_count",
-                0
-            )
+            rejected_count
         )
 
     st.markdown("---")
@@ -144,15 +88,15 @@ def render_action_centre_queue():
         """, unsafe_allow_html=True)
 
         st.markdown("### Pending Documents")
-        hcols = st.columns([4, 3, 3, 2])
-        hcols[0].markdown("**File Name**")
-        hcols[1].markdown("**Entity Name**")
-        hcols[2].markdown("**Document Date**")
-        hcols[3].markdown("**Action**")
+        hcols = st.columns([4, 3, 3, 2], gap="xxsmall")
+        hcols[0].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px; border-radius: 6px 0 0 6px;'>File Name</div>", unsafe_allow_html=True)
+        hcols[1].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px;'>Entity Name</div>", unsafe_allow_html=True)
+        hcols[2].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px;'>Queue Time</div>", unsafe_allow_html=True)
+        hcols[3].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: center; font-weight: 600; font-size: 14px; border-radius: 0 6px 6px 0;'>Action</div>", unsafe_allow_html=True)
         st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid rgba(200,200,200,0.3);'/>", unsafe_allow_html=True)
         
         for idx, list_doc in enumerate(docs):
-            cols = st.columns([4, 3, 3, 2], gap="small")
+            cols = st.columns([4, 3, 3, 2], gap="xxsmall")
             
             # File Name is always available
             cols[0].write(list_doc.get("file_name", "Unknown"))
@@ -165,80 +109,133 @@ def render_action_centre_queue():
                 entity = list_doc.get("entity_name")
                 cols[1].write(entity if entity and str(entity).strip() else "⚠️ *Missing*")
                 
-                date = list_doc.get("document_date")
-                cols[2].write(str(date) if date and str(date).strip() else "⚠️ *Missing*")
+                # Show the exact time it was added to the queue to prove FIFO sorting
+                queue_time = list_doc.get("queue_date", "Unknown")
+                cols[2].write(queue_time)
             
+            cols[3].markdown("<div class='table-btn-anchor'></div>", unsafe_allow_html=True)
             if cols[3].button("Review", key=f"review_btn_{idx}", use_container_width=True):
                 st.session_state.selected_doc_index = idx
                 st.rerun()
             st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid rgba(200,200,200,0.3);'/>", unsafe_allow_html=True)
-
-if st.session_state.selected_doc_index is None:
-    render_action_centre_queue()
-else:
-    docs = list(reversed(load_review_documents()))
-    i = st.session_state.selected_doc_index
-    if i >= len(docs):
-        st.session_state.selected_doc_index = None
-        st.rerun()
         
-    doc = docs[i]
-    
-    if st.button("← Back to List", key="back_to_list"):
-        st.session_state.selected_doc_index = None
-        st.rerun()
+        # JS: mark Review buttons as loading on click for instant feedback
+        import streamlit.components.v1 as _sc
+        _sc.html("""
+            <script>
+            setTimeout(() => {
+                const btns = window.parent.document.querySelectorAll('button');
+                btns.forEach(btn => {
+                    if (btn.innerText.trim() === 'Review' && !btn.dataset.uxWired) {
+                        btn.dataset.uxWired = 'true';
+                        btn.addEventListener('click', () => {
+                            btn.innerText = 'Loading...';
+                            btn.style.opacity = '0.65';
+                            btn.style.pointerEvents = 'none';
+                        });
+                    }
+                });
+            }, 300);
+            </script>
+        """, height=0)
+
+# Always invoke the fragment — it self-exits when in review mode, clearing its DOM slot.
+# If we only call it in the 'if' branch, its old output lingers as a ghost until the 5s timer fires.
+render_action_centre_queue()
+
+if st.session_state.selected_doc_index is not None:
+    # Pre-load all required data and download document bytes inside a single spinner
+    with st.spinner("Loading document and metadata from cloud..."):
+        docs = load_review_documents()
+        i = st.session_state.selected_doc_index
+        if i >= len(docs):
+            st.session_state.selected_doc_index = None
+            st.rerun()
+            
+        doc = docs[i]
         
-    st.markdown(f"### Reviewing: {doc.get('file_name', 'Document')}")
-    st.markdown("---")
-
-    left, right = st.columns(
-        [5, 4]
-    )
-
-    blob_name = doc.get("sharepoint_url", "")
-    
-    with left:
-        st.subheader(doc["file_name"])
-        st.caption("Document Preview")
-
+        blob_name = doc.get("sharepoint_url", "")
+        file_bytes = None
+        extension = None
+        file_bytes_error = None
+        
         if blob_name:
             sas_url = generate_sas_url(blob_name)
             if sas_url:
                 extension = os.path.splitext(blob_name)[1].lower()
-                
                 try:
-                    # Fetch securely into RAM
                     response = requests.get(sas_url)
                     response.raise_for_status()
                     file_bytes = response.content
-                    
-                    with st.container(border=True):
-                        if extension in [".png", ".jpg", ".jpeg"]:
-                            st.image(file_bytes, use_container_width=True)
-                        elif extension == ".pdf":
-                            try:
-                                pdf_viewer(file_bytes, width=700, height=800)
-                            except Exception as e:
-                                st.error(f"Failed to preview PDF: {e}")
-                        elif extension == ".docx":
-                            try:
-                                docx_file = io.BytesIO(file_bytes)
-                                result = mammoth.convert_to_html(docx_file)
-                                html = result.value
-                                
-                                # Render DOCX content inside a scrollable container
-                                st.markdown(
-                                    f'<div style="height: 800px; overflow-y: auto; padding: 1rem; background: white; color: black; font-family: sans-serif;">{html}</div>', 
-                                    unsafe_allow_html=True
-                                )
-                            except Exception as e:
-                                st.error(f"Failed to preview DOCX: {e}")
                 except Exception as e:
-                    st.error(f"Failed to load document from cloud: {e}")
-            else:
-                st.warning("Failed to generate secure preview link.")
-        else:
+                    file_bytes_error = str(e)
+    
+    # Now that everything is loaded, render the UI components all at once
+    col_heading, col_back = st.columns([8.5, 1.5])
+    with col_heading:
+        st.markdown(f"<h3 style='margin:0; padding-top:2px; font-family: Outfit, sans-serif;'>Reviewing: {doc.get('file_name', 'Document')}</h3>", unsafe_allow_html=True)
+    with col_back:
+        if st.button("← Back to List", key="back_to_list", use_container_width=True):
+            st.session_state.selected_doc_index = None
+            st.rerun()
+    st.markdown("---")
+    
+    # JS: immediately blank the page when Back is clicked to prevent layout-jump flash
+    import streamlit.components.v1 as _sc_back
+    _sc_back.html("""
+        <script>
+        setTimeout(() => {
+            const btns = window.parent.document.querySelectorAll('button');
+            btns.forEach(btn => {
+                if (btn.innerText.trim() === '← Back to List' && !btn.dataset.backWired) {
+                    btn.dataset.backWired = 'true';
+                    btn.addEventListener('click', () => {
+                        const container = window.parent.document.querySelector('.block-container');
+                        if (container) {
+                            container.style.transition = 'opacity 0.1s ease';
+                            container.style.opacity = '0';
+                        }
+                    });
+                }
+            });
+        }, 200);
+        </script>
+    """, height=0)
+
+    left, right = st.columns(
+        [5, 4]
+    )
+    
+    with left:
+        st.caption("Document Preview")
+        if file_bytes:
+            with st.container(border=True):
+                if extension in [".png", ".jpg", ".jpeg"]:
+                    st.image(file_bytes, use_container_width=True)
+                elif extension == ".pdf":
+                    try:
+                        pdf_viewer(file_bytes, width=700, height=800)
+                    except Exception as e:
+                        st.error(f"Failed to preview PDF: {e}")
+                elif extension == ".docx":
+                    try:
+                        docx_file = io.BytesIO(file_bytes)
+                        result = mammoth.convert_to_html(docx_file)
+                        html = result.value
+                        
+                        # Render DOCX content inside a scrollable container
+                        st.markdown(
+                            f'<div style="height: 800px; overflow-y: auto; padding: 1rem; background: white; color: black; font-family: sans-serif;">{html}</div>', 
+                            unsafe_allow_html=True
+                        )
+                    except Exception as e:
+                        st.error(f"Failed to preview DOCX: {e}")
+        elif file_bytes_error:
+            st.error(f"Failed to load document from cloud: {file_bytes_error}")
+        elif not blob_name:
             st.warning("Original document URL not found in metadata.")
+        else:
+            st.warning("Failed to generate secure preview link.")
 
     with right:
 
@@ -266,6 +263,8 @@ else:
                         
                         extension = os.path.splitext(doc.get("file_name", ""))[1].lower()
                         text = extract_text(file_bytes, extension=extension)
+                        from src.auth.auth_service import login_user
+                        user = login_user()
                         user_id = user.get("user_id", "default_global") if user else "default_global"
                         new_metadata = extract_metadata(text, user_id=user_id)
                         
@@ -503,112 +502,110 @@ else:
         )
 
         with b1:
-
             if st.button(
                 "Approve",
                 key=f"a_{i}",
                 width="stretch"
             ):
+                with st.spinner("Approving and indexing document..."):
+                    doc[
+                        "document_type"
+                    ] = document_type
 
-                doc[
-                    "document_type"
-                ] = document_type
+                    doc[
+                        "document_title"
+                    ] = document_title
 
-                doc[
-                    "document_title"
-                ] = document_title
+                    doc[
+                        "document_number"
+                    ] = document_number
 
-                doc[
-                    "document_number"
-                ] = document_number
+                    doc[
+                        "entity_name"
+                    ] = entity_name
 
-                doc[
-                    "entity_name"
-                ] = entity_name
+                    doc[
+                        "document_date"
+                    ] = document_date
 
-                doc[
-                    "document_date"
-                ] = document_date
+                    # Collect non-empty metadata
+                    final_metadata = {}
+                    
+                    for _, row in edited_metadata.iterrows():
+                        if pd.notna(row.get("Key")) and pd.notna(row.get("Value")):
+                            k = str(row["Key"]).strip()
+                            v = str(row["Value"]).strip()
+                            if k and v:
+                                final_metadata[k] = v
+                    
+                    # Truncate to 50 items to be safe
+                    final_metadata = dict(list(final_metadata.items())[:50])
+                    doc["metadata"] = json.dumps(final_metadata)
 
-                # Collect non-empty metadata
-                final_metadata = {}
-                
-                for _, row in edited_metadata.iterrows():
-                    if pd.notna(row.get("Key")) and pd.notna(row.get("Value")):
-                        k = str(row["Key"]).strip()
-                        v = str(row["Value"]).strip()
-                        if k and v:
-                            final_metadata[k] = v
-                
-                # Truncate to 50 items to be safe
-                final_metadata = dict(list(final_metadata.items())[:50])
-                doc["metadata"] = json.dumps(final_metadata)
-
-                doc_to_upload = (
-                    doc.copy()
-                )
-
-                doc_to_upload.pop(
-                    "review_status",
-                    None
-                )
-                
-                if "metadata" in doc_to_upload:
-                    try:
-                        import json
-                        meta_dict = json.loads(doc_to_upload["metadata"]) if isinstance(doc_to_upload["metadata"], str) else doc_to_upload["metadata"]
-                        meta_dict.pop("flagged_tokens", None)
-                        doc_to_upload["metadata"] = json.dumps(meta_dict) if isinstance(doc_to_upload["metadata"], str) else meta_dict
-                    except Exception:
-                        pass
-
-                os.makedirs(
-                    "data/",
-                    exist_ok=True
-                )
-
-                # 1. Format the date properly for Azure Search (ISO 8601)
-                raw_date = str(doc_to_upload.get("document_date", ""))
-
-                if raw_date and raw_date.strip() not in ["", "None"]:
-                    if "T" not in raw_date:
-                        doc_to_upload["document_date"] = f"{raw_date.strip()}T00:00:00Z"
-                else:
-                    doc_to_upload["document_date"] = None
-
-                # 2. ACTUALLY upload the document to the Search Index!
-                try:
-                    upload_documents([doc_to_upload])
-                except Exception as e:
-                    st.error(f"Failed to upload to Azure Search: {e}")
-                    st.stop()  # Stop the process so it doesn't falsely show success
-
-                # (Removed old shutil.move block)
-
-                log_document_status(
-                    file_name=doc[
-                        "file_name"
-                    ],
-                    url=doc.get("sharepoint_url", ""),
-                    status="Approved Manually",
-                    note="Reviewed and indexed by human reviewer",
-                    start_time=datetime.now(),
-                    end_time=datetime.now()
-                )
-
-                st.session_state[
-                    "approved_count"
-                ] = (
-                    st.session_state.get(
-                        "approved_count",
-                        0
+                    doc_to_upload = (
+                        doc.copy()
                     )
-                    + 1
-                )
 
-                remove_review_document(
-                    doc.get("id", doc.get("file_name"))
-                )
+                    doc_to_upload.pop(
+                        "review_status",
+                        None
+                    )
+                    
+                    if "metadata" in doc_to_upload:
+                        try:
+                            import json
+                            meta_dict = json.loads(doc_to_upload["metadata"]) if isinstance(doc_to_upload["metadata"], str) else doc_to_upload["metadata"]
+                            meta_dict.pop("flagged_tokens", None)
+                            doc_to_upload["metadata"] = json.dumps(meta_dict) if isinstance(doc_to_upload["metadata"], str) else meta_dict
+                        except Exception:
+                            pass
+
+                    os.makedirs(
+                        "data/",
+                        exist_ok=True
+                    )
+
+                    # 1. Format the date properly for Azure Search (ISO 8601)
+                    raw_date = str(doc_to_upload.get("document_date", ""))
+
+                    if raw_date and raw_date.strip() not in ["", "None"]:
+                        if "T" not in raw_date:
+                            doc_to_upload["document_date"] = f"{raw_date.strip()}T00:00:00Z"
+                    else:
+                        doc_to_upload["document_date"] = None
+
+                    # 2. ACTUALLY upload the document to the Search Index!
+                    try:
+                        upload_documents([doc_to_upload])
+                    except Exception as e:
+                        st.error(f"Failed to upload to Azure Search: {e}")
+                        st.stop()  # Stop the process so it doesn't falsely show success
+
+                    log_document_status(
+                        file_name=doc[
+                            "file_name"
+                        ],
+                        url=doc.get("sharepoint_url", ""),
+                        status="Approved Manually",
+                        note="Reviewed and indexed by human reviewer",
+                        start_time=datetime.now(),
+                        end_time=datetime.now(),
+                        source="Streamlit UI"
+                    )
+
+                    st.session_state[
+                        "approved_count"
+                    ] = (
+                        st.session_state.get(
+                            "approved_count",
+                            0
+                        )
+                        + 1
+                    )
+
+                    remove_review_document(
+                        doc.get("id", doc.get("file_name"))
+                    )
 
                 st.success(
                     "Document approved and indexed successfully."
@@ -618,49 +615,49 @@ else:
                 st.rerun()
 
         with b2:
-
             if st.button(
                 "Reject",
                 key=f"r_{i}",
                 width="stretch"
             ):
-
-                log_document_status(
-                    file_name=doc[
-                        "file_name"
-                    ],
-                    url=doc.get("sharepoint_url", ""),
-                    status="Rejected",
-                    note="Rejected by human reviewer",
-                    start_time=datetime.now(),
-                    end_time=datetime.now()
-                )
-
-                st.session_state[
-                    "rejected_count"
-                ] = (
-                    st.session_state.get(
-                        "rejected_count",
-                        0
+                with st.spinner("Rejecting and purging document from Azure..."):
+                    log_document_status(
+                        file_name=doc[
+                            "file_name"
+                        ],
+                        url=doc.get("sharepoint_url", ""),
+                        status="Rejected",
+                        note="Rejected by human reviewer",
+                        start_time=datetime.now(),
+                        end_time=datetime.now(),
+                        source="Streamlit UI"
                     )
-                    + 1
-                )
 
-                remove_review_document(
-                    doc.get("id", doc.get("file_name"))
-                )
-                
-                # --- DEEP REJECT: Purge from Azure Ecosystem ---
-                # 1. Delete Blob
-                blob_name = doc.get("sharepoint_url", "")
-                if blob_name:
-                    delete_blob(blob_name)
+                    st.session_state[
+                        "rejected_count"
+                    ] = (
+                        st.session_state.get(
+                            "rejected_count",
+                            0
+                        )
+                        + 1
+                    )
+
+                    remove_review_document(
+                        doc.get("id", doc.get("file_name"))
+                    )
                     
-                # 2. Delete Hashes
-                sha256_hash = doc.get("sha256_signature", "")
-                if sha256_hash:
-                    dedupe_service = DuplicateDetectionService()
-                    dedupe_service.delete_document_hashes(sha256_hash)
+                    # --- DEEP REJECT: Purge from Azure Ecosystem ---
+                    # 1. Delete Blob
+                    blob_name = doc.get("sharepoint_url", "")
+                    if blob_name:
+                        delete_blob(blob_name)
+                        
+                    # 2. Delete Hashes
+                    sha256_hash = doc.get("sha256_signature", "")
+                    if sha256_hash:
+                        dedupe_service = DuplicateDetectionService()
+                        dedupe_service.delete_document_hashes(sha256_hash)
 
                 st.warning(
                     "Document completely rejected and purged from Azure."

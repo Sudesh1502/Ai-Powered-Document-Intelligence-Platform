@@ -82,21 +82,28 @@ def search_documents(
     if index_name == "generic-documents-index":
         search_kwargs["select"] = [
             "id", "file_name", "document_title", "document_type", 
-            "entity_name", "document_date", "confidence", "sharepoint_url"
+            "entity_name", "document_date", "confidence", "sharepoint_url",
+            "content", "metadata"
         ]
+        semantic_config_name = "default-semantic-config"
     elif index_name == "policy-master-index":
         search_kwargs["select"] = [
             "id", "file_name", "policy_number", "insured_name", 
-            "policy_effective_date", "sharepoint_url"
+            "policy_effective_date", "sharepoint_url",
+            "metadata"
         ]
+        semantic_config_name = "policy-semantic-config"
 
     # Add semantic parameters if requested
     if use_semantic_ranker:
         search_kwargs.update({
             "query_type": "semantic",
-            "semantic_configuration_name": "default-semantic-config",
+            "semantic_configuration_name": semantic_config_name,
             "query_caption": "extractive"
         })
+    else:
+        # Enforce exact matching for all keywords (instead of partial/any matches)
+        search_kwargs["search_mode"] = "all"
 
     try:
         # Execute the search request
@@ -108,13 +115,25 @@ def search_documents(
                 "rank": rank,
                 "id": result["id"],
                 "file_name": result.get("file_name"),
-                "document_title": result.get("document_title"),
-                "document_type": result.get("document_type"),
-                "document_date": result.get("document_date"),
-                "entity_name": result.get("entity_name"),
                 "sharepoint_url": result.get("sharepoint_url"),
+                "content": result.get("content") if index_name == "generic-documents-index" else result.get("metadata"),
+                "metadata": result.get("metadata"),
                 "score": round(result["@search.score"], 3)
             }
+            
+            if index_name == "policy-master-index":
+                doc_data.update({
+                    "policy_number": result.get("policy_number"),
+                    "insured_name": result.get("insured_name"),
+                    "policy_effective_date": result.get("policy_effective_date")
+                })
+            else:
+                doc_data.update({
+                    "document_title": result.get("document_title"),
+                    "document_type": result.get("document_type"),
+                    "document_date": result.get("document_date"),
+                    "entity_name": result.get("entity_name")
+                })
             
             # If semantic search is used, Azure provides exact text snippets (captions) where it found the answer
             if use_semantic_ranker and result.get("@search.captions"):

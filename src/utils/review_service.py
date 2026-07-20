@@ -10,6 +10,6 @@ def get_review_status(
         return "Completed"
 
     elif confidence >= 70:
-        return "Review Required"
+        return "Needs Review"
 
     return "Failed"
