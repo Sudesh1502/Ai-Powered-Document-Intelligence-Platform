@@ -17,52 +17,83 @@ st.markdown("---")
 
 if st.session_state.get("preview_doc"):
     doc = st.session_state.preview_doc
-    if st.button("← Back to List", key="back_to_search"):
-        st.session_state.preview_doc = None
-        st.rerun()
-        
-    st.markdown(f"### Reviewing: {doc.get('file_name', 'Document')}")
+
+    # Pre-load blob bytes before rendering any UI so there is no layout jump
+    with st.spinner("Loading document from cloud..."):
+        blob_name = doc.get("sharepoint_url", "")
+        file_bytes = None
+        extension = None
+        preview_error = None
+        if blob_name:
+            sas_url = generate_sas_url(blob_name)
+            if sas_url:
+                extension = os.path.splitext(blob_name)[1].lower()
+                try:
+                    response = requests.get(sas_url)
+                    response.raise_for_status()
+                    file_bytes = response.content
+                except Exception as e:
+                    preview_error = str(e)
+
+    # Render header row: heading left, back button right
+    col_heading, col_back = st.columns([8.5, 1.5])
+    with col_heading:
+        st.markdown(f"<h3 style='margin:0; padding-top:2px; font-family: Outfit, sans-serif;'>Reviewing: {doc.get('file_name', 'Document')}</h3>", unsafe_allow_html=True)
+    with col_back:
+        if st.button("← Back to List", key="back_to_search", use_container_width=True):
+            st.session_state.preview_doc = None
+            st.rerun()
     st.markdown("---")
     
-    st.subheader(doc.get("file_name", ""))
-    st.caption("Document Preview")
+    # JS: immediately blank the page when Back is clicked to prevent layout-jump flash
+    import streamlit.components.v1 as _sc_back_s
+    _sc_back_s.html("""
+        <script>
+        setTimeout(() => {
+            const btns = window.parent.document.querySelectorAll('button');
+            btns.forEach(btn => {
+                if (btn.innerText.trim() === '← Back to List' && !btn.dataset.backWired) {
+                    btn.dataset.backWired = 'true';
+                    btn.addEventListener('click', () => {
+                        const container = window.parent.document.querySelector('.block-container');
+                        if (container) {
+                            container.style.transition = 'opacity 0.1s ease';
+                            container.style.opacity = '0';
+                        }
+                    });
+                }
+            });
+        }, 200);
+        </script>
+    """, height=0)
 
-    blob_name = doc.get("sharepoint_url", "")
-    if blob_name:
-        sas_url = generate_sas_url(blob_name)
-        if sas_url:
-            extension = os.path.splitext(blob_name)[1].lower()
-            try:
-                # Fetch securely into RAM
-                response = requests.get(sas_url)
-                response.raise_for_status()
-                file_bytes = response.content
-                
-                with st.container(border=True):
-                    if extension in [".png", ".jpg", ".jpeg"]:
-                        st.image(file_bytes, use_container_width=True)
-                    elif extension == ".pdf":
-                        try:
-                            pdf_viewer(file_bytes, width=700, height=800)
-                        except Exception as e:
-                            st.error(f"Failed to preview PDF: {e}")
-                    elif extension == ".docx":
-                        try:
-                            docx_file = io.BytesIO(file_bytes)
-                            result = mammoth.convert_to_html(docx_file)
-                            html = result.value
-                            st.markdown(
-                                f'<div style="height: 800px; overflow-y: auto; padding: 1rem; background: white; color: black; font-family: sans-serif;">{html}</div>', 
-                                unsafe_allow_html=True
-                            )
-                        except Exception as e:
-                            st.error(f"Failed to preview DOCX: {e}")
-            except Exception as e:
-                st.error(f"Failed to load document from cloud: {e}")
-        else:
-            st.warning("Failed to generate secure preview link.")
-    else:
+    st.caption("Document Preview")
+    if file_bytes:
+        with st.container(border=True):
+            if extension in [".png", ".jpg", ".jpeg"]:
+                st.image(file_bytes, use_container_width=True)
+            elif extension == ".pdf":
+                try:
+                    pdf_viewer(file_bytes, width=700, height=800)
+                except Exception as e:
+                    st.error(f"Failed to preview PDF: {e}")
+            elif extension == ".docx":
+                try:
+                    docx_file = io.BytesIO(file_bytes)
+                    result = mammoth.convert_to_html(docx_file)
+                    html = result.value
+                    st.markdown(
+                        f'<div style="height: 800px; overflow-y: auto; padding: 1rem; background: white; color: black; font-family: sans-serif;">{html}</div>',
+                        unsafe_allow_html=True
+                    )
+                except Exception as e:
+                    st.error(f"Failed to preview DOCX: {e}")
+    elif preview_error:
+        st.error(f"Failed to load document from cloud: {preview_error}")
+    elif not blob_name:
         st.warning("Original document URL not found.")
+    else:
+        st.warning("Failed to generate secure preview link.")
     st.stop()
 
 c1, c2, c3, c4 = st.columns(
@@ -195,6 +226,26 @@ if "search_results" in st.session_state:
             if cols[3].button("View Document", key=f"view_doc_{i}", use_container_width=True):
                 st.session_state.preview_doc = r
                 st.rerun()
+        
+        # JS: show loading state on View Document buttons immediately on click
+        import streamlit.components.v1 as _sc
+        _sc.html("""
+            <script>
+            setTimeout(() => {
+                const btns = window.parent.document.querySelectorAll('button');
+                btns.forEach(btn => {
+                    if (btn.innerText.trim() === 'View Document' && !btn.dataset.uxWired) {
+                        btn.dataset.uxWired = 'true';
+                        btn.addEventListener('click', () => {
+                            btn.innerText = 'Loading...';
+                            btn.style.opacity = '0.65';
+                            btn.style.pointerEvents = 'none';
+                        });
+                    }
+                });
+            }, 300);
+            </script>
+        """, height=0)
         # 5. Fetch the AI Summary using session state caching to save costs
         with summary_placeholder.container():
             # Check if we already generated a summary for this EXACT query

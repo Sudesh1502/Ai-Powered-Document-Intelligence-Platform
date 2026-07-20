@@ -86,7 +86,7 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
         log_document_status(
             file_name=filename, url="Gmail Ingestion", status="Needs Review",
             note="Data-Level Duplicate (Matching ID & Vendor)", start_time=start_time, end_time=get_ist_now(), word_count=len(text.split()) if text else 0,
-            confidence=confidence
+            confidence=confidence, source="Gmail"
         )
         return
 
@@ -99,7 +99,7 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
         log_document_status(
             file_name=filename, url="Gmail Ingestion", status="Failed",
             note=f"Rejected due to extremely low confidence ({confidence}%)", start_time=start_time, end_time=get_ist_now(), word_count=len(text.split()) if text else 0,
-            confidence=confidence
+            confidence=confidence, source="Gmail"
         )
         return
     elif review_status != "Completed":
@@ -111,7 +111,7 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
         log_document_status(
             file_name=filename, url="Gmail Ingestion", status="Needs Review",
             note=metadata["review_reason"], start_time=start_time, end_time=datetime.datetime.now(), word_count=len(text.split()) if text else 0,
-            confidence=confidence
+            confidence=confidence, source="Gmail"
         )
         return
 
@@ -169,7 +169,7 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
         log_document_status(
             file_name=filename, url="Gmail Ingestion", status="Needs Review",
             note=metadata["review_reason"], start_time=start_time, end_time=datetime.datetime.now(), word_count=len(text.split()) if text else 0,
-            confidence=confidence
+            confidence=confidence, source="Gmail"
         )
     else:
         # Cross Validation against Policy Master Index
@@ -193,7 +193,7 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
                 log_document_status(
                     file_name=filename, url="Gmail Ingestion", status="Needs Review",
                     note=f"Policy Breach. {reason_str}", start_time=start_time, end_time=get_ist_now(), word_count=len(text.split()) if text else 0,
-                    confidence=confidence
+                    confidence=confidence, source="Gmail"
                 )
                 return # Skip Azure Search upload
                 
@@ -207,7 +207,8 @@ def process_email_attachment(email_body: str, attachment: dict, dedupe_service: 
             start_time=start_time,
             end_time=get_ist_now(),
             word_count=len(text.split()) if text else 0,
-            confidence=confidence
+            confidence=confidence,
+            source="Gmail"
         )
         
     # Log Document Hashes

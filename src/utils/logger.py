@@ -10,16 +10,22 @@ import pandas as pd
 
 LOG_FILE = Path(__file__).resolve().parent.parent.parent / "processing_logs.csv"
 
-def log_document_status(file_name: str, url: str, status: str, note: str, start_time: datetime = None, end_time: datetime = None, word_count:int=0, confidence:float=None):
+def log_document_status(file_name: str, url: str, status: str, note: str, start_time: datetime = None, end_time: datetime = None, word_count:int=0, confidence:float=None, source:str="Unknown"):
     """Logs the processing status of a document to a CSV file."""
     file_exists = os.path.isfile(LOG_FILE)
     
-    # Dynamically upgrade existing log files to include OCR Confidence header if missing
+    # Dynamically upgrade existing log files to include new columns if missing
     if file_exists:
         try:
             df = pd.read_csv(LOG_FILE)
+            changed = False
             if 'OCR Confidence' not in df.columns:
                 df['OCR Confidence'] = ""
+                changed = True
+            if 'Source' not in df.columns:
+                df['Source'] = "Unknown"
+                changed = True
+            if changed:
                 df.to_csv(LOG_FILE, index=False)
         except Exception:
             pass
@@ -27,7 +33,7 @@ def log_document_status(file_name: str, url: str, status: str, note: str, start_
     with open(LOG_FILE, mode='a', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(['Timestamp', 'File Name', 'URL', 'Status', 'Note','Word Count', 'Start Time', 'End Time', 'Processing Time (s)', 'OCR Confidence'])
+            writer.writerow(['Timestamp', 'File Name', 'URL', 'Status', 'Note', 'Word Count', 'Start Time', 'End Time', 'Processing Time (s)', 'OCR Confidence', 'Source'])
             
         timestamp = get_ist_now().strftime("%Y-%m-%d %H:%M:%S")
         
@@ -39,7 +45,8 @@ def log_document_status(file_name: str, url: str, status: str, note: str, start_
             processing_time = str(round((end_time - start_time).total_seconds(), 2))
             
         conf_str = str(confidence) if confidence is not None else ""
-        writer.writerow([timestamp, file_name, url, status, note, word_count, start_str, end_str, processing_time, conf_str])
+        writer.writerow([timestamp, file_name, url, status, note, word_count, start_str, end_str, processing_time, conf_str, source])
+
 
 
 def get_logs():

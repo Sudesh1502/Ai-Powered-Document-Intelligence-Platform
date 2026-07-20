@@ -229,6 +229,24 @@ class LocalAuthProvider:
                                 loginHeading.insertAdjacentElement('afterend', subtitle);
                             }
                         }
+
+                        // 4. Login button: show loading state immediately on click
+                        const loginForm = window.parent.document.querySelector('div[data-testid="stForm"]');
+                        if (loginForm) {
+                            const submitBtn = loginForm.querySelector('button[type="submit"], button[data-testid="stBaseButton-secondaryFormSubmit"]');
+                            if (submitBtn && !submitBtn.dataset.uxWired) {
+                                submitBtn.dataset.uxWired = 'true';
+                                submitBtn.addEventListener('click', () => {
+                                    // Brief delay to allow Streamlit to register the click, then show loading
+                                    setTimeout(() => {
+                                        submitBtn.innerText = 'Signing in...';
+                                        submitBtn.style.opacity = '0.7';
+                                        submitBtn.style.pointerEvents = 'none';
+                                        submitBtn.style.cursor = 'not-allowed';
+                                    }, 80);
+                                });
+                            }
+                        }
                     }, 500);
                 </script>
             """, height=0, width=0)
@@ -243,5 +261,22 @@ class LocalAuthProvider:
         return None
 
     def logout(self):
-        if self.authenticator:
-            self.authenticator.logout('Logout', 'main')
+        """
+        Clears all authentication session state keys directly.
+        We cannot call authenticator.logout() programmatically — it is a widget
+        that only fires when its own rendered button is clicked internally.
+        Instead we manually clear every key that streamlit-authenticator writes.
+        """
+        # Clear all streamlit-authenticator session state keys
+        for key in ["authentication_status", "username", "name", "email",
+                    "user", "auth_provider", "cookie_saved_rerun"]:
+            st.session_state.pop(key, None)
+
+        # Expire the auth cookie so the browser won't auto-login on next visit
+        try:
+            if self.authenticator and hasattr(self.authenticator, 'cookie_manager'):
+                self.authenticator.cookie_manager.delete(
+                    self.authenticator.cookie_name
+                )
+        except Exception:
+            pass  # Cookie expiry is best-effort; session clear is what matters

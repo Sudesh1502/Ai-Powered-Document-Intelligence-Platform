@@ -155,7 +155,8 @@ if submitted and uploaded_files:
                             start_time=get_ist_now(),
                             end_time=get_ist_now(),
                             word_count=0,
-                            confidence=0.0
+                            confidence=0.0,
+                            source="Streamlit UI"
                         )
                         continue
     
@@ -185,9 +186,6 @@ if submitted and uploaded_files:
                     confidence = round(ocr_analysis.get("weighted_score", 0.0), 2)
                     text = result.content
                     
-                    # Register hashes early so that duplicate detection works even if the document fails validation or is routed to Action Centre
-                    dedupe_service.log_document(file_bytes, "", text, uploaded_file.name)
-    
                     page_count = len(result.pages) if result.pages else 0
     
                     st.markdown(
@@ -241,11 +239,16 @@ if submitted and uploaded_files:
                             start_time=start_time,
                             end_time=get_ist_now(),
                             word_count=word_count,
-                            confidence=confidence
+                            confidence=confidence,
+                            source="Streamlit UI"
                         )
                         status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
                         action_centre_count += 1
                         continue
+    
+                    # Register hashes early so that duplicate detection works even if the document fails validation or is routed to Action Centre
+                    dedupe_service.log_document(file_bytes, "", text, uploaded_file.name)
+    
     
                     with st.spinner(
                         "Extracting Metadata..."
@@ -293,7 +296,8 @@ if submitted and uploaded_files:
                                 start_time=start_time,
                                 end_time=get_ist_now(),
                                 word_count=word_count,
-                                confidence=confidence
+                                confidence=confidence,
+                                source="Streamlit UI"
                             )
                             
                             status_container.update(label=f"⚠️ Action Centre (Duplicate): {uploaded_file.name}", state="complete", expanded=False)
@@ -344,7 +348,8 @@ if submitted and uploaded_files:
                             start_time=start_time,
                             end_time=get_ist_now(),
                             word_count=0,
-                            confidence=confidence
+                            confidence=confidence,
+                            source="Streamlit UI"
                         )
                 
                         # 5. Continue to the next file instead of stopping the batch
@@ -377,7 +382,8 @@ if submitted and uploaded_files:
                                     start_time=start_time,
                                     end_time=get_ist_now(),
                                     word_count=0,
-                                    confidence=confidence
+                                    confidence=confidence,
+                                    source="Streamlit UI"
                                 )
                                 status_container.update(label=f"⚠️ Action Centre (Policy Breach): {uploaded_file.name}", state="complete", expanded=False)
                                 action_centre_count += 1
@@ -548,7 +554,7 @@ if submitted and uploaded_files:
                         note = "Rejected due to extremely low confidence"
                         status_container.update(label=f"❌ Rejected: {uploaded_file.name}", state="error", expanded=False)
                         
-                    else: # "Review Required"
+                    else: # "Needs Review"
     
                         metadata["file_name"] = uploaded_file.name
                         metadata["status"] = "Needs Review"
@@ -589,7 +595,8 @@ if submitted and uploaded_files:
                         start_time=start_time,
                         end_time=end_time,
                         word_count=word_count,
-                        confidence=confidence
+                        confidence=confidence,
+                        source="Streamlit UI"
                     )
     
                     st.info(
@@ -610,7 +617,8 @@ if submitted and uploaded_files:
                         start_time=start_time,
                         end_time=end_time,
                         word_count=word_count,
-                        confidence=confidence
+                        confidence=confidence,
+                        source="Streamlit UI"
                     )
     
                     st.error(
@@ -634,8 +642,11 @@ logs = get_logs()
 if logs.empty:
     st.info("No logs available.")
 else:
+    # 1. Rename the 'Note' column from the CSV to 'Reason' so your code can use it
+    logs = logs.rename(columns={"Note": "Reason"})
+    
     keep_cols = []
-    for c in ["Timestamp", "File Name", "Status", "Processing Time (s)"]:
+    for c in ["Timestamp", "File Name", "Status", "Reason", "Processing Time (s)"]:
         if c in logs.columns:
             keep_cols.append(c)
 
@@ -655,10 +666,11 @@ else:
 <table style='width: 100%; border-collapse: collapse; font-family: Inter, sans-serif; font-size: 14px;'>
 <thead>
 <tr style='background-color: #F8FAFC; border-bottom: 1px solid #E2E8F0; text-align: left; position: sticky; top: 0; z-index: 10;'>
-<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC;'>Timestamp</th>
-<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC;'>File Name</th>
-<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC;'>Status</th>
-<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC;'>Processing Time (s)</th>
+<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC; width: 160px; white-space: nowrap;'>Timestamp</th>
+<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC; min-width: 200px;'>File Name</th>
+<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC; width: 130px; text-align: center; white-space: nowrap;'>Status</th>
+<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC; min-width: 250px;'>Reason</th>
+<th style='padding: 12px; color: #64748B; font-weight: 600; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; background-color: #F8FAFC; width: 150px; text-align: right; white-space: nowrap;'>Processing Time (s)</th>
 </tr>
 </thead>
 <tbody>"""
@@ -666,21 +678,25 @@ else:
     for idx, row in display.iterrows():
         status = row.get("Status", "Unknown")
         if status == "Rejected":
-            badge = "<span style='background-color: #FEE2E2; color: #991B1B; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif;'>Rejected</span>"
+            badge = "<span style='background-color: #FEE2E2; color: #991B1B; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>Rejected</span>"
         elif status == "Needs Review":
-            badge = "<span style='background-color: #0F172A; color: #FFFFFF; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif;'>Needs Review</span>"
+            badge = "<span style='background-color: #0F172A; color: #FFFFFF; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>Needs Review</span>"
         elif status == "Completed":
-            badge = "<span style='background-color: #D1FAE5; color: #065F46; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif;'>Completed</span>"
+            badge = "<span style='background-color: #D1FAE5; color: #065F46; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>Completed</span>"
         else:
-            badge = f"<span style='background-color: #F1F5F9; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif;'>{status}</span>"
+            badge = f"<span style='background-color: #F1F5F9; color: #475569; padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>{status}</span>"
 
         time_val = row.get("Processing Time (s)", "0")
         
-        html_table += f"""<tr style='border-bottom: 1px solid #F1F5F9;'>
-<td style='padding: 14px 12px; color: #475569;'>{row.get("Timestamp", "")}</td>
+        # Get the renamed 'Reason' value and display it in the 4th column
+        reason_val = row.get("Reason", "")
+        
+        html_table += f"""<tr style='border-bottom: 1px solid #F1F5F9; vertical-align: middle;'>
+<td style='padding: 14px 12px; color: #475569; white-space: nowrap;'>{row.get("Timestamp", "")}</td>
 <td style='padding: 14px 12px; color: #0F172A; font-weight: 500;'>{row.get("File Name", "")}</td>
-<td style='padding: 14px 12px;'>{badge}</td>
-<td style='padding: 14px 12px; color: #475569;'>{time_val}</td>
+<td style='padding: 14px 12px; text-align: center;'>{badge}</td>
+<td style='padding: 14px 12px; color: #475569;'>{reason_val}</td>
+<td style='padding: 14px 12px; color: #475569; text-align: right;'>{time_val}</td>
 </tr>"""
 
     html_table += """</tbody>
