@@ -28,8 +28,19 @@ from src.utils.review_storage import (
 
 
 
-st.title("Action Centre")
-st.caption("Review and validate documents that require manual intervention.")
+st.markdown("""
+<div style="
+    background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%);
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    border: 1px solid #dbeafe;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    margin-bottom: 1.5rem;
+">
+    <h1 style="margin: 0; font-family: 'Outfit', sans-serif; color: #0F172A; font-size: 2.2rem; font-weight: 700;">Action Centre</h1>
+    <p style="margin: 6px 0 0 0; color: #475569; font-size: 1.05rem;">Review and validate documents that require manual intervention.</p>
+</div>
+""", unsafe_allow_html=True)
 st.markdown("---")
 
 if "selected_doc_index" not in st.session_state:
@@ -87,13 +98,13 @@ def render_action_centre_queue():
             </style>
         """, unsafe_allow_html=True)
 
-        st.markdown("### Pending Documents")
+        st.markdown("<h3 style='font-family: Montserrat, sans-serif; color: #1a2c47; font-size: 1.15rem; font-weight: 600; margin-bottom: 1rem; margin-top: 1rem;'>Pending Documents</h3>", unsafe_allow_html=True)
         hcols = st.columns([4, 3, 3, 2], gap="xxsmall")
-        hcols[0].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px; border-radius: 6px 0 0 6px;'>File Name</div>", unsafe_allow_html=True)
-        hcols[1].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px;'>Entity Name</div>", unsafe_allow_html=True)
-        hcols[2].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 14px;'>Queue Time</div>", unsafe_allow_html=True)
-        hcols[3].markdown("<div style='background-color: #002060; color: white; padding: 8px 12px; text-align: center; font-weight: 600; font-size: 14px; border-radius: 0 6px 6px 0;'>Action</div>", unsafe_allow_html=True)
-        st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid rgba(200,200,200,0.3);'/>", unsafe_allow_html=True)
+        hcols[0].markdown("<div style='background-color: #f8fafc; color: #475569; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 6px 0 0 6px; font-family: Inter, sans-serif;'>File Name</div>", unsafe_allow_html=True)
+        hcols[1].markdown("<div style='background-color: #f8fafc; color: #475569; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-family: Inter, sans-serif;'>Entity Name</div>", unsafe_allow_html=True)
+        hcols[2].markdown("<div style='background-color: #f8fafc; color: #475569; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-family: Inter, sans-serif;'>Queue Time</div>", unsafe_allow_html=True)
+        hcols[3].markdown("<div style='background-color: #f8fafc; color: #475569; padding: 10px 14px; text-align: center; font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 0 6px 6px 0; font-family: Inter, sans-serif;'>Action</div>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid #e2e8f0;'/>", unsafe_allow_html=True)
         
         for idx, list_doc in enumerate(docs):
             cols = st.columns([4, 3, 3, 2], gap="xxsmall")
@@ -103,11 +114,11 @@ def render_action_centre_queue():
             
             # Handle Entity Name & Errors
             if "error" in list_doc:
-                cols[1].markdown("🚨 **Extraction Failed**")
-                cols[2].markdown("🚨 **Failed**")
+                cols[1].markdown("**Extraction Failed**")
+                cols[2].markdown("**Failed**")
             else:
                 entity = list_doc.get("entity_name")
-                cols[1].write(entity if entity and str(entity).strip() else "⚠️ *Missing*")
+                cols[1].write(entity if entity and str(entity).strip() else "*Missing*")
                 
                 # Show the exact time it was added to the queue to prove FIFO sorting
                 queue_time = list_doc.get("queue_date", "Unknown")
@@ -117,7 +128,7 @@ def render_action_centre_queue():
             if cols[3].button("Review", key=f"review_btn_{idx}", use_container_width=True):
                 st.session_state.selected_doc_index = idx
                 st.rerun()
-            st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid rgba(200,200,200,0.3);'/>", unsafe_allow_html=True)
+            st.markdown("<hr style='margin: 0.2rem 0; border: none; border-bottom: 1px solid #e2e8f0;'/>", unsafe_allow_html=True)
         
         # JS: mark Review buttons as loading on click for instant feedback
         import streamlit.components.v1 as _sc
@@ -247,7 +258,7 @@ if st.session_state.selected_doc_index is not None:
         metadata_is_empty = not bool(doc.get("metadata"))
         if metadata_is_empty:
             st.info("The custom metadata for this document is currently empty.")
-            if st.button("✨ Generate Custom Metadata with AI", type="primary", use_container_width=True):
+            if st.button("Generate Custom Metadata with AI", type="primary", use_container_width=True):
                 with st.spinner("Analyzing document to extract missing custom metadata..."):
                     try:
                         # 1. Fetch file bytes
@@ -378,7 +389,7 @@ if st.session_state.selected_doc_index is not None:
             key=f"date_{i}"
         )
 
-        st.markdown("##### Metadata")
+        st.markdown("<h5 style='font-family: Montserrat, sans-serif; color: #1a2c47; font-weight: 600; margin-bottom: 1rem;'>Metadata</h5>", unsafe_allow_html=True)
         
         metadata_fields_key = f"metadata_fields_{i}"
 
@@ -461,7 +472,7 @@ if st.session_state.selected_doc_index is not None:
             st.rerun()
 
         # Custom gray button to add a new row
-        if st.button("➕ Add Metadata Field", type="secondary", key=f"add_row_{i}"):
+        if st.button("Add Metadata Field", type="secondary", key=f"add_row_{i}"):
             new_row = pd.DataFrame([{"Key": "", "Value": "", "Delete": False}])
             new_df = pd.concat([edited_metadata, new_row], ignore_index=True)
             st.session_state[metadata_fields_key] = new_df
@@ -502,6 +513,7 @@ if st.session_state.selected_doc_index is not None:
         )
 
         with b1:
+            st.markdown("<div id='btn-approve-marker'></div>", unsafe_allow_html=True)
             if st.button(
                 "Approve",
                 key=f"a_{i}",
@@ -615,6 +627,7 @@ if st.session_state.selected_doc_index is not None:
                 st.rerun()
 
         with b2:
+            st.markdown("<div id='btn-reject-marker'></div>", unsafe_allow_html=True)
             if st.button(
                 "Reject",
                 key=f"r_{i}",

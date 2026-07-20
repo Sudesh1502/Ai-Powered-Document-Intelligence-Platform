@@ -20,7 +20,7 @@ start_background_worker()
 
 st.set_page_config(
     page_title="Document Intelligence Platform",
-    page_icon="📄",
+    page_icon=":material/description:",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -149,159 +149,343 @@ else:
 # --- Global CSS and Style Injection for Figma Design Reference ---
 st.markdown("""
     <style>
-    /* Import modern typography */
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
-    
-    /* Apply globally */
+    /* ── Typography: Montserrat for headings, Inter for body ── */
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+    /* ── Global ── */
     .stApp {
         font-family: 'Inter', sans-serif;
-        background-color: #F8FAFC;
+        background-color: #FFFFFF;
+        color: #1a2c47;
     }
-    
-    /* Style cards and forms */
-    div[data-testid="stForm"], .stCard {
-        background-color: #ffffff !important;
-        border: 1px solid #E2E8F0 !important;
-        border-radius: 12px !important;
-        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.03) !important;
-        padding: 2rem !important;
+
+    /* ══════════════════════════════════════════════════
+       SIDEBAR — Deep Navy, Adrosonic Corporate
+       ══════════════════════════════════════════════════ */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #1a2c47 0%, #111e34 100%) !important;
+        border-right: none !important;
     }
-    
-    /* Style metrics/KPI cards with vertical left border */
-    [data-testid="stMetric"] {
-        background-color: #ffffff !important;
-        border: 1px solid #E2E8F0 !important;
-        border-left: 4px solid #002060 !important;
+    [data-testid="stSidebar"] * {
+        color: #FFFFFF !important;
+    }
+    /* Signed in text */
+    [data-testid="stSidebar"] .stMarkdown p,
+    [data-testid="stSidebar"] .stMarkdown strong {
+        color: rgba(255,255,255,0.7) !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 0.85rem !important;
+    }
+    /* Nav links — clean line icon styling */
+    [data-testid="stSidebarNav"] a,
+    [data-testid="stSidebarNavLink"] {
+        color: rgba(255,255,255,0.75) !important;
         border-radius: 8px !important;
-        padding: 1.2rem !important;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.02) !important;
+        padding: 0.5rem 0.75rem !important;
+        margin-bottom: 2px !important;
+        transition: all 0.18s ease !important;
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 500 !important;
+        font-size: 0.9rem !important;
+    }
+    [data-testid="stSidebarNav"] a:hover,
+    [data-testid="stSidebarNavLink"]:hover {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        color: #ffffff !important;
+    }
+    /* Active state — subtle left accent */
+    [data-testid="stSidebarNav"] a[aria-selected="true"],
+    [data-testid="stSidebarNavLink"][aria-selected="true"] {
+        background-color: rgba(0, 204, 255, 0.1) !important;
+        color: #00ccff !important;
+        font-weight: 600 !important;
+        border-left: 3px solid #00ccff !important;
+    }
+    /* Logout button */
+    [data-testid="stSidebar"] button[kind="secondary"] {
+        background: transparent !important;
+        border: 1px solid rgba(255,255,255,0.3) !important;
+        color: rgba(255,255,255,0.9) !important;
+        border-radius: 8px !important;
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 500 !important;
+        font-size: 0.85rem !important;
+        transition: all 0.2s ease !important;
+        margin-top: 0.25rem !important;
+    }
+    [data-testid="stSidebar"] button[kind="secondary"]:hover {
+        background: rgba(255,255,255,0.1) !important;
+        border-color: #ffffff !important;
+        color: #ffffff !important;
+    }
+    /* Sidebar divider */
+    [data-testid="stSidebar"] hr {
+        border-color: rgba(255,255,255,0.08) !important;
+        margin: 0.75rem 0 !important;
+    }
+
+    /* ══════════════════════════════════════════════════
+       KPI METRIC CARDS — Clean white, soft elevation
+       ══════════════════════════════════════════════════ */
+    [data-testid="stMetric"] {
+        background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%) !important;
+        border: 1px solid #dbeafe !important;
+        border-radius: 10px !important;
+        padding: 1.25rem 1.4rem !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 2px rgba(0, 0, 0, 0.02) !important;
+        transition: all 0.2s ease !important;
+    }
+    [data-testid="stMetric"]:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+        transform: translateY(-2px) !important;
     }
     [data-testid="stMetricLabel"] {
-        font-family: 'Outfit', sans-serif !important;
+        font-family: 'Montserrat', sans-serif !important;
         font-weight: 600 !important;
         color: #64748B !important;
         text-transform: uppercase !important;
-        font-size: 0.75rem !important;
-        letter-spacing: 0.05em !important;
+        font-size: 0.68rem !important;
+        letter-spacing: 0.08em !important;
     }
     [data-testid="stMetricValue"] {
-        font-family: 'Outfit', sans-serif !important;
+        font-family: 'Montserrat', sans-serif !important;
         font-weight: 700 !important;
-        color: #0F172A !important;
-        font-size: 1.8rem !important;
+        color: #1a2c47 !important;
+        font-size: 2rem !important;
+        line-height: 1.2 !important;
     }
-    
-    /* Style Primary Action Buttons */
+
+    /* ══════════════════════════════════════════════════
+       FORMS & CARDS — Clean, subtle borders
+       ══════════════════════════════════════════════════ */
+    div[data-testid="stForm"], .stCard {
+        background-color: #ffffff !important;
+        border: 1px solid #e8ecf1 !important;
+        border-radius: 12px !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+        padding: 1.75rem !important;
+    }
+
+    /* ══════════════════════════════════════════════════
+       PRIMARY BUTTONS — Adrosonic blue gradient CTA
+       ══════════════════════════════════════════════════ */
     button[kind="primary"],
     button[kind="primaryFormSubmit"],
     button[data-testid="stFormSubmitButton"] {
-        background-color: #002060 !important;
+        background: linear-gradient(135deg, #1a2c47 0%, #295fd5 100%) !important;
         color: #ffffff !important;
         border-radius: 8px !important;
         border: none !important;
-        font-family: 'Outfit', sans-serif !important;
+        font-family: 'Inter', sans-serif !important;
         font-weight: 600 !important;
-        padding: 0.6rem 2rem !important;
+        font-size: 0.875rem !important;
+        padding: 0.6rem 1.75rem !important;
         transition: all 0.2s ease !important;
+        letter-spacing: 0.01em !important;
     }
     button[kind="primary"]:hover,
     button[kind="primaryFormSubmit"]:hover,
     button[data-testid="stFormSubmitButton"]:hover {
-        background-color: #001040 !important;
+        background: linear-gradient(135deg, #142340 0%, #1e4fb8 100%) !important;
+        box-shadow: 0 4px 14px rgba(26, 44, 71, 0.2) !important;
         transform: translateY(-1px);
-        box-shadow: 0px 4px 12px rgba(0, 32, 96, 0.2) !important;
     }
-    
-    /* Style Secondary buttons */
+
+    /* ══════════════════════════════════════════════════
+       SECONDARY BUTTONS
+       ══════════════════════════════════════════════════ */
     button[kind="secondary"] {
-        background-color: #002060 !important;
-        color: #ffffff !important;
-        border: 1px solid #002060 !important;
-        font-family: 'Outfit', sans-serif !important;
+        background: linear-gradient(135deg, #f0f7ff 0%, #dbeafe 100%) !important;
+        color: #1a2c47 !important;
+        border: 1px solid #bfdbfe !important;
+        font-family: 'Inter', sans-serif !important;
         font-weight: 500 !important;
-        padding: 0.5rem 1rem !important;
-        border-radius: 6px !important;
+        font-size: 0.85rem !important;
+        padding: 0.5rem 1.15rem !important;
+        border-radius: 8px !important;
         transition: all 0.2s ease !important;
     }
     button[kind="secondary"]:hover {
-        background-color: #001040 !important;
-        border-color: #001040 !important;
-        color: #ffffff !important;
-        box-shadow: 0px 4px 12px rgba(0, 32, 96, 0.15) !important;
+        background: linear-gradient(135deg, #e0f2fe 0%, #bfdbfe 100%) !important;
+        border-color: #93c5fd !important;
+        color: #1a2c47 !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06) !important;
     }
-    
-    /* Keep file uploader buttons light/default */
+
+    /* ── Approve & Reject Buttons (Action Centre) ── */
+    div.element-container:has(#btn-approve-marker) + div.element-container button {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+        border-color: #a7f3d0 !important;
+        color: #065f46 !important;
+    }
+    div.element-container:has(#btn-approve-marker) + div.element-container button:hover {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
+        border-color: #6ee7b7 !important;
+    }
+
+    div.element-container:has(#btn-reject-marker) + div.element-container button {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%) !important;
+        border-color: #fecaca !important;
+        color: #991b1b !important;
+    }
+    div.element-container:has(#btn-reject-marker) + div.element-container button:hover {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+        border-color: #f87171 !important;
+    }
+
+    /* ── File Uploader Buttons — neutral ── */
     [data-testid="stFileUploader"] button {
-        background-color: #F1F5F9 !important;
-        color: #0F172A !important;
-        border: 1px solid #E2E8F0 !important;
+        background-color: #f7f8fa !important;
+        color: #1a2c47 !important;
+        border: 1px solid #e2e8f0 !important;
         box-shadow: none !important;
+        font-family: 'Inter', sans-serif !important;
     }
     [data-testid="stFileUploader"] button:hover {
-        background-color: #E2E8F0 !important;
-        border-color: #CBD5E1 !important;
-        color: #0F172A !important;
+        background-color: #eef1f6 !important;
+        border-color: #cbd5e1 !important;
     }
-    
-    /* Override table action buttons */
+
+    /* ── Table inline action buttons (View, Review) ── */
     div:has(div.table-btn-anchor) + div button {
         background-color: transparent !important;
-        color: #475569 !important;
-        border: 1px solid transparent !important;
+        color: #64748b !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 6px !important;
+        font-size: 0.8rem !important;
+        font-weight: 500 !important;
+        transition: all 0.15s ease !important;
     }
     div:has(div.table-btn-anchor) + div button:hover {
-        color: #002060 !important;
-        background-color: #F1F5F9 !important;
-        border-color: #002060 !important;
-        box-shadow: none !important;
+        color: #1a2c47 !important;
+        background-color: #f7f8fa !important;
+        border-color: #cbd5e1 !important;
     }
-    
-    /* Style VIEW ALL ACTIVITY button */
+
+    /* ── View All Activity Link ── */
     .view-all-container button {
         background-color: transparent !important;
-        color: #2563EB !important;
+        color: #00ccff !important;
         border: none !important;
-        font-family: 'Outfit', sans-serif !important;
+        font-family: 'Inter', sans-serif !important;
         font-weight: 600 !important;
-        letter-spacing: 0.05em !important;
-        text-transform: uppercase !important;
+        letter-spacing: 0.03em !important;
         font-size: 0.8rem !important;
         box-shadow: none !important;
-        margin: 0 auto !important;
-        display: block !important;
-        width: auto !important;
-        padding: 0.5rem 1.5rem !important;
+        padding: 0.4rem 1rem !important;
         border-radius: 6px !important;
-        transition: all 0.2s ease !important;
+        transition: all 0.15s ease !important;
     }
     .view-all-container button:hover {
-        color: #1D4ED8 !important;
-        background-color: #F1F5F9 !important;
-        text-decoration: underline !important;
+        color: #1a2c47 !important;
+        background-color: #f7f8fa !important;
     }
-    
-    /* Custom spacing and margins */
+
+    /* ══════════════════════════════════════════════════
+       LAYOUT
+       ══════════════════════════════════════════════════ */
     .block-container {
-        padding-top: 0rem !important;
+        padding-top: 1rem !important;
         padding-bottom: 2rem !important;
         max-width: 95% !important;
     }
-    
-    /* Style tables */
+
+    /* ── Tables ── */
     .stTable, [data-testid="stTable"] {
-        border-radius: 8px !important;
+        border-radius: 10px !important;
         overflow: hidden !important;
-        border: 1px solid #E2E8F0 !important;
+        border: 1px solid #e8ecf1 !important;
+    }
+
+    /* ══════════════════════════════════════════════════
+       TYPOGRAPHY
+       ══════════════════════════════════════════════════ */
+    h1, h2, h3, h4, h5, h6,
+    .stTitle, .stHeader, .stSubheader {
+        font-family: 'Montserrat', sans-serif !important;
+        color: #1a2c47 !important;
+        font-weight: 600 !important;
+    }
+
+    /* ── Expanders ── */
+    [data-testid="stExpander"] summary {
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 600 !important;
+        color: #1a2c47 !important;
+        font-size: 0.9rem !important;
+    }
+
+    /* ── Progress bar ── */
+    [data-testid="stProgress"] > div > div > div {
+        background: linear-gradient(90deg, #00ccff, #03b7b7) !important;
+        border-radius: 4px !important;
+    }
+
+    /* ── Tabs ── */
+    button[data-baseweb="tab"] {
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 600 !important;
+        color: #64748b !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #00ccff !important;
+        border-bottom-color: #00ccff !important;
+    }
+
+    /* ── Dividers ── */
+    hr {
+        border-color: #e8ecf1 !important;
+    }
+
+    /* ── Captions & Small Text ── */
+    .stCaption, [data-testid="stCaption"] {
+        color: #94a3b8 !important;
+        font-family: 'Inter', sans-serif !important;
+    }
+
+    /* ── Toggle ── */
+    [data-testid="stToggle"] label span {
+        font-family: 'Inter', sans-serif !important;
+        font-size: 0.875rem !important;
+        color: #475569 !important;
+    }
+
+    /* ── Input fields ── */
+    [data-testid="stTextInput"] input,
+    [data-testid="stDateInput"] input,
+    [data-testid="stSelectbox"] div[data-baseweb="select"] {
+        font-family: 'Inter', sans-serif !important;
+        border-color: #e2e8f0 !important;
+        border-radius: 8px !important;
+    }
+    [data-testid="stTextInput"] input:focus,
+    [data-testid="stDateInput"] input:focus {
+        border-color: #00ccff !important;
+        box-shadow: 0 0 0 1px #00ccff !important;
+    }
+
+    /* ── Download button ── */
+    [data-testid="stDownloadButton"] button {
+        background-color: #ffffff !important;
+        color: #1a2c47 !important;
+        border: 1px solid #d1d9e6 !important;
+        border-radius: 8px !important;
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 500 !important;
+    }
+    [data-testid="stDownloadButton"] button:hover {
+        background-color: #f7f8fa !important;
+        border-color: #b0bac9 !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # 3. Show a sleek loading spinner while the heavy home page is evaluated and drawn
 with st.spinner("Preparing your workspace..."):
-    upload_page = st.Page("views/0_Upload.py", title="Upload", icon="⬆️", default=True)
-    search_page = st.Page("views/1_Search.py", title="Search", icon="🔍")
-    action_page = st.Page("views/2_Action Centre.py", title="Action Centre", icon="⚠️")
-    settings_page = st.Page("views/3_Settings.py", title="Settings", icon="⚙️")
+    upload_page = st.Page("views/0_Upload.py", title="Upload", icon=":material/upload:", default=True)
+    search_page = st.Page("views/1_Search.py", title="Search", icon=":material/search:")
+    action_page = st.Page("views/2_Action Centre.py", title="Action Centre", icon=":material/warning:")
+    settings_page = st.Page("views/3_Settings.py", title="Settings", icon=":material/settings:")
 
     # Re-enable the standard sidebar navigation
     pg = st.navigation([upload_page, search_page, action_page, settings_page])
