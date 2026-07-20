@@ -1,7 +1,19 @@
 import streamlit as st
 from src.auth.auth_service import login_user, logout_user
 
-st.title("Settings")
+st.markdown("""
+<div style="
+    background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%);
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    border: 1px solid #dbeafe;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    margin-bottom: 1.5rem;
+">
+    <h1 style="margin: 0; font-family: 'Outfit', sans-serif; color: #0F172A; font-size: 2.2rem; font-weight: 700;">Settings</h1>
+    <p style="margin: 6px 0 0 0; color: #475569; font-size: 1.05rem;">Manage platform configurations and user preferences.</p>
+</div>
+""", unsafe_allow_html=True)
 st.markdown("---")
 
 st.header("Cross-Validation Configuration")

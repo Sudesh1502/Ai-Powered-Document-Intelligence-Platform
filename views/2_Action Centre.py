@@ -28,8 +28,19 @@ from src.utils.review_storage import (
 
 
 
-st.title("Action Centre")
-st.caption("Review and validate documents that require manual intervention.")
+st.markdown("""
+<div style="
+    background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%);
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    border: 1px solid #dbeafe;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    margin-bottom: 1.5rem;
+">
+    <h1 style="margin: 0; font-family: 'Outfit', sans-serif; color: #0F172A; font-size: 2.2rem; font-weight: 700;">Action Centre</h1>
+    <p style="margin: 6px 0 0 0; color: #475569; font-size: 1.05rem;">Review and validate documents that require manual intervention.</p>
+</div>
+""", unsafe_allow_html=True)
 st.markdown("---")
 
 if "selected_doc_index" not in st.session_state:
@@ -502,6 +513,7 @@ if st.session_state.selected_doc_index is not None:
         )
 
         with b1:
+            st.markdown("<div id='btn-approve-marker'></div>", unsafe_allow_html=True)
             if st.button(
                 "Approve",
                 key=f"a_{i}",
@@ -615,6 +627,7 @@ if st.session_state.selected_doc_index is not None:
                 st.rerun()
 
         with b2:
+            st.markdown("<div id='btn-reject-marker'></div>", unsafe_allow_html=True)
             if st.button(
                 "Reject",
                 key=f"r_{i}",
