@@ -545,7 +545,7 @@ if submitted and uploaded_files:
                         st.success(
                             "Document Indexed Successfully."
                         )
-                        status_container.update(label=f"Completed: {uploaded_file.name}", state="complete", expanded=False)
+                        status_container.update(label=f"Indexed Successfully: {uploaded_file.name}", state="complete", expanded=False)
                         success_count += 1
     
                     elif review_status == "Failed":
@@ -679,7 +679,7 @@ else:
         status = row.get("Status", "Unknown")
         # Color-coded badges: semantic colors, clean design
         if status == "Completed":
-            badge = "<span style='background-color: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>Completed</span>"
+            badge = "<span style='background-color: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>Indexed Successfully</span>"
         elif status == "Approved Manually":
             badge = "<span style='background-color: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 2px 8px; border-radius: 12px; font-weight: 600; font-size: 12px; font-family: Inter, sans-serif; display: inline-block; white-space: nowrap;'>Approved</span>"
         elif status == "Needs Review":
