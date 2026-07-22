@@ -129,6 +129,25 @@ if not user:
     if 'cookie_saved_rerun' in st.session_state:
         del st.session_state['cookie_saved_rerun']
 
+    # Dismiss any active blur overlay on the parent document
+    st.components.v1.html("""
+        <script>
+            (function() {
+                var doc = window.parent.document;
+                var win = window.parent;
+                if (win._uxState) {
+                    win._uxState.active = false;
+                    if (win._uxState.spinPoll) clearInterval(win._uxState.spinPoll);
+                    if (win._uxState.debounce) clearTimeout(win._uxState.debounce);
+                    if (win._uxState.safety) clearTimeout(win._uxState.safety);
+                    if (win._uxState.mutObs) win._uxState.mutObs.disconnect();
+                }
+                var el = doc.getElementById('ux-loading-overlay');
+                if (el) el.style.display = 'none';
+            })();
+        </script>
+    """, height=0)
+
     # Explicitly clear the navigation state from the frontend before stopping
     pg = st.navigation([st.Page(lambda: None, title="Login")], position="hidden")
     pg.run()
@@ -494,8 +513,7 @@ with st.spinner("Preparing your workspace..."):
 with st.sidebar:
     st.markdown(f"**Signed in as:** {user['name']}")
     if st.button("Logout", key="sidebar_logout_btn", use_container_width=True):
-        with st.spinner("Signing out..."):
-            logout_user()
+        logout_user()
         st.rerun()
     st.markdown("---")
 
