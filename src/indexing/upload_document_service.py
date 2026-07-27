@@ -35,7 +35,8 @@ def upload_documents(documents, index_name="generic-documents-index"):
     1. Top-level: only schema-defined fields are forwarded (whitelist).
     2. metadata blob: internal-only keys are stripped from the JSON string.
     """
-    print(f"\nUploading documents to index: {index_name}...")
+    print(f"\nUploading documents to index: {index_name}...", flush=True)
+    print(f"document to be upload:\n\n {documents}", flush=True)
 
     sanitized_docs = []
     for doc in documents:
@@ -69,5 +70,5 @@ def upload_documents(documents, index_name="generic-documents-index"):
         index_name=index_name,
         credential=AzureKeyCredential(AZURE_SEARCH_ADMIN_KEY)
     )
-    print("\nIndex uploaded!")
+    print("\nIndex uploaded!", flush=True)
     return search_client.upload_documents(sanitized_docs)

@@ -34,7 +34,7 @@ class LocalAuthProvider:
                 'credentials': {'usernames': usernames},
                 'cookie': {
                     'name': 'doc_intel_auth_v2',
-                    'key': 'adrosonic_secret_auth_key_8492',
+                    'key': os.getenv('AUTH_COOKIE_KEY', 'adrosonic_secret_auth_key_8492'),
                     'expiry_days': AUTH_COOKIE_EXPIRY_DAYS
                 }
             }

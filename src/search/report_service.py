@@ -2,8 +2,8 @@ import json
 import markdown2
 from xhtml2pdf import pisa
 from io import BytesIO
-from google import genai
-from src.config.config import GEMINI_API_KEY
+from src.utils.llm_client import get_llm_client
+from src.config.config import AZURE_OPENAI_DEPLOYMENT_NAME
 
 def generate_investigation_report(search_results: list, user_query: str) -> str:
     """
@@ -11,7 +11,7 @@ def generate_investigation_report(search_results: list, user_query: str) -> str:
     """
     print(f"\nGenerating investigation report for: '{user_query}'...")
     
-    client = genai.Client(api_key=GEMINI_API_KEY)
+    client = get_llm_client()
     
     # Clean the search results so the LLM doesn't get confused by UUIDs or URLs
     clean_results = []
@@ -78,17 +78,17 @@ For every statement, reference the document(s) it came from. You MUST use the ex
 """
 
     try:
-        response = client.models.generate_content(
-            model="gemini-3.1-flash-lite",
-            contents=prompt
+        response = client.chat.completions.create(
+            model=AZURE_OPENAI_DEPLOYMENT_NAME,
+            messages=[{"role": "user", "content": prompt}],
         )
 
-        if not response.text:
-            return "Error: Empty response from Gemini."
+        content = response.choices[0].message.content
+        if not content:
+            return "Error: Empty response from Azure OpenAI."
 
         print("Investigation report generated successfully.")
-        print(response.text.strip())
-        return response.text.strip()
+        return content.strip()
 
     except Exception as e:
         print(f"Report generation failed: {e}")

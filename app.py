@@ -7,7 +7,11 @@ import atexit
 @st.cache_resource
 def start_background_worker():
     print("[SYSTEM] Spawning Gmail Ingestion background worker...")
-    process = subprocess.Popen([sys.executable, "run_ingestion.py"])
+    process = subprocess.Popen(
+        [sys.executable, "run_ingestion.py"],
+        stdout=sys.stdout,   # pipe worker prints → Streamlit terminal
+        stderr=sys.stderr    # pipe worker errors → Streamlit terminal
+    )
     
     def cleanup():
         print("[SYSTEM] Shutting down Gmail Ingestion worker...")

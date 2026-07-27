@@ -152,20 +152,19 @@ def validate_document_orchestrator(metadata: dict) -> dict:
 
 def validate_email_intent_match(email_body: str, metadata: dict) -> dict:
     """
-    Uses Gemini to cross-validate if the attached document matches the email intent.
+    Uses Azure OpenAI to cross-validate if the attached document matches the email intent.
     Returns {"is_mismatch": bool, "reason": str}
     """
     if not email_body or len(email_body.strip()) < 5:
         return {"is_mismatch": False, "reason": ""}
-        
+
     try:
-        import google.generativeai as genai
-        from src.config.config import GEMINI_API_KEY
+        from src.utils.llm_client import get_llm_client
+        from src.config.config import AZURE_OPENAI_DEPLOYMENT_NAME
         import json
-        
-        genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-1.5-pro')
-        
+
+        client = get_llm_client()
+
         prompt = f"""
         You are a compliance officer for an insurance company.
         A user has sent an email with an attached document. You need to verify if the attached document matches the intent of the email.
@@ -179,10 +178,15 @@ def validate_email_intent_match(email_body: str, metadata: dict) -> dict:
         Reply strictly in this JSON format:
         {{"is_mismatch": true/false, "reason": "Brief explanation"}}
         """
-        
-        response = model.generate_content(prompt)
-        text = response.text.strip().replace('```json', '').replace('```', '')
-        
+
+        response = client.chat.completions.create(
+            model=AZURE_OPENAI_DEPLOYMENT_NAME,
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        text = response.choices[0].message.content.strip()
+        text = text.replace('```json', '').replace('```', '')
+
         result = json.loads(text)
         return result
     except Exception as e:

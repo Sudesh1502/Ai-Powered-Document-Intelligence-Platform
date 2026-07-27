@@ -5,47 +5,32 @@ from src.utils.get_prompt import get_search_summary_prompt
 
 from src.config.config import (
     AZURE_SEARCH_ENDPOINT,
-    AZURE_SEARCH_ADMIN_KEY
+    AZURE_SEARCH_ADMIN_KEY,
+    AZURE_OPENAI_DEPLOYMENT_NAME,
 )
-from google import genai
+from src.utils.llm_client import get_llm_client
 
-from src.config.config import GEMINI_API_KEY
-
-def get_summary(search_results:list, user_query:str, semantic_search:bool):
+def get_summary(search_results: list, user_query: str, semantic_search: bool):
     print("\nSummary extraction started...")
-    client = genai.Client(
-        api_key=GEMINI_API_KEY
-    )
+    client = get_llm_client()
     search_type = "semantic" if semantic_search else "keyword"
     summary_prompt = get_search_summary_prompt(user_query, search_type, search_results)
 
     try:
-
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=summary_prompt
+        response = client.chat.completions.create(
+            model=AZURE_OPENAI_DEPLOYMENT_NAME,
+            messages=[{"role": "user", "content": summary_prompt}],
         )
 
-        if not response.text:
-            return {
-                "error": "Empty response from Gemini"
-            }
-
-        output = response.text.strip()
-
-        
-
-        summary = output
+        content = response.choices[0].message.content
+        if not content:
+            return {"error": "Empty response from Azure OpenAI"}
 
         print("\nSummary extraction completed...")
-
-        return summary
+        return content.strip()
 
     except Exception as e:
-
-        return {
-            "error": str(e)
-        }
+        return {"error": str(e)}
     
 
 def search_documents(
