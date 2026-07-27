@@ -46,6 +46,18 @@ st.markdown("---")
 if "selected_doc_index" not in st.session_state:
     st.session_state.selected_doc_index = None
 
+# Ensure the app container is fully visible (combats the fade-out from Back to List transition)
+if st.session_state.selected_doc_index is None:
+    import streamlit.components.v1 as _sc_reset
+    _sc_reset.html("""
+        <script>
+        const container = window.parent.document.querySelector('.block-container');
+        if (container) {
+            container.style.opacity = '1';
+        }
+        </script>
+    """, height=0)
+
 @st.fragment(run_every="5s")
 def render_action_centre_queue():
     if st.session_state.selected_doc_index is not None:
@@ -436,8 +448,6 @@ if st.session_state.selected_doc_index is not None:
 
         df = st.session_state[metadata_fields_key]
         
-        df = st.session_state[metadata_fields_key]
-        
         # Ensure Delete column exists
         if "Delete" not in df.columns:
             df["Delete"] = False
@@ -478,8 +488,7 @@ if st.session_state.selected_doc_index is not None:
             st.session_state[metadata_fields_key] = new_df
             st.rerun()
         
-        edited_metadata = st.session_state[metadata_fields_key]
-        
+        # Use edited_metadata directly to preserve inline user input modifications
         if len(edited_metadata) > 50:
             st.warning("Warning: Only the first 50 entries will be saved.")
 
@@ -551,26 +560,39 @@ if st.session_state.selected_doc_index is not None:
                                 final_metadata[k] = v
                     
                     # Truncate to 50 items to be safe
-                    final_metadata = dict(list(final_metadata.items())[:50])
-                    doc["metadata"] = json.dumps(final_metadata)
+                    # ── Build doc_to_upload using ONLY the Azure Search schema fields ──
+                    # The doc dict comes from Azure Table Storage and contains many extra
+                    # fields (source, review_status, review_reason, status, flagged_tokens,
+                    # sha256_signature, minhash_signature, phash_signature, user_tracking,
+                    # queue_date, etc.) that do NOT exist in the index schema.
+                    # Sending any unknown field causes a 400 error from Azure Search.
+                    # We whitelist ONLY the 12 allowed schema fields; everything else
+                    # stays inside the metadata JSON blob and is never sent directly.
+                    SCHEMA_FIELDS = {
+                        "id", "file_name", "document_type", "document_title",
+                        "content", "document_number", "entity_name",
+                        "document_date", "page_count", "confidence",
+                        "metadata", "sharepoint_url"
+                    }
 
-                    doc_to_upload = (
-                        doc.copy()
-                    )
+                    # Strip flagged_tokens from the metadata blob before upload
+                    clean_metadata = final_metadata.copy()
+                    clean_metadata.pop("flagged_tokens", None)
 
-                    doc_to_upload.pop(
-                        "review_status",
-                        None
-                    )
-                    
-                    if "metadata" in doc_to_upload:
-                        try:
-                            import json
-                            meta_dict = json.loads(doc_to_upload["metadata"]) if isinstance(doc_to_upload["metadata"], str) else doc_to_upload["metadata"]
-                            meta_dict.pop("flagged_tokens", None)
-                            doc_to_upload["metadata"] = json.dumps(meta_dict) if isinstance(doc_to_upload["metadata"], str) else meta_dict
-                        except Exception:
-                            pass
+                    doc_to_upload = {
+                        "id":               doc.get("id", ""),
+                        "file_name":        doc.get("file_name", ""),
+                        "document_type":    document_type,
+                        "document_title":   document_title,
+                        "content":          doc.get("content", ""),
+                        "document_number":  document_number,
+                        "entity_name":      entity_name,
+                        "document_date":    None,   # formatted below
+                        "page_count":       doc.get("page_count", 0),
+                        "confidence":       doc.get("confidence", 0.0),
+                        "metadata":         json.dumps(clean_metadata),
+                        "sharepoint_url":   doc.get("sharepoint_url", ""),
+                    }
 
                     os.makedirs(
                         "data/",
@@ -578,13 +600,25 @@ if st.session_state.selected_doc_index is not None:
                     )
 
                     # 1. Format the date properly for Azure Search (ISO 8601)
-                    raw_date = str(doc_to_upload.get("document_date", ""))
+                    raw_date = str(document_date or doc.get("document_date", ""))
 
                     if raw_date and raw_date.strip() not in ["", "None"]:
                         if "T" not in raw_date:
                             doc_to_upload["document_date"] = f"{raw_date.strip()}T00:00:00Z"
+                        else:
+                            doc_to_upload["document_date"] = raw_date.strip()
                     else:
                         doc_to_upload["document_date"] = None
+
+                    # Ensure numeric types are correct (page_count int, confidence float)
+                    try:
+                        doc_to_upload["page_count"] = int(doc_to_upload["page_count"] or 0)
+                    except (ValueError, TypeError):
+                        doc_to_upload["page_count"] = 0
+                    try:
+                        doc_to_upload["confidence"] = float(doc_to_upload["confidence"] or 0.0)
+                    except (ValueError, TypeError):
+                        doc_to_upload["confidence"] = 0.0
 
                     # 2. ACTUALLY upload the document to the Search Index!
                     try:
@@ -592,6 +626,7 @@ if st.session_state.selected_doc_index is not None:
                     except Exception as e:
                         st.error(f"Failed to upload to Azure Search: {e}")
                         st.stop()  # Stop the process so it doesn't falsely show success
+
 
                     log_document_status(
                         file_name=doc[
