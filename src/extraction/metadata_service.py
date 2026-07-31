@@ -4,7 +4,16 @@ This file handles metadata extraction from text using Azure OpenAI.
 import json
 
 from openai import AzureOpenAI
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_exponential, before_sleep_log
+import logging
+
+# Configure a basic logger for tenacity
+logger = logging.getLogger("tenacity.retry")
+logger.setLevel(logging.WARNING)
+if not logger.handlers:
+    ch = logging.StreamHandler()
+    ch.setFormatter(logging.Formatter("[SYSTEM_WARNING] %(message)s"))
+    logger.addHandler(ch)
 
 from src.config.config import AZURE_OPENAI_DEPLOYMENT_NAME
 from src.utils.llm_client import get_llm_client
@@ -12,7 +21,11 @@ from src.utils.get_prompt import get_metadata_extraction_prompt
 from src.utils.llm_cost_calculator import calculate_llm_cost
 
 
-@retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=2, max=10))
+@retry(
+    stop=stop_after_attempt(5), 
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    before_sleep=before_sleep_log(logger, logging.WARNING)
+)
 def _generate_content_with_retry(prompt: str):
     """Helper function to call Azure OpenAI with automatic retries on failure."""
     client = get_llm_client()
